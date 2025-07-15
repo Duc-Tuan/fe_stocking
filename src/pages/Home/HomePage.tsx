@@ -40,7 +40,7 @@ export default function HomePage() {
     const [isOpen, toggleOpen, setOpen] = useToggle(true);
     const [openPopup, setOpenPopup] = useState<boolean>(false);
 
-    const [currentRange, setCurrentRange] = useState<string>('');
+    const [currentRange, setCurrentRange] = useState<string>('1 phút');
     const [loadingDownload, setLoadingDownload] = useState<boolean>(false);
     const [dataServer, setDataServer] = useState<IOptions[]>([]);
 
@@ -190,13 +190,13 @@ export default function HomePage() {
             chartRef={chartRef2}
             latestData={symbolsCandSocket}
             isOpen={isOpen}
+            currentRange={currentRange}
         />
-    ), [symbolsCand, pagination, symbolsCandSocket, isOpen]);
+    ), [symbolsCand, pagination, symbolsCandSocket, isOpen, currentRange]);
 
     const handleRangeChange = (seconds: number | null, label: string) => {
-
         if (chartRef1.current) {
-            handleTimeRangeChange(chartRef1, symbols, seconds);
+            handleTimeRangeChange(chartRef1, symbols, seconds, "line");
         }
         if (chartRef2.current) {
             handleTimeRangeChange(chartRef2, symbolsCand, seconds);

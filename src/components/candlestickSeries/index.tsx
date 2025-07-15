@@ -8,7 +8,8 @@ import {
 import { useEffect, useRef } from 'react';
 import { formatVietnamTimeSmart, gridColor } from '../line/formatTime';
 import { normalizeChartData } from './options';
-import { adjustToUTCPlus_7 } from '../../pages/Home/options';
+import { adjustToUTCPlus_7, timeOptions } from '../../pages/Home/options';
+import { aggregateCandlesByInterval } from '../../utils/timeRange';
 
 export const CandlestickSeriesComponent = (props: any) => {
     const {
@@ -17,6 +18,7 @@ export const CandlestickSeriesComponent = (props: any) => {
         latestData,
         setPagination,
         chartRef,
+        currentRange,
         colors: {
             backgroundColor = 'white',
             textColor = 'black',
@@ -181,6 +183,15 @@ export const CandlestickSeriesComponent = (props: any) => {
         };
     }, []);
 
+    const pLineSeriesRe = (data: BarData[]) => {
+        if (!pLineSeriesRef.current) return;
+        const pData = data.map(d => ({
+            time: d.time,
+            value: (d.high + d.low + d.close) / 3,
+        }));
+        pLineSeriesRef.current.setData(pData);
+    }
+
     useEffect(() => {
         if (!candleSeriesRef.current || !dataOld?.length) return;
 
@@ -203,18 +214,28 @@ export const CandlestickSeriesComponent = (props: any) => {
         }
 
         allData.current = merged.sort((a: any, b: any) => a.time - b.time);
-        // allData.current = [...unique, ...existing].sort((a: any, b: any) => a.time - b.time);
-        candleSeriesRef.current.setData(allData.current);
 
-        if (pLineSeriesRef.current) {
-            const pData = allData.current.map(d => ({
-                time: d.time,
-                value: (d.high + d.low + d.close) / 3,
-            }));
-
-            pLineSeriesRef.current.setData(pData);
+        let time = undefined
+        if (currentRange) {
+            time = timeOptions.filter((i) => i.label === currentRange)[0].seconds
         }
+        const data = aggregateCandlesByInterval(allData.current, time)
+
+        candleSeriesRef.current.setData(data);
+
+        pLineSeriesRe(data)
     }, [dataOld]);
+
+    useEffect(() => {
+        if (!candleSeriesRef.current || !currentRange) return;
+
+        const time = timeOptions.filter((i) => i.label === currentRange)[0].seconds
+        const data = aggregateCandlesByInterval(allData.current, time)
+
+        candleSeriesRef.current.setData(data);
+
+        pLineSeriesRe(data)
+    }, [currentRange])
 
     useEffect(() => {
         if (!latestData || !Array.isArray(latestData) || !latestData.length || !candleSeriesRef.current) return;

@@ -132,7 +132,7 @@ export const timeOptions = [
     { label: '1 ngày', seconds: 24 * 60 * 60 },
     { label: '1 tuần', seconds: 7 * 24 * 60 * 60 },
     { label: '1 tháng', seconds: 30 * 24 * 60 * 60 },
-    { label: 'tất cả', seconds: null },
+    { label: '1 năm', seconds: 12 * 30 * 24 * 60 * 60 },
 ];
 
 export const convertDataLine: ((data: any[]) => Array<IinitialData>) = (data: any[]) => {
