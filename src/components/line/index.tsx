@@ -27,6 +27,51 @@ export const ChartComponent = (props: any) => {
     const tooltipRef = useRef<HTMLDivElement>(null);
     const dataRef = useRef<any[]>([]);
 
+    const drawDaySeparators = (chart: any, data: any[]) => {
+        const timeScale = chart.timeScale();
+        const container = chartContainerRef.current;
+        if (!container) return;
+
+        // Xóa các vạch cũ
+        container.querySelectorAll('.day-separator').forEach(el => el.remove());
+
+        const seenDates = new Set<string>();
+
+        for (const point of data) {
+            const date = new Date(point.time * 1000);
+            const dateKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+            if (seenDates.has(dateKey)) continue;
+            seenDates.add(dateKey);
+
+            const x = timeScale.timeToCoordinate(point.time);
+            if (x === null) continue;
+
+            const line = document.createElement('div');
+            line.className = 'day-separator';
+            line.style.cssText = `
+                position: absolute;
+                top: 20%;
+                left: ${x}px;
+                width: 0;
+                height: 73%;
+                border-left: 1px dashed rgba(0, 0, 0, 0.4);
+                pointer-events: none;
+                z-index: 2;
+            `;
+            container.appendChild(line);
+        }
+    };
+
+    const updateSeparators = (data: any[]) => {
+        if (!chartRef.current || !data.length) return;
+
+        requestAnimationFrame(() => {
+            setTimeout(() => {
+                drawDaySeparators(chartRef.current, data);
+            }, 80); // Delay để đợi chart render xong
+        });
+    };
+
     useEffect(() => {
         const chart = createChart(chartContainerRef.current!, {
             layout: {
@@ -86,6 +131,10 @@ export const ChartComponent = (props: any) => {
                     timeFormatter: (time: any) => formatVietnamTimeSmart(time, true),
                 },
             });
+
+            if (dataRef.current.length) {
+                updateSeparators(dataRef.current);
+            }
 
             if (range.from <= 5) {
                 setPagination((prev: any) => {
@@ -178,6 +227,8 @@ export const ChartComponent = (props: any) => {
         seriesRef.current.setData(deduped);
         dataRef.current = deduped;
 
+        updateSeparators(deduped); // ✅ Vẽ vạch phân cách
+
         if (currentRange && currentRange.from !== undefined && currentRange.to !== undefined) {
             const shift = deduped.length - dataRef.current.length;
             timeScale?.setVisibleLogicalRange({
@@ -203,6 +254,8 @@ export const ChartComponent = (props: any) => {
                 const updated = [...dataRef.current, ...filteredNewPoints];
                 seriesRef.current.setData(updated);
                 dataRef.current = updated;
+
+                updateSeparators(updated); // ✅
             }
         } else if (fixedLatestData.length === 1 && lastPoint) {
             const newPoint = fixedLatestData[0];

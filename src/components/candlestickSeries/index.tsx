@@ -38,6 +38,52 @@ export const CandlestickSeriesComponent = (props: any) => {
     const allData = useRef<BarData[]>([]);
     const hasRequestedNextPage = useRef(false);
 
+    // ✅ Vẽ vạch phân cách ngày bằng overlay div
+    const drawDaySeparators = (chart: IChartApi, data: BarData[]) => {
+        const timeScale = chart.timeScale();
+        const container = chartContainerRef.current;
+        if (!container) return;
+
+        // Xóa vạch cũ
+        container.querySelectorAll('.day-separator').forEach(el => el.remove());
+
+        const seenDates = new Set<string>();
+
+        for (const candle of data) {
+            const date = new Date(Number(candle.time) * 1000);
+            const dateKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+            if (seenDates.has(dateKey)) continue;
+            seenDates.add(dateKey);
+
+            const x = timeScale.timeToCoordinate(candle.time);
+            if (x === null) continue;
+
+            const line = document.createElement('div');
+            line.className = 'day-separator';
+            line.style.cssText = `
+                position: absolute;
+                top: 0;
+                left: ${x}px;
+                width: 0;
+                height: 96%;
+                border-left: 1px dashed rgba(0, 0, 0, 0.4); /* dashed thay vì solid */
+                pointer-events: none;
+                z-index: 2;
+            `;
+            container.appendChild(line);
+        }
+    };
+
+    const updateSeparators = (data: BarData[]) => {
+        if (!chartRef.current || !data.length) return;
+
+        requestAnimationFrame(() => {
+            setTimeout(() => {
+                drawDaySeparators(chartRef.current!, data);
+            }, 80); // Delay 80ms để đợi chart render xong
+        });
+    };
+
     useEffect(() => {
         if (!chartContainerRef.current) return;
 
@@ -57,7 +103,6 @@ export const CandlestickSeriesComponent = (props: any) => {
                 borderVisible: false,
                 timeVisible: true,
                 secondsVisible: true,
-                // tickMarkFormatter: (time: any) => formatVietnamTimeSmart(time),
             },
             handleScroll: {
                 mouseWheel: true,
@@ -80,7 +125,6 @@ export const CandlestickSeriesComponent = (props: any) => {
             wickUpColor,
             wickDownColor,
         });
-
         candleSeriesRef.current = candleSeries;
 
         const pLineSeries = chart.addLineSeries({
@@ -89,8 +133,8 @@ export const CandlestickSeriesComponent = (props: any) => {
             priceLineVisible: false,
             lastValueVisible: false,
         });
-
         pLineSeriesRef.current = pLineSeries;
+
         chartRef.current = chart;
 
         const tooltip = document.createElement('div');
@@ -157,6 +201,12 @@ export const CandlestickSeriesComponent = (props: any) => {
                 },
             });
 
+            if (allData.current.length) {
+                const time = timeOptions.find(i => i.label === currentRange)?.seconds;
+                const data = aggregateCandlesByInterval(allData.current, time);
+                updateSeparators(data);
+            }
+
             if (isAtLeftEdge) {
                 hasRequestedNextPage.current = true;
                 setPagination((prev: any) => {
@@ -171,7 +221,7 @@ export const CandlestickSeriesComponent = (props: any) => {
                 }, 1000);
             }
         });
-
+        
         const handleResize = () => {
             chart.applyOptions({ width: chartContainerRef.current!.clientWidth });
         };
@@ -190,7 +240,7 @@ export const CandlestickSeriesComponent = (props: any) => {
             value: (d.high + d.low + d.close) / 3,
         }));
         pLineSeriesRef.current.setData(pData);
-    }
+    };
 
     useEffect(() => {
         if (!candleSeriesRef.current || !dataOld?.length) return;
@@ -202,14 +252,12 @@ export const CandlestickSeriesComponent = (props: any) => {
         if (!unique.length) return;
 
         const merged = [...existing];
-
-        // Cập nhật hoặc thêm mới
         for (const d of unique) {
             const index = merged.findIndex(item => item.time === d.time);
             if (index !== -1) {
-                merged[index] = d; // Ghi đè
+                merged[index] = d;
             } else {
-                merged.push(d); // Thêm mới
+                merged.push(d);
             }
         }
 
@@ -222,20 +270,20 @@ export const CandlestickSeriesComponent = (props: any) => {
         const data = aggregateCandlesByInterval(allData.current, time)
 
         candleSeriesRef.current.setData(data);
-
-        pLineSeriesRe(data)
+        pLineSeriesRe(data);
+        updateSeparators(data);
     }, [dataOld]);
 
     useEffect(() => {
         if (!candleSeriesRef.current || !currentRange) return;
 
-        const time = timeOptions.filter((i) => i.label === currentRange)[0].seconds
-        const data = aggregateCandlesByInterval(allData.current, time)
+        const time = timeOptions.find(i => i.label === currentRange)?.seconds;
+        const data = aggregateCandlesByInterval(allData.current, time);
 
         candleSeriesRef.current.setData(data);
-
-        pLineSeriesRe(data)
-    }, [currentRange])
+        pLineSeriesRe(data);
+        updateSeparators(data);
+    }, [currentRange]);
 
     useEffect(() => {
         if (!latestData || !Array.isArray(latestData) || !latestData.length || !candleSeriesRef.current) return;
@@ -247,30 +295,26 @@ export const CandlestickSeriesComponent = (props: any) => {
         let hasNew = false;
 
         for (const point of fixed) {
-            // So sánh bằng số để tránh lỗi '=== string'
             const idx = updated.findIndex(p => Number(p.time) === Number(point.time));
             if (idx !== -1) {
-                updated[idx] = point; // Cập nhật bản ghi cũ
+                updated[idx] = point;
             } else {
-                updated.push(point); // Thêm bản ghi mới
+                updated.push(point);
                 hasNew = true;
             }
         }
 
-        if (hasNew) updated.sort((a: any, b: any) => a.time - b.time); // Đảm bảo tăng dần theo time
-
+        if (hasNew) updated.sort((a: any, b: any) => a.time - b.time);
 
         candleSeriesRef.current.setData(updated);
         allData.current = updated;
 
-        // Cập nhật đường MA hoặc line khác
-        if (pLineSeriesRef.current) {
-            const pData = allData.current.map(d => ({
-                time: d.time,
-                value: (d.high + d.low + d.close) / 3,
-            }));
-            pLineSeriesRef.current.setData(pData);
-        }
+        const pData = allData.current.map(d => ({
+            time: d.time,
+            value: (d.high + d.low + d.close) / 3,
+        }));
+        pLineSeriesRef.current?.setData(pData);
+        updateSeparators(updated);
     }, [latestData]);
 
     useEffect(() => {
@@ -279,5 +323,5 @@ export const CandlestickSeriesComponent = (props: any) => {
         }
     }, [isOpen]);
 
-    return <div ref={chartContainerRef} />;
+    return <div ref={chartContainerRef} style={{ position: 'relative' }} />;
 };
