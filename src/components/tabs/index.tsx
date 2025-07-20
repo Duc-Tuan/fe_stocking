@@ -41,7 +41,7 @@ export default function Tabs(props: IProps) {
                             } cursor-pointer`}
                         aria-current="page"
                     >
-                       Dãy {String(item?.value).slice(-3)}
+                       T {String(item?.value).slice(-6)}
                     </Button>
                 </Tooltip>
             ))}
