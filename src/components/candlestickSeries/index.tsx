@@ -201,11 +201,11 @@ export const CandlestickSeriesComponent = (props: any) => {
                 },
             });
 
-            if (allData.current.length) {
-                const time = timeOptions.find(i => i.label === currentRange)?.seconds;
-                const data = aggregateCandlesByInterval(allData.current, time);
-                updateSeparators(data);
-            }
+            // if (allData.current.length) {
+            //     const time = timeOptions.find(i => i.label === currentRange)?.seconds;
+            //     const data = aggregateCandlesByInterval(allData.current, time);
+            //     updateSeparators(data);
+            // }
 
             if (isAtLeftEdge) {
                 hasRequestedNextPage.current = true;
@@ -221,7 +221,7 @@ export const CandlestickSeriesComponent = (props: any) => {
                 }, 1000);
             }
         });
-        
+
         const handleResize = () => {
             chart.applyOptions({ width: chartContainerRef.current!.clientWidth });
         };
@@ -235,12 +235,32 @@ export const CandlestickSeriesComponent = (props: any) => {
 
     const pLineSeriesRe = (data: BarData[]) => {
         if (!pLineSeriesRef.current) return;
-        const pData = data.map(d => ({
-            time: d.time,
-            value: (d.high + d.low + d.close) / 3,
-        }));
+
+        const pData = data
+            .filter(d => d.high !== undefined && d.low !== undefined && d.close !== undefined)
+            .map(d => ({
+                time: d.time,
+                value: (d.high + d.low + d.close) / 3,
+            }));
+
+        if (!pData.length) {
+            pLineSeriesRef.current.setData([]); // Clear để tránh lỗi vẽ
+            return;
+        }
+        if (pData.length === 0) return;
+
         pLineSeriesRef.current.setData(pData);
     };
+
+    const renderData = (data: any) => {
+        let time = undefined
+        if (currentRange) {
+            time = timeOptions.filter((i) => i.label === currentRange)[0].seconds
+        }
+        console.log("data: ", data);
+
+        return aggregateCandlesByInterval(data, time)
+    }
 
     useEffect(() => {
         if (!candleSeriesRef.current || !dataOld?.length) return;
@@ -263,11 +283,7 @@ export const CandlestickSeriesComponent = (props: any) => {
 
         allData.current = merged.sort((a: any, b: any) => a.time - b.time);
 
-        let time = undefined
-        if (currentRange) {
-            time = timeOptions.filter((i) => i.label === currentRange)[0].seconds
-        }
-        const data = aggregateCandlesByInterval(allData.current, time)
+        const data = renderData(allData.current)
 
         candleSeriesRef.current.setData(data);
         pLineSeriesRe(data);
@@ -275,15 +291,12 @@ export const CandlestickSeriesComponent = (props: any) => {
     }, [dataOld]);
 
     useEffect(() => {
-        if (!candleSeriesRef.current || !currentRange) return;
-
-        const time = timeOptions.find(i => i.label === currentRange)?.seconds;
-        const data = aggregateCandlesByInterval(allData.current, time);
-
+        if (!candleSeriesRef.current) return;
+        const data = renderData(allData.current);
         candleSeriesRef.current.setData(data);
         pLineSeriesRe(data);
         updateSeparators(data);
-    }, [currentRange]);
+    }, [currentRange])
 
     useEffect(() => {
         if (!latestData || !Array.isArray(latestData) || !latestData.length || !candleSeriesRef.current) return;
@@ -305,16 +318,14 @@ export const CandlestickSeriesComponent = (props: any) => {
         }
 
         if (hasNew) updated.sort((a: any, b: any) => a.time - b.time);
-
-        candleSeriesRef.current.setData(updated);
         allData.current = updated;
 
-        const pData = allData.current.map(d => ({
-            time: d.time,
-            value: (d.high + d.low + d.close) / 3,
-        }));
-        pLineSeriesRef.current?.setData(pData);
-        updateSeparators(updated);
+        const data = renderData(allData.current);
+
+        candleSeriesRef.current.setData(data);
+
+        pLineSeriesRe(data);
+        updateSeparators(data);
     }, [latestData]);
 
     useEffect(() => {

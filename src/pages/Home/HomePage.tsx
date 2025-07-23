@@ -76,6 +76,7 @@ export default function HomePage() {
                 value: a.username,
                 label: a.server,
                 active: i === 0,
+                data: JSON.parse(a.by_symbol)
             }));
             setDataServer(dataNew);
         } catch (error) {

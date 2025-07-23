@@ -12,8 +12,6 @@ interface IProps {
 
 export default function Tabs(props: IProps) {
     const { options, handleClick, children, isLoading } = props;
-
-
     return <div className="text-center">
         <div className="flex flex-wrap text-sm font-medium text-center text-gray-500 dark:text-gray-400 gap-2">
             {options.map((item: IOptions) => (
@@ -26,6 +24,9 @@ export default function Tabs(props: IProps) {
                             </div>
                             <div>
                                 server: {item?.label}
+                            </div>
+                            <div className="font-bold">
+                                Cặp tiền: {JSON.stringify(item?.data)}
                             </div>
                         </div>
                     }

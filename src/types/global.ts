@@ -20,4 +20,5 @@ export interface IOptions<T = string> {
     value: string,
     label: T,
     active?: boolean
+    data?: any
 }
