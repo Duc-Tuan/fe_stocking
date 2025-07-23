@@ -4,6 +4,7 @@ import {
     type BarData,
     type IChartApi,
     type ISeriesApi,
+    type UTCTimestamp,
 } from 'lightweight-charts';
 import { useEffect, useRef } from 'react';
 import { formatVietnamTimeSmart, gridColor } from '../line/formatTime';
@@ -47,29 +48,42 @@ export const CandlestickSeriesComponent = (props: any) => {
         // Xóa vạch cũ
         container.querySelectorAll('.day-separator').forEach(el => el.remove());
 
+        // ✅ Tìm ngày duy nhất có trong data
         const seenDates = new Set<string>();
+        const timestampsAt7UTC: number[] = [];
 
         for (const candle of data) {
             const date = new Date(Number(candle.time) * 1000);
-            const dateKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
-            if (seenDates.has(dateKey)) continue;
-            seenDates.add(dateKey);
+            const y = date.getUTCFullYear();
+            const m = date.getUTCMonth();
+            const d = date.getUTCDate();
 
-            const x = timeScale.timeToCoordinate(candle.time);
+            const key = `${y}-${m}-${d}`;
+            if (seenDates.has(key)) continue;
+            seenDates.add(key);
+
+            // Tạo timestamp tại 07:00 UTC của ngày đó
+            const t7 = Math.floor(Date.UTC(y, m, d, 0, 0, 0) / 1000);
+            timestampsAt7UTC.push(t7);
+        }
+
+        // ✅ Vẽ vạch
+        for (const timestamp of timestampsAt7UTC) {
+            const x = timeScale.timeToCoordinate(timestamp as UTCTimestamp);
             if (x === null) continue;
 
             const line = document.createElement('div');
             line.className = 'day-separator';
             line.style.cssText = `
-                position: absolute;
-                top: 0;
-                left: ${x}px;
-                width: 0;
-                height: 96%;
-                border-left: 1px dashed rgba(0, 0, 0, 0.4); /* dashed thay vì solid */
-                pointer-events: none;
-                z-index: 2;
-            `;
+            position: absolute;
+            top: 0;
+            left: ${x}px;
+            width: 0;
+            height: 96%;
+            border-left: 1px dashed rgba(0, 0, 0, 0.4);
+            pointer-events: none;
+            z-index: 2;
+        `;
             container.appendChild(line);
         }
     };
@@ -201,11 +215,11 @@ export const CandlestickSeriesComponent = (props: any) => {
                 },
             });
 
-            // if (allData.current.length) {
-            //     const time = timeOptions.find(i => i.label === currentRange)?.seconds;
-            //     const data = aggregateCandlesByInterval(allData.current, time);
-            //     updateSeparators(data);
-            // }
+            if (allData.current.length) {
+                const time = timeOptions.find(i => i.label === currentRange)?.seconds;
+                const data = aggregateCandlesByInterval(allData.current, time);
+                updateSeparators(data);
+            }
 
             if (isAtLeftEdge) {
                 hasRequestedNextPage.current = true;
