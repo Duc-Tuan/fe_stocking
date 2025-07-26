@@ -31,14 +31,13 @@ import {
 } from "./options";
 import toast from "react-hot-toast";
 import type { IDataSymbols } from "../../components/candlestickSeries/options";
-import PopupLoginMt5, { type ILoginMt5 } from "./PopupLoginMt5";
+import PopupLoginMt5 from "./PopupLoginMt5";
 
 export default function HomePage() {
     const chartRef1: any = useRef<IChartApi | null>(null);
     const chartRef2: any = useRef<IChartApi | null>(null);
     const navigate = useNavigate();
     const [isOpen, toggleOpen, setOpen] = useToggle(true);
-    const [openPopup, setOpenPopup] = useState<boolean>(false);
 
     const [currentRange, setCurrentRange] = useState<string>('1 phút');
     const [loadingDownload, setLoadingDownload] = useState<boolean>(false);
@@ -219,9 +218,9 @@ export default function HomePage() {
         }
     }
 
-    const handleSubmitLogin = (data: ILoginMt5) => {
-        setDataServer((prev: IOptions[]) => ([...prev, { label: data.server, value: data.username, active: false }]))
-        setOpenPopup(false)
+    const handleLogout = () => {
+        localStorage.removeItem('token')
+        return navigate('/');
     }
 
     return (
@@ -253,9 +252,11 @@ export default function HomePage() {
                             </Tooltip>
                         ))}
                     </div>
-                    <Tabs handleClick={handleClickServer} options={dataServer} isLoading={loading}>
-                        <div></div>
-                    </Tabs>
+                    <div className="hidden sm:flex">
+                        <Tabs handleClick={handleClickServer} options={dataServer} isLoading={loading}>
+                            <div></div>
+                        </Tabs>
+                    </div>
 
                     {
                         activeTab.filter((item: IOptionsTabsCharts) => item?.active)[0]?.tabsName === "Biểu đồ nến" && (
@@ -269,34 +270,49 @@ export default function HomePage() {
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                    <div className="flex gap-2 cursor-pointer justify-around items-center p-1 px-2 rounded-lg text-white bg-rose-400 active hover:bg-rose-600 hover:font-medium" onClick={handleClickDownload}>
+                    <div className="hidden sm:flex gap-2 cursor-pointer justify-around items-center p-1 px-2 rounded-lg text-white bg-rose-400 active hover:bg-rose-600 hover:font-medium" onClick={handleClickDownload}>
                         {loadingDownload ? <div className="px-2"><LoadingOnly /></div> : <><Icon name="icon-export" className="text-white w-[18px] h-[18px] " />
                             <span>Xuất file</span></>}
-
-
                     </div>
 
-                    <Button className="flex gap-2 cursor-pointer justify-around items-center p-1 px-2 rounded-lg text-white bg-rose-400 active hover:bg-rose-600" onClick={() => setOpenPopup((prev) => !prev)}>
-                        Theo dõi thêm tài khoản
-                    </Button>
+                    <div className="hidden sm:flex">
+                        <Logout handleclick={handleLogout} />
+                    </div>
+
+                    <div className="sm:hidden">
+                        <PopupLoginMt5>
+                            <div className="h-full">
+                                <h1 className="text-rose-500 font-bold text-xl">Mở rộng</h1>
+                                <div className="mt-4 flex h-[95%] flex-col justify-between items-start">
+                                    <div className="flex flex-col gap-2 justify-between items-start">
+                                        <div className="w-[120px] flex cursor-pointer justify-center items-center p-2 rounded-lg text-white bg-rose-400 active hover:bg-rose-600 hover:font-medium" onClick={handleClickDownload}>
+                                            <div className="flex items-center gap-2">{loadingDownload ? <div className="px-2"><LoadingOnly /></div> : <><Icon name="icon-export" className="text-white w-[18px] h-[18px] " />
+                                                <span>Xuất file</span></>}</div>
+                                        </div>
+
+                                        <div className="">
+                                            <h3 className="font-bold mb-2">Máy chủ theo dõi:</h3>
+                                            <Tabs handleClick={handleClickServer} options={dataServer} isLoading={loading}>
+                                                <div></div>
+                                            </Tabs>
+                                        </div>
+
+                                        <div className="">
+                                            <h3 className="font-bold mb-2">Bộ lọc thời gian:</h3>
+                                            <Filter handleClick={handleRangeChange} currentRange={currentRange} />
+                                        </div>
+                                    </div>
+
+                                    <Logout handleclick={handleLogout} />
+                                </div>
+                            </div>
+                        </PopupLoginMt5>
+                    </div>
                 </div>
             </div>
 
-            <div className="flex flex-wrap gap-2 mt-4">
-                {timeOptions.map((opt: any) => (
-                    <Button
-                        key={opt.label}
-                        onClick={() =>
-                            handleRangeChange(opt.seconds, opt.label)
-                        }
-                        className={`inline-block p-[10px] rounded-lg ${currentRange === opt.label
-                            ? "text-white bg-rose-400 active"
-                            : "bg-gray-200 text-black hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-rose-200 dark:hover:text-rose-900 border border-rose-100 dark:hover:border-rose-200"
-                            } cursor-pointer font-normal`}
-                    >
-                        <div>{opt.label}</div>
-                    </Button>
-                ))}
+            <div className="flex-wrap gap-2 mt-4 hidden sm:flex">
+                <Filter handleClick={handleRangeChange} currentRange={currentRange} />
             </div>
 
             <div className="mt-5">
@@ -309,9 +325,33 @@ export default function HomePage() {
                     </React.Fragment>
                 ))}
             </div>
-
-
-            <PopupLoginMt5 open={openPopup} setOpen={setOpenPopup} handle={handleSubmitLogin} />
         </div>
     );
+}
+
+
+const Logout = ({ handleclick }: { handleclick: () => void }) => {
+    return <div onClick={handleclick} className="w-full flex gap-2 cursor-pointer justify-center items-center p-2 rounded-lg text-white bg-rose-400 active hover:bg-rose-600 hover:font-medium">
+        <Icon name="icon-logout" className="text-white w-[18px] h-[18px] " />
+        <span>Đăng xuất</span>
+    </div>
+}
+
+const Filter = ({ handleClick, currentRange }: any) => {
+    return <div className="flex-wrap gap-2 flex">
+        {timeOptions.map((opt: any) => (
+            <Button
+                key={opt.label}
+                onClick={() =>
+                    handleClick(opt.seconds, opt.label)
+                }
+                className={`inline-block p-[10px] rounded-lg ${currentRange === opt.label
+                    ? "text-white bg-rose-400 active"
+                    : "bg-gray-200 text-black hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-rose-200 dark:hover:text-rose-900 border border-rose-100 dark:hover:border-rose-200"
+                    } cursor-pointer font-normal`}
+            >
+                <div>{opt.label}</div>
+            </Button>
+        ))}
+    </div>
 }

@@ -240,8 +240,29 @@ export const CandlestickSeriesComponent = (props: any) => {
             chart.applyOptions({ width: chartContainerRef.current!.clientWidth });
         };
 
+        const resizeObserver = new ResizeObserver(() => {
+            const container = chartContainerRef.current;
+            if (!container) return;
+
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            chart.applyOptions({
+                width,
+                height,
+                layout: {
+                    fontSize: width < 480 ? 10 : 12, // 👈 nhỏ hơn ở màn hình nhỏ
+                }
+            });
+        });
+
+        if (chartContainerRef.current) {
+            resizeObserver.observe(chartContainerRef.current);
+        }
+
         window.addEventListener('resize', handleResize);
         return () => {
+            if (resizeObserver) resizeObserver.disconnect();
             window.removeEventListener('resize', handleResize);
             chart.remove();
         };

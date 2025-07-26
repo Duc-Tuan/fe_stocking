@@ -4,6 +4,8 @@ import IconExport from './icons/IconExport.svg?react';
 import IconEye from './icons/IconEye.svg?react';
 import IconEyeNo from './icons/IconEyeNo.svg?react';
 import IconClose from './icons/IconClose.svg?react';
+import IconMenu from './icons/IconMenu.svg?react';
+import IconLogout from './icons/Iconlogout.svg?react';
 
 export default function Icon(props: any) {
     switch (props?.name?.toLowerCase()) {
@@ -19,6 +21,12 @@ export default function Icon(props: any) {
             return <IconEyeNo {...props} />;
         case 'icon-close':
             return <IconClose {...props} />;
+        case 'icon-menu':
+            return <IconMenu {...props} />;
+        case 'icon-menu':
+            return <IconMenu {...props} />;
+        case 'icon-logout':
+            return <IconLogout {...props} />;
         default:
             return null;
     }

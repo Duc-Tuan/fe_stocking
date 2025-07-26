@@ -12,7 +12,7 @@ export default function DashboardLayout() {
     return (
         <div className="bg-gray-100 min-h-[100vh]">
             {/* Main Content */}
-            <main className="flex-1 p-6">
+            <main className="flex-1 p-2 sm:p-4">
                 <Outlet />
             </main>
         </div>

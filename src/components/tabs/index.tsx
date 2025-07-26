@@ -36,7 +36,7 @@ export default function Tabs(props: IProps) {
                         disabled={isLoading}
                         isLoading={isLoading}
                         onClick={() => handleClick(item)}
-                        className={`inline-block p-3 rounded-lg ${item.active
+                        className={`inline-block p-3 w-[100px] rounded-lg ${item.active
                             ? "text-white bg-rose-400 active"
                             : "bg-gray-200 text-black hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-rose-200 dark:hover:text-rose-900 border border-rose-100 dark:hover:border-rose-200"
                             } cursor-pointer`}
