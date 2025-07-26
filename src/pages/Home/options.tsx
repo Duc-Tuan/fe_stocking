@@ -32,28 +32,21 @@ export const optionsTabsCharts: IOptionsTabsCharts[] = [
 export const convertDataCandline = (data: IinitialData[] = []): IinitialDataCand[] => {
     if (data.length === 0) return [];
 
-    // const dataNew = data?.map((data: any) => ({
-    //     time: adjustToUTCPlus7((new Date(data?.time)).getTime()),
-    //     value: data?.total_pnl,
-    // }));
-
-    if (data.length === 0) return [];
-
     const dataNew = data
         .map((data: any) => {
             const utcPlus7 = adjustToUTCPlus7(new Date(data.time).getTime());
-            const date = new Date(utcPlus7);
-            const day = date.getDay();
+            // const date = new Date(utcPlus7);
+            // const day = date.getDay();
 
             // Loại bỏ Thứ 7 và Chủ nhật
-            if (day === 0 || day === 6) return null;
+            // if (day === 0 || day === 6) return null;
 
             return {
                 time: utcPlus7,
                 value: data.total_pnl,
             };
         })
-        .filter(Boolean)
+        // .filter(Boolean)
         .sort((a: any, b: any) => a.time - b.time);
 
     const candles: IinitialDataCand[] = [];
@@ -139,17 +132,17 @@ export const convertDataLine: ((data: any[]) => Array<IinitialData>) = (data: an
     const dataLine: any[] = data
         ?.map((data: any) => {
             const date = new Date(data?.time);
-            const day = date.getDay();
+            // const day = date.getDay();
 
             // Bỏ qua nếu là thứ 7 (6) hoặc Chủ nhật (0)
-            if (day === 0 || day === 6) return null;
+            // if (day === 0 || day === 6) return null;
 
             return {
                 time: adjustToUTCPlus7(Math.floor(date.getTime() / 1000)), // hoặc Math.floor(date.getTime() / 1000) nếu dùng dạng UNIX (giây)
                 value: data?.total_pnl,
             };
         })
-        .filter(Boolean); // Loại bỏ các phần tử null
+        // .filter(Boolean); // Loại bỏ các phần tử null
     return dataLine;
 }
 
