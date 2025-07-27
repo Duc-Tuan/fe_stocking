@@ -290,14 +290,14 @@ export default function HomePage() {
                                                 <span>Xuất file</span></>}</div>
                                         </div>
 
-                                        <div className="">
+                                        <div className="mt-4">
                                             <h3 className="font-bold mb-2">Máy chủ theo dõi:</h3>
                                             <Tabs handleClick={handleClickServer} options={dataServer} isLoading={loading}>
                                                 <div></div>
                                             </Tabs>
                                         </div>
 
-                                        <div className="">
+                                        <div className="mt-4">
                                             <h3 className="font-bold mb-2">Bộ lọc thời gian:</h3>
                                             <Filter handleClick={handleRangeChange} currentRange={currentRange} />
                                         </div>

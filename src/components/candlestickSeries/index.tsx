@@ -245,11 +245,12 @@ export const CandlestickSeriesComponent = (props: any) => {
             if (!container) return;
 
             const width = container.clientWidth;
-            const height = container.clientHeight;
+            const heights = container.clientHeight;
+            const isMobile = window.innerWidth < 480;
 
             chart.applyOptions({
                 width,
-                height,
+                height: isMobile ? 540 : heights,
                 layout: {
                     fontSize: width < 480 ? 10 : 12, // 👈 nhỏ hơn ở màn hình nhỏ
                 }
@@ -292,8 +293,6 @@ export const CandlestickSeriesComponent = (props: any) => {
         if (currentRange) {
             time = timeOptions.filter((i) => i.label === currentRange)[0].seconds
         }
-        console.log("data: ", data);
-
         return aggregateCandlesByInterval(data, time)
     }
 
