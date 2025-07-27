@@ -2,12 +2,14 @@ import { useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 
 export default function DashboardLayout() {
-    const token = localStorage.getItem('token');
-    const navigate = useNavigate()
+    const navigate = useNavigate();
 
     useEffect(() => {
-        if (!token) navigate('/login');
-    }, [token])
+        const token = localStorage.getItem('token');
+        if (!token) {
+            navigate('/login');
+        }
+    }, []);
 
     return (
         <div className="bg-gray-100 min-h-[100vh]">

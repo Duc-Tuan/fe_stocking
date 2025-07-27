@@ -23,8 +23,6 @@ export default function Icon(props: any) {
             return <IconClose {...props} />;
         case 'icon-menu':
             return <IconMenu {...props} />;
-        case 'icon-menu':
-            return <IconMenu {...props} />;
         case 'icon-logout':
             return <IconLogout {...props} />;
         default:

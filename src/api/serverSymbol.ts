@@ -1,4 +1,3 @@
-import type { ILoginMt5 } from "../pages/Home/PopupLoginMt5";
 import axiosClient from "../services/axiosClient";
 
 export const serverSymbolApi = async () => {
@@ -6,7 +5,7 @@ export const serverSymbolApi = async () => {
     return data.data.data
 }
 
-export const postAccMt5Api = async (dataAccMt5: ILoginMt5) => {
+export const postAccMt5Api = async (dataAccMt5: any) => {
     const data = await axiosClient.post('/accmt5', dataAccMt5, {
         headers: {
             'Content-Type': 'application/json',

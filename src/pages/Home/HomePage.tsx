@@ -32,11 +32,15 @@ import {
 import toast from "react-hot-toast";
 import type { IDataSymbols } from "../../components/candlestickSeries/options";
 import PopupLoginMt5 from "./PopupLoginMt5";
+import { useDispatch } from "react-redux";
+import type { AppDispatch } from "../../store";
+import { logout } from "../../auth/authSlice";
 
 export default function HomePage() {
     const chartRef1: any = useRef<IChartApi | null>(null);
     const chartRef2: any = useRef<IChartApi | null>(null);
     const navigate = useNavigate();
+    const dispatch = useDispatch<AppDispatch>();
     const [isOpen, toggleOpen, setOpen] = useToggle(true);
 
     const [currentRange, setCurrentRange] = useState<string>('1 phút');
@@ -154,7 +158,7 @@ export default function HomePage() {
     }, [serverId]);
 
     useEffect(() => {
-        getDataServer();
+        getDataServer(); // giả sử đây là async
     }, []);
 
     const handleClick = (selected: IOptionsTabsCharts) => {
@@ -219,8 +223,8 @@ export default function HomePage() {
     }
 
     const handleLogout = () => {
-        localStorage.removeItem('token')
-        return navigate('/');
+        dispatch(logout())
+        navigate('/login');
     }
 
     return (
