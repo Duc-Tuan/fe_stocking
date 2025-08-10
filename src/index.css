@@ -1,1 +1,67 @@
 @import "tailwindcss";
+
+:root,
+:root.blue,
+:root.green,
+:root.ocean,
+:root.purple,
+:root.pink,
+:root.orange {
+  transition: --color-background 5s ease,
+    --color-background-opacity-5 5s ease,
+    --color-background-opacity-2 5s ease,
+    --color-background-opacity-01 5s ease, --color-text 5s ease;
+}
+
+:root {
+  --color-background: #ff637e;
+  --color-background-opacity-5: rgba(255, 99, 125, 0.5);
+  --color-background-opacity-2: rgba(255, 99, 125, 0.2);
+  --color-background-opacity-01: rgba(255, 99, 125, 0.01);
+  --color-text: #ffff;
+
+  --bg-primary: #ff637e;
+  --bg-blue: #0000ff;
+  --bg-green: #0dff00;
+  --bg-ocean: #00ffd0;
+  --bg-purple: #d900ff;
+  --bg-pink: #ff00b3;
+  --bg-orange: #ff7700;
+}
+
+.blue {
+  --color-background: #0000ff;
+  --color-background-opacity-5: rgba(0, 0, 255, 0.5);
+  --color-background-opacity-2: rgba(0, 0, 255, 0.2);
+  --color-background-opacity-01: rgba(0, 0, 255, 0.01);
+}
+.green {
+  --color-background: #0dff00;
+  --color-background-opacity-5: rgba(13, 255, 0, 0.5);
+  --color-background-opacity-2: rgba(13, 255, 0, 0.2);
+  --color-background-opacity-01: rgba(13, 255, 0, 0.01);
+}
+.ocean {
+  --color-background: #00ffd0;
+  --color-background-opacity-5: rgba(0, 255, 208, 0.5);
+  --color-background-opacity-2: rgba(0, 255, 208, 0.2);
+  --color-background-opacity-01: rgba(0, 255, 208, 0.01);
+}
+.purple {
+  --color-background: #d900ff;
+  --color-background-opacity-5: rgba(217, 0, 255, 0.5);
+  --color-background-opacity-2: rgba(217, 0, 255, 0.2);
+  --color-background-opacity-01: rgba(217, 0, 255, 0.01);
+}
+.pink {
+  --color-background: #ff00b3;
+  --color-background-opacity-5: rgba(255, 0, 179, 0.5);
+  --color-background-opacity-2: rgba(255, 0, 179, 0.2);
+  --color-background-opacity-01: rgba(255, 0, 179, 0.01);
+}
+.orange {
+  --color-background: #ff7700;
+  --color-background-opacity-5: rgba(255, 119, 0, 0.5);
+  --color-background-opacity-2: rgba(255, 119, 0, 0.2);
+  --color-background-opacity-01: rgba(255, 119, 0, 0.01);
+}

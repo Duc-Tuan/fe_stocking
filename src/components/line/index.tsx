@@ -6,6 +6,7 @@ import {
 import { useEffect, useRef } from 'react';
 import { formatVietnamTimeSmart, gridColor } from './formatTime';
 import { adjustToUTCPlus_7 } from '../../pages/Home/options';
+import { getColorChart } from '../../utils/timeRange';
 
 export const ChartComponent = (props: any) => {
     const {
@@ -14,11 +15,10 @@ export const ChartComponent = (props: any) => {
         latestData,
         chartRef,
         colors: {
-            backgroundColor = 'white',
-            lineColor = 'rgba(236, 0, 63, 1)',
+            backgroundColor = 'transparent',
+            lineColor = getColorChart('--color-background'),
             textColor = 'black',
-            areaTopColor = 'rgba(236, 0, 63, 1)',
-            areaBottomColor = 'rgba(236, 0, 63, 0.1)',
+            areaTopColor = getColorChart('--color-background'),
         } = {},
     } = props;
 
@@ -72,6 +72,7 @@ export const ChartComponent = (props: any) => {
         });
     };
 
+
     useEffect(() => {
         const chart = createChart(chartContainerRef.current!, {
             layout: {
@@ -81,15 +82,19 @@ export const ChartComponent = (props: any) => {
             grid: gridColor,
             width: chartContainerRef.current!.clientWidth,
             height: 600,
+            rightPriceScale: {
+                borderColor: '#00000030'
+            },
             timeScale: {
                 rightOffset: 5,
                 barSpacing: 16,
                 minBarSpacing: 0,
                 lockVisibleTimeRangeOnResize: false,
                 rightBarStaysOnScroll: true,
-                borderVisible: false,
+                borderVisible: true,
                 timeVisible: true,
                 secondsVisible: true,
+                borderColor: '#00000030'
             },
             handleScroll: {
                 mouseWheel: true,
@@ -108,7 +113,7 @@ export const ChartComponent = (props: any) => {
             lineColor,
             lineWidth: 1,
             topColor: areaTopColor,
-            bottomColor: areaBottomColor,
+            bottomColor: getColorChart("--color-background-opacity-01"),
         });
 
         chartRef.current = chart;
@@ -120,10 +125,10 @@ export const ChartComponent = (props: any) => {
             chart.applyOptions({
                 crosshair: {
                     vertLine: {
-                        labelBackgroundColor: 'rgb(236, 0, 63)',
+                        labelBackgroundColor: getColorChart(),
                     },
                     horzLine: {
-                        labelBackgroundColor: 'rgb(236, 0, 63)',
+                        labelBackgroundColor: getColorChart(),
                     },
                 },
                 localization: {
@@ -151,7 +156,7 @@ export const ChartComponent = (props: any) => {
             position: absolute;
             display: none;
             padding: 6px 8px;
-            background: rgba(236, 0, 63, 0.8);
+            background: var(--color-background);
             color: white;
             border-radius: 4px;
             font-size: 12px;
@@ -185,8 +190,8 @@ export const ChartComponent = (props: any) => {
 
             tooltip.innerHTML = `<strong>PNL:</strong> ${price.toFixed(4)}<br/><strong>Time:</strong> ${timeStr}`;
             tooltip.style.display = 'block';
-            tooltip.style.left = `${left}px`;
-            tooltip.style.top = `${param.point.y + 10}px`;
+            tooltip.style.left = `${left + 40}px`;
+            tooltip.style.top = `${param.point.y + 100}px`;
         });
 
         const handleResize = () => {

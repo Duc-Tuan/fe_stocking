@@ -1,22 +1,17 @@
-import { Tooltip } from "@material-tailwind/react";
 import type { IChartApi } from "lightweight-charts";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { downloadFileExApi } from "../../api/downloadFile";
-import { serverSymbolApi } from "../../api/serverSymbol";
 import { symbolApi } from "../../api/symbol";
-import Icon from "../../assets/icon";
 import { Button } from "../../components/button";
 import { CandlestickSeriesComponent } from "../../components/candlestickSeries";
+import type { IDataSymbols } from "../../components/candlestickSeries/options";
 import { ChartComponent } from "../../components/line";
 import { Loading } from "../../components/loading";
-import { LoadingOnly } from "../../components/loading/indexOnly";
-import Tabs from "../../components/tabs";
+import TooltipCustom from "../../components/tooltip";
+import { useAppInfo } from "../../hooks/useAppInfo";
+import { useClickOutside } from "../../hooks/useClickOutside";
 import { useToggle } from "../../hooks/useToggle";
-import { useSocket } from "../../hooks/useWebSocket";
 import type {
     IDataRequest,
-    IOptions,
     IOptionsTabsCharts,
     IPagination,
 } from "../../types/global";
@@ -29,23 +24,14 @@ import {
     type IinitialData,
     type IinitialDataCand,
 } from "./options";
-import toast from "react-hot-toast";
-import type { IDataSymbols } from "../../components/candlestickSeries/options";
-import PopupLoginMt5 from "./PopupLoginMt5";
-import { useDispatch } from "react-redux";
-import type { AppDispatch } from "../../store";
-import { logout } from "../../auth/authSlice";
 
 export default function HomePage() {
+    const { serverMonitorActive, t } = useAppInfo()
     const chartRef1: any = useRef<IChartApi | null>(null);
     const chartRef2: any = useRef<IChartApi | null>(null);
-    const navigate = useNavigate();
-    const dispatch = useDispatch<AppDispatch>();
-    const [isOpen, toggleOpen, setOpen] = useToggle(true);
+    const [isOpen, toggleOpen] = useToggle(true);
 
-    const [currentRange, setCurrentRange] = useState<string>('1 phút');
-    const [loadingDownload, setLoadingDownload] = useState<boolean>(false);
-    const [dataServer, setDataServer] = useState<IOptions[]>([]);
+    const [currentRange, setCurrentRange] = useState<string>('M1');
 
     const [symbols, setSymbols] = useState<IinitialData[]>([]);
     const [symbolsSocket, setSymbolsSocket] = useState<IinitialData[]>([]);
@@ -62,31 +48,7 @@ export default function HomePage() {
     });
     const [loading, setLoading] = useState<boolean>(false);
 
-    const currentServer = dataServer.find((i) => i.active);
-    const serverId = Number(currentServer?.value);
-    const prevServerId = useRef<number | null>(null); // ✅ Tránh gọi lại khi không cần
-
-    const { data } = useSocket(
-        import.meta.env.VITE_URL_API,
-        "chat_message",
-        serverId
-    );
-
-    const getDataServer = async () => {
-        try {
-            const data = await serverSymbolApi();
-            const dataNew = data.map((a: any, i: number) => ({
-                value: a.username,
-                label: a.server,
-                active: i === 0,
-                data: JSON.parse(a.by_symbol)
-            }));
-            setDataServer(dataNew);
-        } catch (error) {
-            return navigate("/login")
-        }
-
-    };
+    const serverId: number = useMemo(() => { return Number(serverMonitorActive?.value) }, [serverMonitorActive?.value])
 
     // Gọi api khi page thay đổi
     const getSymbolApi = async (idServer: number) => {
@@ -134,22 +96,21 @@ export default function HomePage() {
         }
     }
 
-    useEffect(() => {
-        if (data) {
-            setSymbolsSocket(convertDataLine([data]))
-            setSymbolsCandSocket(convertDataCandline([data]))
-        }
-    }, [data]);
+    // useEffect(() => {
+    //     if (data) {
+    //         setSymbolsSocket(convertDataLine([data]))
+    //         setSymbolsCandSocket(convertDataCandline([data]))
+    //     }
+    // }, [data]);
 
     useEffect(() => {
-        if (pagination.page !== 1 && serverId) {
-            getSymbolApi(serverId);
+        if (pagination.page !== 1) {
+            getSymbolApi(Number(serverMonitorActive?.value));
         }
     }, [pagination.page]);
 
     useEffect(() => {
-        if (serverId && prevServerId.current !== serverId) {
-            prevServerId.current = serverId;
+        if (serverId) {
             setPagination((prev) => ({ ...prev, page: 1 }));
             setSymbols([]);
             setSymbolsCand([]);
@@ -157,24 +118,12 @@ export default function HomePage() {
         }
     }, [serverId]);
 
-    useEffect(() => {
-        getDataServer(); // giả sử đây là async
-    }, []);
-
     const handleClick = (selected: IOptionsTabsCharts) => {
         const updated = activeTab.map((tab) => ({
             ...tab,
             active: tab.tabsName === selected.tabsName,
         }));
         setActiveTab(updated);
-    };
-
-    const handleClickServer = (selected: IOptions) => {
-        const updated = dataServer.map((s) => ({
-            ...s,
-            active: s.value === selected.value,
-        }));
-        setDataServer(updated);
     };
 
     // ✅ Ghi nhớ component để tránh render lại
@@ -208,118 +157,47 @@ export default function HomePage() {
         setCurrentRange(label);
     };
 
-    const handleClickDownload = async () => {
-        if (!loadingDownload) {
-            try {
-                setLoadingDownload(true)
-                await downloadFileExApi()
-                return toast.success('Tải file xuống thành công!');
-            } catch (error) {
-                return toast.error('Tải file xuống thất bại!');
-            } finally {
-                setLoadingDownload(false)
-            }
-        }
-    }
-
-    const handleLogout = () => {
-        dispatch(logout())
-        navigate('/login');
-    }
-
     return (
         <div className="text-center">
             <div className="flex flex-wrap justify-between">
-                <div className="flex flex-wrap gap-10">
-                    <div className="flex flex-wrap text-sm font-medium text-center text-gray-500 dark:text-gray-400 gap-1">
+                <div className="flex flex-wrap gap-4">
+                    <div className="flex flex-wrap text-sm font-medium text-center text-gray-500 dark:text-gray-400 gap-2">
                         {activeTab.map((item) => (
-                            <Tooltip
-                                key={item.tabsName}
-                                content={
-                                    <div className="dark:text-white dark:bg-rose-400 rounded-lg py-1 px-2">
-                                        {item.tabsName}
-                                    </div>
-                                }
-                            >
-                                <Button
-                                    disabled={loading}
-                                    onClick={() => handleClick(item)}
-                                    isLoading={loading}
-                                    className={`inline-block p-1 px-2 rounded-lg ${item.active
-                                        ? "text-white bg-rose-400 active"
-                                        : "bg-gray-200 text-black hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-rose-200 dark:hover:text-rose-900 border border-rose-100 dark:hover:border-rose-200"
-                                        } cursor-pointer`}
-                                    aria-current="page"
-                                >
-                                    {item.icon}
-                                </Button>
-                            </Tooltip>
+                            <React.Fragment key={item.tabsName}>
+                                <TooltipCustom isButton titleTooltip={item.tabsName}>
+                                    <Button
+                                        disabled={loading}
+                                        onClick={() => handleClick(item)}
+                                        isLoading={loading}
+                                        className={`inline-block p-1 px-2 rounded-lg ${item.active
+                                            ? "text-[var(--color-text)] bg-[var(--color-background)] active"
+                                            : "bg-gray-200 text-black hover:text-[var(--color-text)] hover:bg-[var(--color-background-opacity-5)] border border-rose-100 dark:hover:border-rose-200"
+                                            } cursor-pointer`}
+                                        aria-current="page"
+                                    >
+                                        {item.icon}
+                                    </Button>
+                                </TooltipCustom>
+                            </React.Fragment>
                         ))}
-                    </div>
-                    <div className="hidden sm:flex">
-                        <Tabs handleClick={handleClickServer} options={dataServer} isLoading={loading}>
-                            <div></div>
-                        </Tabs>
+
+                        <Filter handleClick={handleRangeChange} currentRange={currentRange} />
                     </div>
 
                     {
                         activeTab.filter((item: IOptionsTabsCharts) => item?.active)[0]?.tabsName === "Biểu đồ nến" && (
                             <button className="flex items-center me-4 cursor-pointer" onClick={toggleOpen}>
-                                <input checked={isOpen} type="checkbox" value="" className="custom-checkbox cursor-pointer appearance-none bg-gray-100 border-black checked:bg-rose-500 w-4 h-4 rounded-sm focus:ring-rose-400 dark:focus:ring-rose-400 focus:ring-2 dark:bg-white border dark:border-rose-400 dark:ring-offset-rose-400" />
-                                <label htmlFor="green-checkbox" className="cursor-pointer ms-2 text-sm font-medium text-gray-900 dark:text-gray-900">Đường trung bình</label>
+                                <input checked={isOpen} readOnly type="checkbox" value="" className="custom-checkbox cursor-pointer appearance-none bg-gray-100 checked:bg-[var(--color-background)] w-4 h-4 rounded-sm dark:bg-white border border-[var(--color-background)] ring-offset-[var(--color-background)]" />
+                                <label htmlFor="green-checkbox" className="cursor-pointer ms-2 text-sm font-medium text-gray-900 dark:text-gray-900">{t("Đường trung bình")}</label>
                             </button>
                         )
                     }
 
-                </div>
 
-                <div className="flex flex-wrap gap-2">
-                    <div className="hidden sm:flex gap-2 cursor-pointer justify-around items-center p-1 px-2 rounded-lg text-white bg-rose-400 active hover:bg-rose-600 hover:font-medium" onClick={handleClickDownload}>
-                        {loadingDownload ? <div className="px-2"><LoadingOnly /></div> : <><Icon name="icon-export" className="text-white w-[18px] h-[18px] " />
-                            <span>Xuất file</span></>}
-                    </div>
-
-                    <div className="hidden sm:flex">
-                        <Logout handleclick={handleLogout} />
-                    </div>
-
-                    <div className="sm:hidden">
-                        <PopupLoginMt5>
-                            <div className="h-full">
-                                <h1 className="text-rose-500 font-bold text-xl">Mở rộng</h1>
-                                <div className="mt-4 flex h-[95%] flex-col justify-between items-start">
-                                    <div className="flex flex-col gap-2 justify-between items-start">
-                                        <div className="w-[120px] flex cursor-pointer justify-center items-center p-2 rounded-lg text-white bg-rose-400 active hover:bg-rose-600 hover:font-medium" onClick={handleClickDownload}>
-                                            <div className="flex items-center gap-2">{loadingDownload ? <div className="px-2"><LoadingOnly /></div> : <><Icon name="icon-export" className="text-white w-[18px] h-[18px] " />
-                                                <span>Xuất file</span></>}</div>
-                                        </div>
-
-                                        <div className="mt-4">
-                                            <h3 className="font-bold mb-2">Máy chủ theo dõi:</h3>
-                                            <Tabs handleClick={handleClickServer} options={dataServer} isLoading={loading}>
-                                                <div></div>
-                                            </Tabs>
-                                        </div>
-
-                                        <div className="mt-4">
-                                            <h3 className="font-bold mb-2">Bộ lọc thời gian:</h3>
-                                            <Filter handleClick={handleRangeChange} currentRange={currentRange} />
-                                        </div>
-                                    </div>
-
-                                    <Logout handleclick={handleLogout} />
-                                </div>
-                            </div>
-                        </PopupLoginMt5>
-                    </div>
                 </div>
             </div>
 
-            <div className="flex-wrap gap-2 mt-4 hidden sm:flex">
-                <Filter handleClick={handleRangeChange} currentRange={currentRange} />
-            </div>
-
-            <div className="mt-5">
+            <div className="mt-5 p-2 border border-gray-200  overflow-hidden rounded-lg shadow-xl">
                 {activeTab.map((item) => (
                     <React.Fragment key={item.tabsName}>
                         {item.active && (
@@ -333,29 +211,53 @@ export default function HomePage() {
     );
 }
 
-
-const Logout = ({ handleclick }: { handleclick: () => void }) => {
-    return <div onClick={handleclick} className="w-full flex gap-2 cursor-pointer justify-center items-center p-2 rounded-lg text-white bg-rose-400 active hover:bg-rose-600 hover:font-medium">
-        <Icon name="icon-logout" className="text-white w-[18px] h-[18px] " />
-        <span>Đăng xuất</span>
-    </div>
-}
-
 const Filter = ({ handleClick, currentRange }: any) => {
-    return <div className="flex-wrap gap-2 flex">
-        {timeOptions.map((opt: any) => (
+    const popupRef: any = useRef(null);
+    const [open, setOpen] = useState(false);
+    const [visible, setVisible] = useState(false); // để delay unmount
+    const handleToggle = () => {
+        if (open) {
+            // Đóng có delay để chạy animation
+            setOpen(false);
+            setTimeout(() => setVisible(false), 200); // khớp với duration
+        } else {
+            setVisible(true);
+            setTimeout(() => setOpen(true), 10); // delay nhẹ để Tailwind áp transition
+        }
+    };
+    useClickOutside(popupRef, () => {
+        setOpen(false);
+        setTimeout(() => setVisible(false), 200);
+    }, visible);
+    return (
+        <div ref={popupRef} className="z-10 relative">
             <Button
-                key={opt.label}
-                onClick={() =>
-                    handleClick(opt.seconds, opt.label)
-                }
-                className={`inline-block p-[10px] rounded-lg ${currentRange === opt.label
-                    ? "text-white bg-rose-400 active"
-                    : "bg-gray-200 text-black hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-rose-200 dark:hover:text-rose-900 border border-rose-100 dark:hover:border-rose-200"
-                    } cursor-pointer font-normal`}
+                onClick={handleToggle}
+                className={`inline-block p-1 px-2 rounded-lg w-[44px] h-[44px] active cursor-pointer font-semibold shadow-xs shadow-gray-500 text-[var(--color-text)] bg-[var(--color-background)]`}
             >
-                <div>{opt.label}</div>
+                <div>{timeOptions.find((a) => a.label === currentRange)?.label}</div>
             </Button>
-        ))}
-    </div>
+
+            {visible && (
+                <div className={`grid grid-cols-5 sm:grid-cols-11 gap-2 w-[300px] sm:w-[600px] transition-all duration-200 absolute -top-3 -left-27 mt-2 bg-white shadow-sm shadow-gray-300 rounded-lg border border-gray-200 p-2 ${open ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'}`}>
+                    {timeOptions.map((opt: any) => (
+                        <Button
+                            key={opt.label}
+                            onClick={() => {
+                                handleToggle()
+                                handleClick(opt.seconds, opt.label)
+                            }
+                            }
+                            className={`h-[42px] w-[46px] rounded-lg ${currentRange === opt.label
+                                ? "text-[var(--color-text)] bg-[var(--color-background)] active"
+                                : "bg-gray-200 text-black hover:bg-[var(--color-background-opacity-2)] hover:text-[var(--color-background)] border border-rose-100 dark:hover:border-rose-200"
+                                } cursor-pointer font-semibold`}
+                        >
+                            <div>{opt.label}</div>
+                        </Button>
+                    ))}
+                </div>
+            )}
+        </div>
+    )
 }

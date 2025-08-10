@@ -117,15 +117,17 @@ export const convertDataCandline = (data: IinitialData[] = []): IinitialDataCand
 };
 
 export const timeOptions = [
-    { label: '1 phút', seconds: 60 },
-    { label: '15 phút', seconds: 15 * 60 },
-    { label: '30 phút', seconds: 30 * 60 },
-    { label: '1 giờ', seconds: 60 * 60 },
-    { label: '4 giờ', seconds: 4 * 60 * 60 },
-    { label: '1 ngày', seconds: 24 * 60 * 60 },
-    { label: '1 tuần', seconds: 7 * 24 * 60 * 60 },
-    { label: '1 tháng', seconds: 30 * 24 * 60 * 60 },
-    { label: '1 năm', seconds: 12 * 30 * 24 * 60 * 60 },
+    { label: 'M1', seconds: 60 },
+    { label: 'M5', seconds: 5 * 60 },
+    { label: 'M6', seconds: 6 * 60 },
+    { label: 'M10', seconds: 10 * 60 },
+    { label: 'M15', seconds: 15 * 60 },
+    { label: 'M30', seconds: 30 * 60 },
+    { label: 'H1', seconds: 60 * 60 },
+    { label: 'H4', seconds: 4 * 60 * 60 },
+    { label: 'D1', seconds: 24 * 60 * 60 },
+    { label: 'W1', seconds: 7 * 24 * 60 * 60 },
+    { label: 'MN', seconds: 30 * 24 * 60 * 60 },
 ];
 
 export const convertDataLine: ((data: any[]) => Array<IinitialData>) = (data: any[]) => {

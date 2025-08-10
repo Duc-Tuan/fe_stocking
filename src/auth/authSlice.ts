@@ -40,8 +40,16 @@ const authSlice = createSlice({
       .addCase(login.fulfilled, (state, action) => {
         state.user = action.payload;
       })
+      .addCase(getMe.pending, (state) => {
+        state.loading = false;
+      })
       .addCase(getMe.fulfilled, (state, action) => {
+        state.loading = true;
         state.user = action.payload;
+      })
+      .addCase(getMe.rejected, (state) => {
+        state.loading = false;
+        localStorage.removeItem('token')
       });
   },
 });

@@ -10,7 +10,7 @@ import { useEffect, useRef } from 'react';
 import { formatVietnamTimeSmart, gridColor } from '../line/formatTime';
 import { normalizeChartData } from './options';
 import { adjustToUTCPlus_7, timeOptions } from '../../pages/Home/options';
-import { aggregateCandlesByInterval } from '../../utils/timeRange';
+import { aggregateCandlesByInterval, getColorChart } from '../../utils/timeRange';
 
 export const CandlestickSeriesComponent = (props: any) => {
     const {
@@ -21,13 +21,13 @@ export const CandlestickSeriesComponent = (props: any) => {
         chartRef,
         currentRange,
         colors: {
-            backgroundColor = 'white',
+            backgroundColor = 'transparent',
             textColor = 'black',
             upColor = '#4bffb5',
-            downColor = '#ff4976',
             borderUpColor = '#4bffb5',
-            borderDownColor = '#ff4976',
             wickUpColor = '#4bffb5',
+            borderDownColor = '#ff4976',
+            downColor = '#ff4976',
             wickDownColor = '#ff4976',
         } = {},
     } = props;
@@ -109,14 +109,18 @@ export const CandlestickSeriesComponent = (props: any) => {
             grid: gridColor,
             width: chartContainerRef.current.clientWidth,
             height: 600,
+            rightPriceScale: {
+                borderColor: '#00000030'
+            },
             timeScale: {
                 rightOffset: 5,
                 barSpacing: 10,
                 lockVisibleTimeRangeOnResize: false,
                 rightBarStaysOnScroll: true,
-                borderVisible: false,
+                borderVisible: true,
                 timeVisible: true,
                 secondsVisible: true,
+                borderColor: '#00000030'
             },
             handleScroll: {
                 mouseWheel: true,
@@ -142,7 +146,7 @@ export const CandlestickSeriesComponent = (props: any) => {
         candleSeriesRef.current = candleSeries;
 
         const pLineSeries = chart.addLineSeries({
-            color: 'rgb(236, 0, 63)',
+            color: getColorChart(),
             lineWidth: 1,
             priceLineVisible: false,
             lastValueVisible: false,
@@ -156,7 +160,7 @@ export const CandlestickSeriesComponent = (props: any) => {
             position: absolute;
             display: none;
             padding: 6px 8px;
-            background: rgb(236, 0, 63);
+            background: var(--color-background);
             color: white;
             border-radius: 4px;
             font-size: 12px;
@@ -196,7 +200,7 @@ export const CandlestickSeriesComponent = (props: any) => {
                 <strong>Time:</strong> ${timeStr}`;
             tooltip.style.display = 'block';
             tooltip.style.left = `${param.point.x + 10}px`;
-            tooltip.style.top = `${param.point.y + 10}px`;
+            tooltip.style.top = `${param.point.y - 50}px`;
         });
 
         chart.timeScale().subscribeVisibleLogicalRangeChange((range: any) => {
@@ -206,8 +210,8 @@ export const CandlestickSeriesComponent = (props: any) => {
 
             chart.applyOptions({
                 crosshair: {
-                    vertLine: { labelBackgroundColor: 'rgb(236, 0, 63)' },
-                    horzLine: { labelBackgroundColor: 'rgb(236, 0, 63)' },
+                    vertLine: { labelBackgroundColor: getColorChart() },
+                    horzLine: { labelBackgroundColor: getColorChart() },
                 },
                 localization: {
                     locale: 'vi-VN',

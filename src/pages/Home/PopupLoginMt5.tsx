@@ -14,7 +14,7 @@ const PopupLoginMt5 = (props: IProps) => {
     const [isOpen, toggleOpen, setOpen] = useToggle(false);
 
     return <div>
-        <button className='inline-block p-2 rounded-lg gap-2 cursor-pointer justify-around items-center text-white active bg-rose-400 active hover:bg-rose-600 hover:font-medium' onClick={() => setOpen(true)}>
+        <button className='inline-block p-2 rounded-lg gap-2 cursor-pointer justify-around items-center active text-[var(--color-text)] bg-[var(--color-background)] active hover:bg-rose-600 hover:font-medium' onClick={() => setOpen(true)}>
             <Icon name="icon-menu"/>
         </button>
 

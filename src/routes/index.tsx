@@ -3,21 +3,20 @@ import { createBrowserRouter } from 'react-router-dom';
 import DashboardLayout from '../layouts/DashboardLayout';
 import HomePage from '../pages/Home/HomePage';
 import NotFoundPage from '../pages/NotFoundPage';
-import ProductPage from '../pages/Product/ProductPage';
 import LoginPage from '../pages/auth/LoginPage';
-import GuestRoute from './guestRoute';
 import ProtectedRoute from './protectedRoute';
+import TransactionPage from '../pages/Transaction/TransactionPage';
+import HistoryTransaction from '../pages/History/HistoryTransaction';
+import { PathName } from './path';
+import SettingTransaction from '../pages/Settings/SettingTransaction';
 
 const router = createBrowserRouter([
   {
-    path: '/login',
-    element: (
-    <GuestRoute>
-      <LoginPage />
-    </GuestRoute>),
+    path: PathName.LOGIN,
+    element: <LoginPage />
   },
   {
-    path: '/',
+    path: PathName.HOME,
     element: (
       <ProtectedRoute>
         <DashboardLayout />
@@ -29,8 +28,16 @@ const router = createBrowserRouter([
         element: <HomePage />,
       },
       {
-        path: 'products',
-        element: <ProductPage />,
+        path: PathName.TRANSACTION,
+        element: <TransactionPage />,
+      },
+      {
+        path: PathName.HISTORY,
+        element: <HistoryTransaction />,
+      },
+      {
+        path: PathName.SETTING,
+        element: <SettingTransaction />,
       },
     ],
   },

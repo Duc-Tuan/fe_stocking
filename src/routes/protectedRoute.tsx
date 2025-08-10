@@ -7,5 +7,5 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
   useEffect(() => {
     if (!token) navigate("/login")
   }, [token])
-  return <>{children}</>;
+  return children;
 }

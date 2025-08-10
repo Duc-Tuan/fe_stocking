@@ -19,6 +19,11 @@ export interface IOptionsTabsCharts {
 export interface IOptions<T = string> {
     value: string,
     label: T,
-    active?: boolean
     data?: any
+}
+
+export interface ICurrentPnl {
+    by_symbol: { current_price: number, symbol: string, type: string }[],
+    time: string,
+    total_pnl: number
 }

@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { login } from '../../auth/authSlice';
+import { getMe, login } from '../../auth/authSlice';
 import type { AppDispatch } from '../../store';
 import Icon from '../../assets/icon';
 import { useToggle } from '../../hooks/useToggle';
 import { Button } from '../../components/button';
 import toast from 'react-hot-toast';
 import { generateUUID } from '../../utils/timeRange';
+import { PathName } from '../../routes/path';
+import { getServer } from '../../store/transaction/transactionSlice';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -26,8 +28,10 @@ export default function LoginPage() {
       }
       setIsLoading(true)
       await dispatch(login({ username, password, deviceId })).unwrap(); // ⬅️ thêm unwrap để bắt lỗi
+      await dispatch(getMe());
+      await dispatch(getServer());
       toast.success('Đăng nhập thành công!');
-      return navigate('/'); // ⬅️ chuyển hướng sau khi login thành công
+      return navigate(PathName.HOME);
     } catch (e: any) {
       if (e?.message === "Request failed with status code 403") return toast.error('Chỉ được đăng nhập trên tối đa 2 thiết bị.', {
         style: {
@@ -75,7 +79,7 @@ export default function LoginPage() {
         </div>
 
 
-        <Button isLoading={isLoading} type="submit" className="w-full cursor-pointer bg-rose-400 px-4 py-2 text-white rounded mt-2">
+        <Button isLoading={isLoading} type="submit" className="w-full cursor-pointer text-[var(--color-text)] bg-[var(--color-background)] px-4 py-2  rounded mt-2">
           Đăng nhập
         </Button>
       </form>
