@@ -29,7 +29,7 @@ export const optionsTabsCharts: IOptionsTabsCharts[] = [
     }
 ]
 
-export const convertDataCandline = (data: IinitialData[] = []): IinitialDataCand[] => {
+export const convertDataCandline = (data: any[] = []): IinitialDataCand[] => {
     if (data.length === 0) return [];
 
     const dataNew = data
@@ -144,7 +144,7 @@ export const convertDataLine: ((data: any[]) => Array<IinitialData>) = (data: an
                 value: data?.total_pnl,
             };
         })
-        // .filter(Boolean); // Loại bỏ các phần tử null
+    // .filter(Boolean); // Loại bỏ các phần tử null
     return dataLine;
 }
 

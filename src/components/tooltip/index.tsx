@@ -1,8 +1,8 @@
 import { Tooltip } from '@material-tailwind/react';
-import React, { type JSX } from 'react'
+import { type JSX } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '../button';
 import { LoadingOnly } from '../loading/indexOnly';
-import { useAppInfo } from '../../hooks/useAppInfo';
 
 interface IProps {
     children: JSX.Element;
@@ -13,10 +13,11 @@ interface IProps {
     w?: string;
     h?: string;
     classNameButton?: string
+    placement?: string
 }
 
-export default function TooltipCustom({ children, titleTooltip, loading, handleClick, isButton, w, h, classNameButton }: IProps) {
-    const { t } = useAppInfo()
+export default function TooltipCustom({ placement = "bottom", children, titleTooltip, loading, handleClick, isButton, w, h, classNameButton }: IProps) {
+    const { t } = useTranslation()
     return (
         <Tooltip
             className="z-50 bg-transparent"
@@ -25,7 +26,7 @@ export default function TooltipCustom({ children, titleTooltip, loading, handleC
                     {(typeof titleTooltip === 'string') ? t(titleTooltip.toString()) : titleTooltip}
                 </div>
             }
-            placement="bottom"
+            placement={placement}
         >
             {isButton ? children : <Button
                 disabled={loading}

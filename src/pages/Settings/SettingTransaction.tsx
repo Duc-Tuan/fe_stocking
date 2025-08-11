@@ -1,16 +1,16 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { datafunctionSetting, type IOptionDatafunctionSetting } from './type'
+import { useTranslation } from 'react-i18next'
+import { Button } from '../../components/button'
+import Acc from './Screens/Acc'
 import AccTracking from './Screens/AccTracking'
 import AccTransaction from './Screens/AccTransaction'
 import Email from './Screens/Email'
 import Language from './Screens/Language'
 import Notifition from './Screens/Notifition'
-import { Button } from '../../components/button'
-import Acc from './Screens/Acc'
-import { useAppInfo } from '../../hooks/useAppInfo'
+import { datafunctionSetting, type IOptionDatafunctionSetting } from './type'
 
 export default function SettingTransaction() {
-    const { t } = useAppInfo()
+    const { t } = useTranslation()
     const [data, setData] = useState<IOptionDatafunctionSetting[]>(datafunctionSetting)
     const [highlightStyle, setHighlightStyle] = useState({ top: 0, height: 0 })
     const containerRef = useRef<HTMLDivElement>(null)

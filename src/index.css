@@ -7,18 +7,20 @@
 :root.purple,
 :root.pink,
 :root.orange {
-  transition: --color-background 5s ease,
-    --color-background-opacity-5 5s ease,
-    --color-background-opacity-2 5s ease,
-    --color-background-opacity-01 5s ease, --color-text 5s ease;
+  transition: --color-background 5s ease, --color-background-opacity-5 5s ease,
+    --color-background-opacity-2 5s ease, --color-background-opacity-01 5s ease,
+    --color-text 5s ease;
 }
 
 :root {
   --color-background: #ff637e;
   --color-background-opacity-5: rgba(255, 99, 125, 0.5);
   --color-background-opacity-2: rgba(255, 99, 125, 0.2);
+  --color-background-opacity-1: rgba(255, 99, 125, 0.05);
   --color-background-opacity-01: rgba(255, 99, 125, 0.01);
   --color-text: #ffff;
+  --color-text-shadown: 0px 1px 1px var(--color-background),
+    0px 1px 2px var(--color-background), 0px 2px 4px var(--color-background);
 
   --bg-primary: #ff637e;
   --bg-blue: #0000ff;
@@ -33,35 +35,53 @@
   --color-background: #0000ff;
   --color-background-opacity-5: rgba(0, 0, 255, 0.5);
   --color-background-opacity-2: rgba(0, 0, 255, 0.2);
+  --color-background-opacit1-1: rgba(0, 0, 255, 0.05);
   --color-background-opacity-01: rgba(0, 0, 255, 0.01);
+  --color-text-shadown: 0px 1px 1px var(--color-background),
+    0px 1px 2px var(--color-background), 0px 2px 4px var(--color-background);
 }
 .green {
   --color-background: #0dff00;
   --color-background-opacity-5: rgba(13, 255, 0, 0.5);
   --color-background-opacity-2: rgba(13, 255, 0, 0.2);
+  --color-background-opacity-1: rgba(13, 255, 0, 0.05);
   --color-background-opacity-01: rgba(13, 255, 0, 0.01);
+  --color-text-shadown: 0px 1px 1px var(--color-background),
+    0px 1px 2px var(--color-background), 0px 2px 4px var(--color-background);
 }
 .ocean {
   --color-background: #00ffd0;
   --color-background-opacity-5: rgba(0, 255, 208, 0.5);
   --color-background-opacity-2: rgba(0, 255, 208, 0.2);
+  --color-background-opacity-1: rgba(0, 255, 208, 0.05);
   --color-background-opacity-01: rgba(0, 255, 208, 0.01);
+  --color-text-shadown: 0px 1px 1px var(--color-background),
+    0px 1px 2px var(--color-background), 0px 2px 4px var(--color-background);
 }
 .purple {
   --color-background: #d900ff;
   --color-background-opacity-5: rgba(217, 0, 255, 0.5);
   --color-background-opacity-2: rgba(217, 0, 255, 0.2);
+  --color-background-opacity-1: rgba(217, 0, 255, 0.05);
   --color-background-opacity-01: rgba(217, 0, 255, 0.01);
+  --color-text-shadown: 0px 1px 1px var(--color-background),
+    0px 1px 2px var(--color-background), 0px 2px 4px var(--color-background);
 }
 .pink {
   --color-background: #ff00b3;
   --color-background-opacity-5: rgba(255, 0, 179, 0.5);
   --color-background-opacity-2: rgba(255, 0, 179, 0.2);
+  --color-background-opacity-1: rgba(255, 0, 179, 0.05);
   --color-background-opacity-01: rgba(255, 0, 179, 0.01);
+  --color-text-shadown: 0px 1px 1px var(--color-background),
+    0px 1px 2px var(--color-background), 0px 2px 4px var(--color-background);
 }
 .orange {
   --color-background: #ff7700;
   --color-background-opacity-5: rgba(255, 119, 0, 0.5);
   --color-background-opacity-2: rgba(255, 119, 0, 0.2);
+  --color-background-opacity-1: rgba(255, 119, 0, 0.05);
   --color-background-opacity-01: rgba(255, 119, 0, 0.01);
+  --color-text-shadown: 0px 1px 1px var(--color-background),
+    0px 1px 2px var(--color-background), 0px 2px 4px var(--color-background);
 }

@@ -2,18 +2,19 @@ import { Tooltip } from '@material-tailwind/react';
 import { useNavigate } from 'react-router-dom';
 import Icon from '../assets/icon';
 import { Button } from '../components/button';
-import { useAppInfo } from '../hooks/useAppInfo';
+import { useTranslation } from 'react-i18next';
 
 interface IProps {
     title: string,
+    className?: string,
     iconName: string,
     path: string,
-    handle?: () => void
+    handle?: () => void,
 }
 
-export default function TooltipNavigate({ iconName, title, path, handle }: IProps) {
+export default function TooltipNavigate({ iconName, title, path, handle, className }: IProps) {
     const navigate = useNavigate();
-    const { t } = useAppInfo()
+    const { t } = useTranslation()
     return (
         <Tooltip
             content={
@@ -28,10 +29,10 @@ export default function TooltipNavigate({ iconName, title, path, handle }: IProp
                     handle && handle()
                     navigate(path)
                 }}
-                className={`cursor-pointer inline-block p-2 rounded-lg active shadow-md shadow-gray-500 text-[var(--color-text)] bg-[var(--color-background)]`}
+                className={`cursor-pointer inline-block p-2 rounded-lg active shadow-md shadow-gray-500 text-[var(--color-text)] bg-[var(--color-background)] ${className}`}
                 aria-current="page"
             >
-                <Icon name={iconName} />
+                <Icon name={iconName} width={20} height={20}/>
             </Button>
         </Tooltip>
     )

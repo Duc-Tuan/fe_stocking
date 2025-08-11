@@ -1,13 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '../../components/button'
 import { datafunction, type IOptionDatafunction } from './type'
 import Positions from './Screens/Positions'
 import Deals from './Screens/Deals'
 import Orders from './Screens/Orders'
-import { useAppInfo } from '../../hooks/useAppInfo'
+import { useTranslation } from 'react-i18next'
+import AllLot from './Screens/AllLot'
 
 export default function HistoryTransaction() {
-    const { t } = useAppInfo()
+    const { t } = useTranslation()
     const [data, setData] = useState<IOptionDatafunction[]>(datafunction)
     const [highlightStyle, setHighlightStyle] = useState({ top: 0, height: 0 })
     const containerRef = useRef<HTMLDivElement>(null)
@@ -37,6 +38,50 @@ export default function HistoryTransaction() {
         moveHighlight(index)
     }
 
+    const Footer = useCallback(({ children, isFooter, isOther }: any) => {
+        return <>
+            {children}
+            {isFooter ?
+                <div>
+                </div>
+                : (isOther ? <div className="sticky bottom-0 bg-white z-50 p-2">
+                    <div className="flex justify-between items-center">
+                        <div className="">{t("Tổng lệnh")}</div>
+                        <span>200</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <div className="">Filled</div>
+                        <span>198</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <div className="">{t("Bị hủy")}</div>
+                        <span>2</span>
+                    </div>
+                </div> :
+
+                    < div className="sticky bottom-0 bg-white z-50 p-2">
+                        <div className="flex justify-between items-center">
+                            <div className="">{t("Tiền nạp")}</div>
+                            <span>100000</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                            <div className="">{t("Lợi nhuận")}</div>
+                            <span>13940</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                            <div className="">{t("Phí qua đêm")}</div>
+                            <span>10.9</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                            <div className="">{t("Số dư")}</div>
+                            <span>1200000</span>
+                        </div>
+                    </div >)
+            }
+        </>
+    }
+        , [])
+
     const screen = useMemo(() => {
         const isCheck = data.find((d) => d.active)
         let content: React.ReactNode;
@@ -50,17 +95,22 @@ export default function HistoryTransaction() {
             case "Deals":
                 content = <Deals />
                 break;
+            case "Lot":
+                content = <AllLot />
+                break;
             default:
                 null
         }
 
         return (
-            <div
-                key={isCheck?.type}
-                className="animate-fade-in"
-            >
-                {content}
-            </div>
+            <Footer isOther={isCheck?.type === "Orders"} isFooter={isCheck?.type === "Lot"}>
+                <div
+                    key={isCheck?.type}
+                    className="animate-fade-in"
+                >
+                    {content}
+                </div>
+            </Footer>
         );
     }, [data.find((d) => d.active)])
 
@@ -78,8 +128,8 @@ export default function HistoryTransaction() {
                     return <Button id="button-history" onClick={() => handlelick(d, idx)} key={d.type} className={`${d.active ? "text-white" : "text-[var(--color-background)] hover:bg-[var(--color-background-opacity-2)]"} cursor-pointer  w-full text-left block shadow-none p-2 mb-1`}>{t(d.title)}</Button>
                 })}
             </div>
-            <div className="col-span-3 lg:col-span-4 shadow-md shadow-gray-500 rounded-lg p-2 overflow-y-scroll my-scroll">
-                <div className="">{screen}</div>
+            <div className="col-span-3 lg:col-span-4 shadow-md shadow-gray-500 rounded-lg overflow-y-scroll my-scroll relative pb-0">
+                {screen}
             </div>
         </div>
     )

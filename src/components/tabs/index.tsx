@@ -1,9 +1,8 @@
-import { Tooltip } from "@material-tailwind/react";
 import React, { memo } from "react";
+import { useTranslation } from "react-i18next";
 import type { IOptions } from "../../types/global";
 import { Button } from "../button";
 import TooltipCustom from "../tooltip";
-import { useAppInfo } from "../../hooks/useAppInfo";
 
 interface IProps {
     options: IOptions[];
@@ -14,7 +13,7 @@ interface IProps {
 
 const Tabs = (props: IProps) => {
     const { options, handleClick, isLoading, serverMonitorActive } = props;
-    const { t } = useAppInfo()
+    const { t } = useTranslation()
 
     return (
         <>

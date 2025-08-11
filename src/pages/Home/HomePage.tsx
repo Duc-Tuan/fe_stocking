@@ -24,9 +24,13 @@ import {
     type IinitialData,
     type IinitialDataCand,
 } from "./options";
+import { useTranslation } from "react-i18next";
+import { useCurrentPnl } from "../../hooks/useCurrentPnl";
 
 export default function HomePage() {
-    const { serverMonitorActive, t } = useAppInfo()
+    const { t } = useTranslation()
+    const { serverMonitorActive } = useAppInfo()
+    const { currentPnl } = useCurrentPnl()
     const chartRef1: any = useRef<IChartApi | null>(null);
     const chartRef2: any = useRef<IChartApi | null>(null);
     const [isOpen, toggleOpen] = useToggle(true);
@@ -96,12 +100,12 @@ export default function HomePage() {
         }
     }
 
-    // useEffect(() => {
-    //     if (data) {
-    //         setSymbolsSocket(convertDataLine([data]))
-    //         setSymbolsCandSocket(convertDataCandline([data]))
-    //     }
-    // }, [data]);
+    useEffect(() => {
+        if (currentPnl) {
+            setSymbolsSocket(convertDataLine([currentPnl]))
+            setSymbolsCandSocket(convertDataCandline([currentPnl]))
+        }
+    }, [currentPnl]);
 
     useEffect(() => {
         if (pagination.page !== 1) {

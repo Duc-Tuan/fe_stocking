@@ -39,7 +39,7 @@ export default function FilterServer() {
     const TabsServer = useCallback(() => <Tabs handleClick={handleClickServer} options={serverMonitor} isLoading={loadingServerMonitor} serverMonitorActive={serverMonitorActive} />, [serverMonitorActive])
 
     return (
-        <div ref={popupRef} className="z-10 col-span-2 font-semibold shadow-xs shadow-gray-500 rounded-md text-sm relative">
+        <div ref={popupRef} className="z-10 col-span-2 font-semibold rounded-md text-sm relative">
             <TooltipNavigate handle={handleToggle} iconName='icon-server' path='#' title='Tài khoản theo dõi' />
 
             {visible && (

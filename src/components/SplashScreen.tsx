@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import bg from '../assets/images/bg-splash.jpg';
+import { useTranslation } from 'react-i18next';
 
 export default function SplashScreen() {
+    const { t } = useTranslation()
     const [size, setSize] = useState(0);
 
     useEffect(() => {
@@ -40,7 +42,7 @@ export default function SplashScreen() {
                 transition: 'mask 0.05s linear, -webkit-mask 0.05s linear',
             }}
         >
-            <span className="font-dancing-bold text-5xl text-white text-shadow-lg text-shadow-rose-400">Welcome to our service!</span>
+            <span className="font-dancing-bold text-5xl text-white text-shadow-[var(--color-text-shadown)]">{t("Chào mừng bạn đến với dịch vụ của chúng tôi!")}</span>
         </div>
     );
 }

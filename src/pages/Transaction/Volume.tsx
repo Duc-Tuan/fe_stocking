@@ -26,9 +26,9 @@ export default function Volume() {
         const newValue = +(centerValue + step).toFixed(4);
         let newScale = adjustScale(newValue);
 
-        if (newValue >= 200) {
-            setCenterValue(200);
-            setInputValue('200');
+        if (newValue >= 1) {
+            setCenterValue(1);
+            setInputValue('1');
         } else if (newValue < 0.01) {
             setCenterValue(0.01);
             setInputValue('0.01');
@@ -45,17 +45,25 @@ export default function Volume() {
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (Number(e.target.value) > 200) return setInputValue("200")
+        if (Number(e.target.value) > 1) return setInputValue("1")
         if (e.target.value === "") return setInputValue("0.01")
         setInputValue(e.target.value);
     };
 
+    // const steps = [
+    //     +(baseSteps[0] * scale).toFixed(2),
+    //     +(baseSteps[1] * scale).toFixed(2),
+    //     +centerValue.toFixed(2),
+    //     +(baseSteps[2] * scale).toFixed(2),
+    //     +(baseSteps[3] * scale).toFixed(2),
+    // ];
+
     const steps = [
-        +(baseSteps[0] * scale).toFixed(2),
-        +(baseSteps[1] * scale).toFixed(2),
+        +(baseSteps[0]).toFixed(2),
+        +(baseSteps[1]).toFixed(2),
         +centerValue.toFixed(2),
-        +(baseSteps[2] * scale).toFixed(2),
-        +(baseSteps[3] * scale).toFixed(2),
+        +(baseSteps[2]).toFixed(2),
+        +(baseSteps[3]).toFixed(2),
     ];
 
     return (
@@ -79,7 +87,7 @@ export default function Volume() {
                         <button
                             key={idx}
                             onClick={() => handleClick(step)}
-                            className="cursor-pointer px-2 py-1 transition-all duration-150 hover:text-rose-400 active:scale-95 hover:bg-rose-100 rounded-lg"
+                            className="cursor-pointer px-2 py-1 transition-all duration-150 active:scale-95 hover:bg-[var(--color-background-opacity-2)] rounded-lg"
                         >
                             {step > 0 ? `+${step}` : step}
                         </button>

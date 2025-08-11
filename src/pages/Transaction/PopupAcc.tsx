@@ -49,7 +49,7 @@ export default function PopupAcc() {
 
     return (
         <div ref={popupRef} className="col-span-2 font-semibold shadow-xs shadow-gray-500 rounded-md text-sm relative">
-            <Button onClick={handleToggle} className="flex h-11 justify-between items-center w-full font-bold cursor-pointer text-black px-2 hover:bg-rose-200 transition text-md">
+            <Button onClick={handleToggle} className="flex h-11 justify-between items-center w-full font-bold cursor-pointer text-black px-2 hover:bg-[var(--color-background-opacity-2)] transition text-md">
                 {data.find((a) => a.active) ?
                     <span>Tài khoản: {data.find((a) => a.active)?.usename}</span>
                     :
@@ -62,7 +62,7 @@ export default function PopupAcc() {
             {visible && (
                 <div className={`flex justify-center items-start gap-1 flex-col transition-all duration-200  absolute bottom-full w-full mb-2 z-50 bg-white shadow-sm rounded-lg border border-gray-300 p-2 ${open ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
                     {data.map((a, i) => (
-                        <Button key={i} onClick={() => handleClick(a)} className={`${a.active ? "text-rose-500 bg-rose-100" : "text-black"} cursor-pointer w-full text-start shadow-none py-2 pl-2 hover:bg-rose-100 transition text-md`} >{a.usename}</Button>
+                        <Button key={i} onClick={() => handleClick(a)} className={`${a.active ? "text-[var(--color-background)] bg-[var(--color-background-opacity-2)]" : "text-black"} cursor-pointer w-full text-start shadow-none py-2 pl-2 hover:bg-[var(--color-background-opacity-2)] transition text-md`} >{a.usename}</Button>
                     ))}
                 </div>
             )}

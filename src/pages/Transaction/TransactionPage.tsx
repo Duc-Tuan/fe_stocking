@@ -5,9 +5,11 @@ import { dataActivateTypetransaction, type IActivateTypetransaction } from "./ty
 import Volume from "./Volume";
 import PopupAcc from "./PopupAcc";
 import { useAppInfo } from "../../hooks/useAppInfo";
+import { useCurrentPnl } from "../../hooks/useCurrentPnl";
 
 export default function TransactionPage() {
-    const { currentPnl, serverMonitorActive } = useAppInfo();
+    const { serverMonitorActive } = useAppInfo();
+    const { currentPnl } = useCurrentPnl()
     const [pnl, setPnl] = useState(19.56);
     const [stopLoss, setStopLoss] = useState(0);
     const [takeProfit, setTakeProfit] = useState(0);
@@ -29,7 +31,7 @@ export default function TransactionPage() {
                 <div className="text-center shadow-xs shadow-gray-500 rounded-lg py-2 mb-4 text-sm">
                     <div className="font-bold">Cặp tiền của tài khoản theo dõi {serverMonitorActive?.value}</div>
                     <div className="text-gray-500">{serverMonitorActive?.label}</div>
-                    <div className="text-red-600 mt-1 font-bold">{serverMonitorActive?.data?.map((a: string, i: number) => {
+                    <div className="text-[var(--color-background)] mt-1 font-bold">{serverMonitorActive?.data?.map((a: string, i: number) => {
                         return a + ((i !== (serverMonitorActive?.data.length - 1)) ? " - " : "")
                     })}</div>
                 </div>
@@ -41,10 +43,12 @@ export default function TransactionPage() {
                             {currentPnl?.by_symbol.map((item, index) => (
                                 <div
                                     key={index}
-                                    className={`text-sm flex justify-between items-center text-gray-700 py-1 ${index !== 4 ? "border-b border-b-gray-300" : ""
-                                        }`}
+                                    className={`text-sm flex justify-between items-center text-gray-700 py-1 border-b border-b-gray-300 border-solid}`}
                                 >
-                                    <span className="font-bold">{item.symbol}</span>
+                                    <span className="font-bold">
+                                        {item.symbol} 
+                                        <span className={`text-[10px] pl-1 ${item.type === "SELL" ? "text-rose-600" : "text-blue-600"}`}>{item.type}</span>
+                                    </span>
                                     <span>{item.current_price.toFixed(6)}</span>
                                 </div>
                             ))}
@@ -146,9 +150,9 @@ export default function TransactionPage() {
                     <div className="col-span-1 shadow-xs shadow-gray-500 rounded-lg p-3 space-y-2">
                         {activateTypetransaction.map((a: IActivateTypetransaction, i: number) => {
                             return (
-                                <Button onClick={() => handlClickActive(a.type)} key={i} className={`flex w-full justify-between items-center  ${i === 0 ? "rounded-none border-b border-b-gray-300 border-solid py-1 px-2" : "py-2 px-2"} cursor-pointer shadow-none hover:bg-rose-100 transition`}>
-                                    <div className={`text-sm font-medium ${a.color}`}>{a.title}</div>
-                                    {a.active && <span><Icon name="icon-check" width={18} height={18} className="text-rose-400" /></span>}
+                                <Button onClick={() => handlClickActive(a.type)} key={i} className={`flex w-full justify-between items-center  ${i === 0 ? "rounded-none border-b border-b-gray-300 border-solid py-1 px-2" : "py-2 px-2"} cursor-pointer shadow-none hover:bg-[var(--color-background-opacity-2)] transition`}>
+                                    <div className={`text-sm font-bold ${a.color}`}>{a.title}</div>
+                                    {a.active && <span><Icon name="icon-check" width={18} height={18} className="text-[var(--color-background)]" /></span>}
                                 </Button>
                             )
                         })}
@@ -170,15 +174,15 @@ export default function TransactionPage() {
 
                 {/* Nút Xuôi / Ngược */}
                 {activateTypetransaction.filter((a) => a.active && a.type === "Lenh_thi_truong").length === 0 ?
-                    <Button className="w-full h-10 font-bold cursor-pointer text-white px-2 bg-rose-500 shadow-md shadow-gray-500">
+                    <Button className="p-0 w-full h-10 font-bold cursor-pointer text-white px-2 bg-[var(--color-background)] shadow-md shadow-gray-500">
                         <span>Đặt lệnh</span>
                     </Button>
                     :
                     <div className="flex gap-2 h-10">
-                        <Button aria-current="page" className="flex-1 bg-rose-600 text-white rounded-lg shadow-xs shadow-gray-500  hover:bg-red-600 cursor-pointer font-bold">
+                        <Button aria-current="page" className="p-0 flex-1 bg-rose-600 text-white rounded-lg shadow-xs shadow-gray-500  hover:bg-red-600 cursor-pointer font-bold">
                             Xuôi
                         </Button>
-                        <Button aria-current="page" className="flex-1 bg-blue-600 text-white rounded-lg shadow-xs shadow-gray-500  hover:bg-blue-800 cursor-pointer font-bold">
+                        <Button aria-current="page" className="p-0 flex-1 bg-blue-600 text-white rounded-lg shadow-xs shadow-gray-500  hover:bg-blue-800 cursor-pointer font-bold">
                             Ngược
                         </Button>
                     </div>

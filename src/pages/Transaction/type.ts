@@ -14,10 +14,10 @@ export const dataActivateTypetransaction: IActivateTypetransaction[] = [
         title: "Vào lệnh thị trường",
         type: "Lenh_thi_truong",
     },
-    { title: "Xuôi Limit", type: "Xuoi_Limit", color: "text-blue-600", active: false },
-    { title: "Ngược Limit", type: "Nguoc_Limit", color: "text-red-600", active: false },
-    { title: "Xuôi Stop", type: "Xuoi_Stop", color: "text-blue-600", active: false },
-    { title: "Ngược Stop", type: "Nguoc_Stop", color: "text-red-600", active: false },
+    { title: "Xuôi Limit", type: "Xuoi_Limit", color: "text-red-600", active: false },
+    { title: "Ngược Limit", type: "Nguoc_Limit", color: "text-blue-600", active: false },
+    { title: "Xuôi Stop", type: "Xuoi_Stop", color: "text-red-600", active: false },
+    { title: "Ngược Stop", type: "Nguoc_Stop", color: "text-blue-600", active: false },
 ]
 
 export interface IAccTransaction {

@@ -77,5 +77,48 @@ input[type="checkbox"].custom-checkbox:checked::after {
 
 button,
 div.animate {
-  transition: background-color 0.5s ease, color 0.5s ease, border-color 0.5s ease;
+  transition: background-color 0.5s ease, color 0.5s ease,
+    border-color 0.5s ease;
+}
+
+.ant-picker-input {
+  height: 32px !important;
+  width: 156px !important;
+}
+
+.ant-picker-outlined {
+  border-color: #0000000d !important;
+}
+
+.ant-space-item {
+  box-shadow: 0 4px 6px -1px var(--tw-shadow-color, rgb(0 0 0 / 0.1)),
+    0 2px 4px -2px var(--tw-shadow-color, rgb(0 0 0 / 0.1));
+}
+
+.ant-picker .ant-picker-suffix svg path {
+  fill: black;
+}
+
+.ant-picker-outlined:focus,
+.ant-picker-outlined:focus-within {
+  box-shadow: none;
+}
+
+:where(.css-dev-only-do-not-override-q7uqvy).ant-picker-outlined:hover {
+  border-color: var(--color-background) !important;
+}
+
+.ant-picker-dropdown
+  .ant-picker-cell-in-view.ant-picker-cell-in-range:not(
+    .ant-picker-cell-disabled
+  ):before,
+.ant-picker-dropdown
+  .ant-picker-cell-in-view.ant-picker-cell-range-start:not(
+    .ant-picker-cell-disabled
+  ):before,
+.ant-picker-dropdown
+  .ant-picker-cell-in-view.ant-picker-cell-range-end:not(
+    .ant-picker-cell-disabled
+  ):before {
+  background-color: var(--color-background-opacity-2) !important;
 }

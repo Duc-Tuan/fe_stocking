@@ -270,6 +270,7 @@ export const CandlestickSeriesComponent = (props: any) => {
             if (resizeObserver) resizeObserver.disconnect();
             window.removeEventListener('resize', handleResize);
             chart.remove();
+            chartRef.current = null;
         };
     }, []);
 

@@ -18,7 +18,7 @@ export default function Language() {
 }
 
 const ChangColor = ({ t }: any) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
   const languageRef: any = useRef(null);
   const [dataColor, setDataColor] = useState<IChangColor[]>([]);
   const currentTheme: any = useRef(null)

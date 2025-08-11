@@ -223,6 +223,7 @@ export const ChartComponent = (props: any) => {
             if (resizeObserver) resizeObserver.disconnect();
             window.removeEventListener('resize', handleResize);
             chart.remove();
+            chartRef.current = null;
         };
     }, []);
 
