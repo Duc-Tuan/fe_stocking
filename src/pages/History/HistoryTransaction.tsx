@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '../../components/button'
-import { datafunction, type IOptionDatafunction } from './type'
+import { datafunction, type IFilterAllLot, type IOptionDatafunction } from './type'
 import Positions from './Screens/Positions'
 import Deals from './Screens/Deals'
 import Orders from './Screens/Orders'
@@ -38,50 +38,6 @@ export default function HistoryTransaction() {
         moveHighlight(index)
     }
 
-    const Footer = useCallback(({ children, isFooter, isOther }: any) => {
-        return <>
-            {children}
-            {isFooter ?
-                <div>
-                </div>
-                : (isOther ? <div className="sticky bottom-0 bg-white z-50 p-2">
-                    <div className="flex justify-between items-center">
-                        <div className="">{t("Tổng lệnh")}</div>
-                        <span>200</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                        <div className="">Filled</div>
-                        <span>198</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                        <div className="">{t("Bị hủy")}</div>
-                        <span>2</span>
-                    </div>
-                </div> :
-
-                    < div className="sticky bottom-0 bg-white z-50 p-2">
-                        <div className="flex justify-between items-center">
-                            <div className="">{t("Tiền nạp")}</div>
-                            <span>100000</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                            <div className="">{t("Lợi nhuận")}</div>
-                            <span>13940</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                            <div className="">{t("Phí qua đêm")}</div>
-                            <span>10.9</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                            <div className="">{t("Số dư")}</div>
-                            <span>1200000</span>
-                        </div>
-                    </div >)
-            }
-        </>
-    }
-        , [])
-
     const screen = useMemo(() => {
         const isCheck = data.find((d) => d.active)
         let content: React.ReactNode;
@@ -101,16 +57,13 @@ export default function HistoryTransaction() {
             default:
                 null
         }
-
         return (
-            <Footer isOther={isCheck?.type === "Orders"} isFooter={isCheck?.type === "Lot"}>
-                <div
-                    key={isCheck?.type}
-                    className="animate-fade-in"
-                >
-                    {content}
-                </div>
-            </Footer>
+            <div
+                key={isCheck?.type}
+                className="animate-fade-in"
+            >
+                {content}
+            </div>
         );
     }, [data.find((d) => d.active)])
 

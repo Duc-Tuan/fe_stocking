@@ -19,6 +19,7 @@ import IconCloseTransaction from './icons/IconCloseTransaction.svg?react';
 import IconArrowLeft from './icons/IconArrowLeft.svg?react';
 import IconArrowRight from './icons/IconArrowRight.svg?react';
 import IconTaskSquare from './icons/IconTaskSquare.svg?react';
+import IconArrowRightV2 from './icons/IconArrowRightV2.svg?react';
 
 export default function Icon(props: any) {
     switch (props?.name?.toLowerCase()) {
@@ -64,6 +65,8 @@ export default function Icon(props: any) {
             return <IconArrowRight {...props} />;
         case 'icon-task-square':
             return <IconTaskSquare {...props} />;
+        case 'icon-right-v2':
+            return <IconArrowRightV2 {...props} />;
         default:
             return null;
     }

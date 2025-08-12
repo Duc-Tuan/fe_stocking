@@ -68,5 +68,10 @@
   "Chốt lệnh nhanh": "Quick command",
   "Chốt lệnh nhanh theo lô từ": "Fast order closing in lots from",
   "đến": "to",
-  "Ngày kết thúc": "End date"
+  "tại": "at",
+  "Ngày kết thúc": "End date",
+  "Nếu bạn xác nhận đóng lệnh nhanh thì sẽ không thể nào mở lại được tại thời điểm này nữa. Bạn vẫn muốn xác nhận!": "If you confirm the quick close order, it will not be possible to reopen it at this time. You still want to confirm!",
+  "Bạn xác nhận muốn đóng lệnh nhanh lô": "You confirm that you want to quickly close the lot",
+  "Bạn xác nhận muốn đóng lệnh nhanh từ lô": "You confirm that you want to quickly close the lot",
+  "ở chợ": "at market"
 }

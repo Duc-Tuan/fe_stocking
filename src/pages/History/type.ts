@@ -222,4 +222,220 @@ export interface IFilterAllLot {
     status: EMO | null,
     accTransaction: number | null,
     toFrom: [start: Dayjs | null | undefined, end: Dayjs | null | undefined]
-} 
+}
+
+export interface ISymbol {
+    id: number,
+    symbol: string,
+    accTransaction: number,
+    type: "SELL" | "BUY",
+    priceOpen: number,
+    price: number,
+    time: string,
+    profit: number,
+    volume: number,
+    status: string
+}
+
+export const dataAccTransaction = [20305495, 102743455, 957463445, 333354356]
+
+export const dataSymbolTransaction: ISymbol[] = [
+    {
+        id: 1,
+        accTransaction: 20305495,
+        symbol: "NZDUSDc",
+        price: 2.235435,
+        priceOpen: 1.23432,
+        profit: 7.5,
+        status: "filled",
+        time: "2025.08.11 11:00:01",
+        type: "BUY",
+        volume: 0.01
+    },
+    {
+        id: 2,
+        accTransaction: 20305495,
+        symbol: "GBPJPYc",
+        price: 2.235435,
+        priceOpen: 1.23432,
+        profit: 7.5,
+        status: "filled",
+        time: "2025.08.11 11:00:01",
+        type: "SELL",
+        volume: 0.01
+    },
+    {
+        id: 3,
+        accTransaction: 20305495,
+        symbol: "EURUSDc",
+        price: 2.235435,
+        priceOpen: 1.23432,
+        profit: 7.5,
+        status: "filled",
+        time: "2025.08.11 11:00:01",
+        type: "SELL",
+        volume: 0.01
+    },
+    {
+        id: 4,
+        accTransaction: 20305495,
+        symbol: "AUDCHFc",
+        price: 2.235435,
+        priceOpen: 1.23432,
+        profit: 7.5,
+        status: "filled",
+        time: "2025.08.11 11:00:01",
+        type: "BUY",
+        volume: 0.01
+    },
+    {
+        id: 5,
+        accTransaction: 20305495,
+        symbol: "NZDUSDc",
+        price: 2.235435,
+        priceOpen: 1.23432,
+        profit: 7.5,
+        status: "filled",
+        time: "2025.08.11 11:00:01",
+        type: "BUY",
+        volume: 0.01
+    },
+    {
+        id: 6,
+        accTransaction: 102743455,
+        symbol: "GBPJPYc",
+        price: 2.235435,
+        priceOpen: 1.23432,
+        profit: 7.5,
+        status: "filled",
+        time: "2025.08.11 11:00:01",
+        type: "SELL",
+        volume: 0.01
+    },
+    {
+        id: 7,
+        accTransaction: 102743455,
+        symbol: "EURUSDc",
+        price: 2.235435,
+        priceOpen: 1.23432,
+        profit: 7.5,
+        status: "filled",
+        time: "2025.08.11 11:00:01",
+        type: "SELL",
+        volume: 0.01
+    },
+    {
+        id: 8,
+        accTransaction: 957463445,
+        symbol: "AUDCHFc",
+        price: 2.235435,
+        priceOpen: 1.23432,
+        profit: 7.5,
+        status: "filled",
+        time: "2025.08.11 11:00:01",
+        type: "BUY",
+        volume: 0.01
+    },
+    {
+        id: 9,
+        accTransaction: 957463445,
+        symbol: "NZDUSDc",
+        price: 2.235435,
+        priceOpen: 1.23432,
+        profit: 7.5,
+        status: "cancel",
+        time: "2025.08.11 11:00:01",
+        type: "BUY",
+        volume: 0.01
+    },
+    {
+        id: 10,
+        accTransaction: 957463445,
+        symbol: "GBPJPYc",
+        price: 2.235435,
+        priceOpen: 1.23432,
+        profit: 7.5,
+        status: "filled",
+        time: "2025.08.11 11:00:01",
+        type: "SELL",
+        volume: 0.01
+    },
+    {
+        id: 11,
+        accTransaction: 957463445,
+        symbol: "EURUSDc",
+        price: 2.235435,
+        priceOpen: 1.23432,
+        profit: 7.5,
+        status: "filled",
+        time: "2025.08.11 11:00:01",
+        type: "SELL",
+        volume: 0.01
+    },
+    {
+        id: 12,
+        accTransaction: 333354356,
+        symbol: "AUDCHFc",
+        price: 2.235435,
+        priceOpen: 1.23432,
+        profit: 7.5,
+        status: "filled",
+        time: "2025.08.11 11:00:01",
+        type: "BUY",
+        volume: 0.01
+    },
+    {
+        id: 13,
+        accTransaction: 333354356,
+        symbol: "NZDUSDc",
+        price: 2.235435,
+        priceOpen: 1.23432,
+        profit: 7.5,
+        status: "filled",
+        time: "2025.08.11 11:00:01",
+        type: "BUY",
+        volume: 0.01
+    },
+    {
+        id: 14,
+        accTransaction: 333354356,
+        symbol: "GBPJPYc",
+        price: 2.235435,
+        priceOpen: 1.23432,
+        profit: 7.5,
+        status: "filled",
+        time: "2025.08.11 11:00:01",
+        type: "SELL",
+        volume: 0.01
+    },
+    {
+        id: 15,
+        accTransaction: 333354356,
+        symbol: "EURUSDc",
+        price: 2.235435,
+        priceOpen: 1.23432,
+        profit: 7.5,
+        status: "filled",
+        time: "2025.08.11 11:00:01",
+        type: "SELL",
+        volume: 0.01
+    },
+    {
+        id: 16,
+        accTransaction: 333354356,
+        symbol: "AUDCHFc",
+        price: 2.235435,
+        priceOpen: 1.23432,
+        profit: 7.5,
+        status: "filled",
+        time: "2025.08.11 11:00:01",
+        type: "BUY",
+        volume: 0.01
+    },
+]
+
+export const initFilter: IFilterAllLot = {
+    accTransaction: null,
+    status: null,
+    toFrom: [undefined, undefined]
+}

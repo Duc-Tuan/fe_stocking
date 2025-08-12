@@ -10,6 +10,7 @@ import { ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 import { Button } from '../../../components/button'
 import RangePickerCustom from '../../../components/rangePicker'
 import dayjs, { Dayjs } from 'dayjs'
+import Filter from '../components/Filter'
 
 const initFilter: IFilterAllLot = {
     accTransaction: null,
@@ -70,7 +71,7 @@ export default function AllLot() {
 
     return (
         <div >
-            <Filter t={t} setFilter={setFilter} filter={filter} />
+            <Filter subButton={<TaskSquare />} setFilter={setFilter} filter={filter} />
 
             <div className="mt-1 p-2">
                 {data.map((a, idx) =>
@@ -148,63 +149,12 @@ export default function AllLot() {
     )
 }
 
-const Filter = ({ t, setFilter, filter }: any) => {
-    const popupRef: any = useRef(null);
-    const [open, setOpen] = useState(false);
-    const [visible, setVisible] = useState(false); // để delay unmount
 
-    const handleToggle = () => {
-        if (open) {
-            // Đóng có delay để chạy animation
-            setOpen(false);
-            setTimeout(() => setVisible(false), 200); // khớp với duration
-        } else {
-            setVisible(true);
-            setTimeout(() => setOpen(true), 10); // delay nhẹ để Tailwind áp transition
-        }
-    };
-
-    return (
-        <div className="sticky top-0 flex justify-between items-center bg-white shadow-lg shadow-gray-100 z-50">
-            <div ref={popupRef} className="w-fit z-10 col-span-2 font-semibold rounded-md text-sm p-2">
-                <div className="flex justify-start items-center">
-                    <TooltipNavigate handle={handleToggle} iconName='icon-filter' path='#' title='Bộ lọc' />
-                    <TaskSquare />
-                </div>
-
-                {visible && (
-                    <div className={`flex flex-col justify-between items-center h-60 transition-all duration-200 absolute top-full bg-white shadow-lg shadow-gray-300 rounded-lg border border-gray-300 p-2 ${open ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'} pt-0`}>
-                        <div className="grid grid-cols-2">
-                            <FilterStatus setFilter={setFilter} filter={filter} />
-                            <FilterAccTransaction setFilter={setFilter} filter={filter} />
-                            <FilterTime setFilter={setFilter} filter={filter} />
-                        </div>
-
-                        <div className="flex justify-end items-center gap-2 w-full">
-                            <Button onClick={handleToggle} className="cursor-pointer text-[var(--color-background)] px-3 py-2 border border-gray-300 border-solid shadow-md shadow-gray-300">{t("Hủy")}</Button>
-                            <Button onClick={() => setFilter(initFilter)} className="cursor-pointer bg-[var(--color-background)] px-3 py-2 shadow-md shadow-gray-300">{t("Làm mới")}</Button>
-                            <Button className="cursor-pointer bg-[var(--color-background)] px-3 py-2 shadow-md shadow-gray-300">{t("Lọc")}</Button>
-                        </div>
-                    </div>
-                )}
-            </div>
-
-            <div className="flex justify-between items-center gap-4 mr-4">
-                <TooltipNavigate iconName='icon-left' path='#' title='Trang trước' className="w-[36px] h-[36px] p-0 flex justify-center items-center" />
-                <div className="flex justify-between items-center gap-1">
-                    <div className="w-[36px] h-[36px] shadow-md shadow-gray-500 flex justify-center items-center rounded-lg">1</div>
-                    <div className="">/</div>
-                    <div className="w-[36px] h-[36px] shadow-md shadow-gray-500 flex justify-center items-center rounded-lg">10</div>
-                </div>
-                <TooltipNavigate iconName='icon-right' path='#' title='Trang sau' className="w-[36px] h-[36px] p-0 flex justify-center items-center" />
-            </div>
-        </div>
-    )
-}
 
 const TaskSquare = () => {
     const { t } = useTranslation()
     const [open, setOpen] = useState(false);
+    const [openModal, setOpenModal] = useState(false);
     const [visible, setVisible] = useState(false); // để delay unmount
     const [data, setData] = useState<{ to: string | undefined, from: string | undefined }>({ to: "1", from: "1" })
 
@@ -236,12 +186,74 @@ const TaskSquare = () => {
                 <span>{t("đến")}</span>
                 <input type="number" onChange={(e) => changeValue(e, "to")} value={data.to} placeholder='2' className='w-16 text-center border border-[var(--color-background)] rounded-sm font-bold px-1 py-0.5 appearance-none focus:outline-none focus:ring-0 focus:border [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [MozAppearance:textfield]' />
                 <Button onClick={handleToggle} className="ml-6 h-[30px] text-red-500 border p-0 px-2 cursor-pointer">{t("Hủy")}</Button>
-                <Button className="h-[30px] text-white bg-[var(--color-background)] border p-0 px-2 cursor-pointer">{t("Xác nhận")}</Button>
+                <Button onClick={() => setOpenModal((prev) => !prev)} className="h-[30px] text-white bg-[var(--color-background)] border p-0 px-2 cursor-pointer">{t("Xác nhận")}</Button>
             </div>
             :
             <TooltipNavigate handle={handleToggle} iconName='icon-task-square' path='#' title='Chốt lệnh nhanh' className='ml-2' />
         }
+
+        <ModalTaskSquare open={openModal} setOpen={setOpenModal} data={data} />
     </div>
+}
+
+const ModalTaskSquare = ({ open, setOpen, data }: { open: boolean, setOpen: Dispatch<SetStateAction<boolean>>, data: { to: string | undefined, from: string | undefined } }) => {
+    const { t } = useTranslation()
+    return <Dialog open={open} onClose={setOpen} className="relative z-100">
+        <DialogBackdrop
+            transition
+            className="fixed inset-0 bg-gray-500/75 transition-opacity data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in"
+        />
+
+        <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
+            <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                <DialogPanel
+                    transition
+                    className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in sm:my-8 sm:w-full sm:max-w-lg data-closed:sm:translate-y-0 data-closed:sm:scale-95"
+                >
+                    <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <div className="sm:flex sm:items-start">
+                            <div className="mx-auto flex size-12 shrink-0 items-center justify-center rounded-full bg-red-100 sm:mx-0 sm:size-10">
+                                <ExclamationTriangleIcon aria-hidden="true" className="size-6 text-red-600" />
+                            </div>
+                            <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                                <DialogTitle as="h3" className="text-base font-semibold text-gray-900">
+                                    {
+                                        data.from === data.to ?
+                                            <>{t("Bạn xác nhận muốn đóng lệnh nhanh lô")} {data.from}</>
+                                            :
+                                            <>
+                                                {t("Bạn xác nhận muốn đóng lệnh nhanh từ lô")} {data.from} {t("đến")} {data.to}
+                                            </>
+                                    }
+                                </DialogTitle>
+                                <div className="mt-2">
+                                    <p className="text-sm text-gray-500">
+                                        {t("Nếu bạn xác nhận đóng lệnh nhanh thì sẽ không thể nào mở lại được tại thời điểm này nữa. Bạn vẫn muốn xác nhận!")}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                        <Button
+                            type="button"
+                            className="shadow-gray-400 cursor-pointer inline-flex w-full justify-center rounded-md bg-[var(--color-background)] px-3 py-2 text-sm font-semibold text-white shadow-md sm:ml-3 sm:w-auto"
+                        >
+                            {t("Xác nhận")}
+                        </Button>
+                        <Button
+                            type="button"
+                            data-autofocus
+                            onClick={() => setOpen(false)}
+                            className="shadow-gray-400 cursor-pointer mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-md inset-ring inset-ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
+                        >
+                            {t("Hủy")}
+                        </Button>
+                    </div>
+                </DialogPanel>
+            </div>
+        </div>
+    </Dialog>
 }
 
 const Modal = ({ open, setOpen, dataCurrent }: { open: boolean, setOpen: Dispatch<SetStateAction<boolean>>, dataCurrent: IActiveHistoryLot | null }) => {
@@ -295,113 +307,4 @@ const Modal = ({ open, setOpen, dataCurrent }: { open: boolean, setOpen: Dispatc
             </div>
         </div>
     </Dialog>
-}
-
-const FilterStatus = ({ setFilter, filter }: { setFilter: Dispatch<SetStateAction<IFilterAllLot>>, filter: IFilterAllLot }) => {
-    const { t } = useTranslation();
-    const popupFilterStatusRef: any = useRef(null);
-    const [open, setOpen] = useState(false);
-    const [visible, setVisible] = useState(false); // để delay unmount
-
-    const handleToggle = () => {
-        if (open) {
-            // Đóng có delay để chạy animation
-            setOpen(false);
-            setTimeout(() => setVisible(false), 200); // khớp với duration
-        } else {
-            setVisible(true);
-            setTimeout(() => setOpen(true), 10); // delay nhẹ để Tailwind áp transition
-        }
-    };
-
-    useClickOutside(popupFilterStatusRef, () => {
-        setOpen(false);
-        setTimeout(() => setVisible(false), 200);
-    }, visible);
-
-
-    return <div ref={popupFilterStatusRef} className="col-span-1 w-fit z-10 font-semibold rounded-md text-sm p-2 relative">
-        <div className="">{t("Trạng thái lô")}:</div>
-        <Button onClick={handleToggle} className="flex justify-between items-center gap-4 text-black px-2 cursor-pointer z-50 min-w-46">
-            <div className="">{t(dataStatusAllLot.find((a) => a.value === filter.status)?.label ?? "Chọn")}</div>
-            <div className=""><Icon name="icon-up" width={14} height={14} className={`transition-transform duration-200 ${open ? 'rotate-180' : 'rotate-0'}`} /></div>
-        </Button>
-
-        {visible && (
-            <div className={`transition-all -mt-2 duration-200 absolute top-full w-[calc(100%-16px)] bg-white shadow-lg shadow-gray-300 rounded-lg border border-gray-300 p-2 ${open ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
-
-                {
-                    dataStatusAllLot.map((item) => {
-                        return <Button onClick={() => {
-                            handleToggle()
-                            setFilter((prev) => ({ ...prev, status: item.value }))
-                        }} className={`${item.value === filter.status ? "text-[var(--color-background)]" : "text-black"}  shadow-none p-1 hover:bg-[var(--color-background-opacity-2)] w-full cursor-pointer hover:text-[var(--color-background)] rounded-none text-left font-semibold`} key={item.value}>{t(item.label)}</Button>
-                    })
-                }
-            </div>
-        )}
-    </div>
-}
-
-const FilterAccTransaction = ({ setFilter, filter }: { setFilter: Dispatch<SetStateAction<IFilterAllLot>>, filter: IFilterAllLot }) => {
-    const { t } = useTranslation();
-    const popupFilterStatusRef: any = useRef(null);
-    const [open, setOpen] = useState(false);
-    const [visible, setVisible] = useState(false); // để delay unmount
-
-    const handleToggle = () => {
-        if (open) {
-            // Đóng có delay để chạy animation
-            setOpen(false);
-            setTimeout(() => setVisible(false), 200); // khớp với duration
-        } else {
-            setVisible(true);
-            setTimeout(() => setOpen(true), 10); // delay nhẹ để Tailwind áp transition
-        }
-    };
-
-    useClickOutside(popupFilterStatusRef, () => {
-        setOpen(false);
-        setTimeout(() => setVisible(false), 200);
-    }, visible);
-
-
-    return <div ref={popupFilterStatusRef} className="col-span-1 w-fit z-10 font-semibold rounded-md text-sm p-2 relative">
-        <div className="">{t("Tài khoản giao dịch")}:</div>
-        <Button onClick={handleToggle} className="flex justify-between items-center gap-4 text-black px-2 cursor-pointer z-50 min-w-46">
-            <div className="">{dataAccTransactionAllLot.find((a) => a.value === filter.accTransaction)?.label ?? t("Chọn")}</div>
-            <div className=""><Icon name="icon-up" width={14} height={14} className={`transition-transform duration-200 ${open ? 'rotate-180' : 'rotate-0'}`} /></div>
-        </Button>
-
-        {visible && (
-            <div className={`transition-all -mt-2 duration-200 absolute top-full w-[calc(100%-16px)] bg-white shadow-lg shadow-gray-300 rounded-lg border border-gray-300 p-2 ${open ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
-
-                {
-                    dataAccTransactionAllLot.map((item) => {
-                        return <Button onClick={() => {
-                            handleToggle()
-                            setFilter((prev) => ({ ...prev, accTransaction: item.value }))
-                        }} className={`${item.value === filter.accTransaction ? "text-[var(--color-background)]" : "text-black"}  shadow-none p-1 hover:bg-[var(--color-background-opacity-2)] w-full cursor-pointer hover:text-[var(--color-background)] rounded-none text-left font-semibold`} key={item.value}>{t(item.label)}</Button>
-                    })
-                }
-            </div>
-        )}
-    </div>
-}
-
-const FilterTime = ({ setFilter, filter }: { setFilter: Dispatch<SetStateAction<IFilterAllLot>>, filter: IFilterAllLot }) => {
-    const { t } = useTranslation()
-    const changeTime = (dates: (dayjs.Dayjs | null)[] | null, dateStrings: any[]) => {
-        if (dates) {
-            const dataDate = [dates[0], dates[1]]
-            setFilter((prev) => ({ ...prev, toFrom: dataDate as [start: Dayjs | null | undefined, end: Dayjs | null | undefined] }))
-        }
-    }
-
-    return <div className="col-span-2">
-        <div className="p-2">
-            <div className="mb-1">{t("Thời gian")}:</div>
-            <RangePickerCustom onRangeChange={changeTime} value={filter.toFrom} />
-        </div>
-    </div>
 }
