@@ -8,8 +8,6 @@ import Icon from '../../../assets/icon'
 import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react'
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 import { Button } from '../../../components/button'
-import RangePickerCustom from '../../../components/rangePicker'
-import dayjs, { Dayjs } from 'dayjs'
 import Filter from '../components/Filter'
 
 const initFilter: IFilterAllLot = {

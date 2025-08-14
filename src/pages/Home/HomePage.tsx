@@ -130,7 +130,6 @@ export default function HomePage() {
         setActiveTab(updated);
     };
 
-    // ✅ Ghi nhớ component để tránh render lại
     const chartMemo = useMemo(() => (
         <ChartComponent
             dataOld={symbols}

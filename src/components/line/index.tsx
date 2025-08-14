@@ -2,6 +2,7 @@ import {
     ColorType,
     createChart,
     type ISeriesApi,
+    type UTCTimestamp,
 } from 'lightweight-charts';
 import { useEffect, useRef } from 'react';
 import { formatVietnamTimeSmart, gridColor } from './formatTime';
@@ -35,25 +36,37 @@ export const ChartComponent = (props: any) => {
         // Xóa các vạch cũ
         container.querySelectorAll('.day-separator').forEach(el => el.remove());
 
+        // ✅ Tìm ngày duy nhất có trong data
         const seenDates = new Set<string>();
+        const timestampsAt7UTC: number[] = [];
 
-        for (const point of data) {
-            const date = new Date(point.time * 1000);
-            const dateKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
-            if (seenDates.has(dateKey)) continue;
-            seenDates.add(dateKey);
+        for (const candle of data) {
+            const date = new Date(Number(candle.time) * 1000);
+            const y = date.getUTCFullYear();
+            const m = date.getUTCMonth();
+            const d = date.getUTCDate();
 
-            const x = timeScale.timeToCoordinate(point.time);
+            const key = `${y}-${m}-${d}`;
+            if (seenDates.has(key)) continue;
+            seenDates.add(key);
+
+            // Tạo timestamp tại 07:00 UTC của ngày đó
+            const t7 = Math.floor(Date.UTC(y, m, d, 0, 0, 0) / 1000);
+            timestampsAt7UTC.push(t7);
+        }
+
+        for (const timestamp of timestampsAt7UTC) {
+            const x = timeScale.timeToCoordinate(timestamp as UTCTimestamp);
             if (x === null) continue;
 
             const line = document.createElement('div');
             line.className = 'day-separator';
             line.style.cssText = `
                 position: absolute;
-                top: 20%;
+                top: 19%;
                 left: ${x}px;
                 width: 0;
-                height: 73%;
+                height: 74%;
                 border-left: 1px dashed rgba(0, 0, 0, 0.4);
                 pointer-events: none;
                 z-index: 2;
@@ -236,6 +249,7 @@ export const ChartComponent = (props: any) => {
                 time: d.time
             }))
             .sort((a, b) => a.time - b.time);
+
         const deduped = normalized.filter((item, index, arr) => {
             return index === 0 || item.time > arr[index - 1].time;
         });
@@ -244,8 +258,8 @@ export const ChartComponent = (props: any) => {
             const first = deduped[0];
             const last = deduped[deduped.length - 1];
             const spacing = 60;
-            deduped.unshift({ time: first.time - spacing, value: null });
-            deduped.push({ time: last.time + spacing, value: null });
+            deduped.unshift({ time: first.time - spacing, value: undefined });
+            deduped.push({ time: last.time + spacing, value: undefined });
         }
 
         const timeScale = chartRef.current?.timeScale();
