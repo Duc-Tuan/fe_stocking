@@ -39,3 +39,20 @@ export const dataAccTransaction: IAccTransaction[] = [
         usename: 76345354
     },
 ]
+
+export interface IOrderTransaction {
+    account_monitor_id?: number,
+    account_transaction_id?: number,
+    price?: number,
+    volume?: number,
+    stop_loss?: number,
+    take_profit?: number,
+    status?: EMO,
+    type?: "CLOSE" | "RUNNING",
+    status_sl_tp?: "Nguoc" | "Xuoi",
+    by_symbol?: {
+        current_price: number,
+        symbol: string,
+        type: "SELL" | "BUY"
+    }[]
+} 

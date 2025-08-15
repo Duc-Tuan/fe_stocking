@@ -169,7 +169,7 @@ export default function AllLot() {
                 )}
             </div>
 
-            <Modal open={open} setOpen={setOpen} dataCurrent={dataCurrent} setDataLost={setData}/>
+            <Modal open={open} setOpen={setOpen} dataCurrent={dataCurrent} setDataLost={setData} />
         </div>
     )
 }
@@ -221,8 +221,10 @@ const TaskSquare = ({ query, idx, setDataLost }: { query: QueryLots, idx: number
 
 const ModalTaskSquare = ({ open, setOpen, data, idx, setDataLost }: { setDataLost: Dispatch<SetStateAction<IHistoryLot[]>>, idx: number[], open: boolean, setOpen: Dispatch<SetStateAction<boolean>>, data: { to: string | undefined, from: string | undefined } }) => {
     const { t } = useTranslation()
+    const [loading, setLoading] = useState<boolean>(false)
 
     const handleClick = async () => {
+        setLoading(true)
         const start = Number(data.from);
         const end = Number(data.to);
 
@@ -240,10 +242,17 @@ const ModalTaskSquare = ({ open, setOpen, data, idx, setDataLost }: { setDataLos
 
         await postCloseOrder(body).then(() => {
             setOpen(false)
-            setDataLost((prev) => prev.map((a) => ({
-                ...a,
-                type: "CLOSE"
-            })))
+            setLoading(false)
+            setDataLost((prev) => prev.map((a) => {
+                const isCheck = body.data.find((i) => i.id === a.id)
+                if (isCheck) {
+                    return {
+                        ...a,
+                        type: "CLOSE"
+                    }
+                }
+                return a
+            }))
             toast.success(`${t("Đóng lệnh từ lô")} ${start} ${t("đến")} ${end} ${t('thành công')}!`)
         })
     }
@@ -286,7 +295,10 @@ const ModalTaskSquare = ({ open, setOpen, data, idx, setDataLost }: { setDataLos
                     </div>
                     <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
                         <Button
-                            onClick={handleClick}
+                            isLoading={loading}
+                            onClick={() => {
+                                !loading && handleClick()
+                            }}
                             type="button"
                             className="shadow-gray-400 cursor-pointer inline-flex w-full justify-center rounded-md bg-[var(--color-background)] px-3 py-2 text-sm font-semibold text-white shadow-md sm:ml-3 sm:w-auto"
                         >
@@ -309,17 +321,24 @@ const ModalTaskSquare = ({ open, setOpen, data, idx, setDataLost }: { setDataLos
 
 const Modal = ({ open, setOpen, dataCurrent, setDataLost }: { setDataLost: Dispatch<SetStateAction<IHistoryLot[]>>, open: boolean, setOpen: Dispatch<SetStateAction<boolean>>, dataCurrent: IActiveHistoryLot | null }) => {
     const { t } = useTranslation()
+    const [loading, setLoading] = useState<boolean>(false)
 
     const handleClick = async () => {
+        setLoading(true)
         await postCloseOrder({ data: [{ id: Number(dataCurrent?.id) }] }).then(() => {
             setOpen(false)
-            setDataLost((prev) => prev.map((a) => ({
-                ...a,
-                type: "CLOSE"
-            })))
+            setLoading(false)
+            setDataLost((prev) => prev.map((a) => {
+                if (a.id === dataCurrent?.id) {
+                    return {
+                        ...a,
+                        type: "CLOSE"
+                    }
+                }
+                return a
+            }))
             toast.success(`${t("Đóng lệnh lô")} ${dataCurrent?.lot} ${t('thành công')}!`)
         })
-        console.log(dataCurrent);
     }
 
     return <Dialog open={open} onClose={setOpen} className="relative z-100">
@@ -353,7 +372,12 @@ const Modal = ({ open, setOpen, dataCurrent, setDataLost }: { setDataLost: Dispa
                     </div>
                     <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
                         <Button
-                            onClick={handleClick}
+                            isLoading={loading}
+                            onClick={
+                                () => {
+                                    !loading && handleClick()
+                                }
+                            }
                             type="button"
                             className="shadow-gray-400 cursor-pointer inline-flex w-full justify-center rounded-md bg-[var(--color-background)] px-3 py-2 text-sm font-semibold text-white shadow-md sm:ml-3 sm:w-auto"
                         >

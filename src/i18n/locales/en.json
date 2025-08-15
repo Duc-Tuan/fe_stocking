@@ -81,5 +81,19 @@
   "Đã đóng lệnh": "Order closed",
   "Đã loại bỏ": "Removed",
   "Lệnh đã đóng": "Order closed",
-  "Trạng thái cặp tiền": "Currency pair status"
+  "Trạng thái cặp tiền": "Currency pair status",
+  "Cặp tiền của tài khoản theo dõi": "Tracking account currency pai",
+  "Hết hạn": "Expiry",
+  "Vào lệnh thị trường": "Enter order field",
+  "Xuôi Limit": "Down Limit",
+  "Ngược Limit": "Reverse Limit",
+  "Xuôi Stop": "Down Stop",
+  "Ngược Stop": "Reverse Stop",
+  "Chọn tài khoản giao dịch": "Select trading account",
+  "Xuôi": "Down",
+  "Vui lòng chọn tài khoản giao dịch trước khi đặt lệnh!": "Please select a trading account before placing an order!",
+  "Bạn xác nhận muốn vào lệnh bằng thông tin dưới đây": "Please confirm that you want to place an order using the information below.",
+  "Ngược": "Reverse",
+  "Đặt lệnh": "Place an order",
+  "Vào lệnh thành công!": "Order successful!"
 }

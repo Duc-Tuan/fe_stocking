@@ -21,6 +21,7 @@ export default function Deals() {
   const { t } = useTranslation()
   const [filter, setFilter] = useState<IFilterAllLot>(initFilter)
   const [data, setData] = useState<ISymbolAll[]>([])
+  const [total, setTotal] = useState<{ totalFilled: number, totalCancelled: number, total: number }>({ total: 0, totalCancelled: 0, totalFilled: 0 })
 
   const [query, setQuery] = useState<QueryLots>(initPara)
 
@@ -28,6 +29,11 @@ export default function Deals() {
     const fetchApi = async () => {
       const res = await getSymbolTransaction(query)
       setData(res.data.data);
+      setTotal({
+        total: res.data.total,
+        totalFilled: res.data.totalFilled,
+        totalCancelled: res.data.totalCancelled,
+      })
       setQuery((prev) => ({ ...prev, total: res.data.total, totalPage: Math.ceil(res.data.total / res.data.limit) }))
     }
     fetchApi();
@@ -51,32 +57,29 @@ export default function Deals() {
       <Filter setFilter={setFilter} filter={filter} isStatus query={query} setQuery={setQuery} isStatusSymbol handleFilter={handleFilter} />
       <div className="p-2 flex flex-col justify-center items-start gap-2">
         {data.map((a, idx) => <div key={idx} className="flex justify-between items-center w-full shadow-sm shadow-gray-300 p-2 rounded-sm">
-          <div className="">
-            <div className='font-bold'>{a.symbol} <span className={`text-sm font-semibold ${a.type === "SELL" ? "text-red-500" : "text-blue-500"}`}>{a.type}</span></div>
-            <div className='text-sm'>{a.volume} {t("tại")} {a.price_open}</div>
+          <div className="text-sm">
+            <div className='font-bold mb-1'>{a.symbol} <span className={`text-sm font-semibold ${a.type === "SELL" ? "text-red-500" : "text-blue-500"}`}>{a.type}</span></div>
+            <div>{a.volume} {t("tại")} {a.price_open}</div>
           </div>
-          <div className="">
-            <div className={`text-right ${a.status === "filled" ? "text-blue-700" : "text-red-500"} font-semibold`}>{a.profit} <span>{a.status}</span></div>
-            <div className='text-sm'>{a.account_transaction_id} | {(dayjs.utc(a.time)).tz("Asia/Ho_Chi_Minh").format("YYYY-MM-DD HH:mm:ss")}</div>
+          <div className="text-sm">
+            <div className={`mb-1 text-right ${a.status === "filled" ? "text-blue-700" : "text-red-500"} font-semibold`}>{a.profit} <span>{a.status}</span></div>
+            <div>{a.account_transaction_id} | {(dayjs.utc(a.time)).tz("Asia/Ho_Chi_Minh").format("YYYY-MM-DD HH:mm:ss")}</div>
           </div>
         </div>)}
       </div>
+
       <div className="sticky bottom-0 bg-white p-2">
         <div className="flex justify-between items-center">
-          <div className="font-semibold">{t("Tiền nạp")}</div>
-          <span className='font-bold'>100000</span>
+          <div className="font-semibold">{t("Tổng lệnh")}</div>
+          <span className='font-bold'>{total.total}</span>
         </div>
         <div className="flex justify-between items-center">
-          <div className="font-semibold">{t("Lợi nhuận")}</div>
-          <span className='font-bold'>13940</span>
+          <div className="font-semibold">Filled</div>
+          <span className='font-bold'>{total.totalFilled}</span>
         </div>
         <div className="flex justify-between items-center">
-          <div className="font-semibold">{t("Phí qua đêm")}</div>
-          <span className='font-bold'>10.9</span>
-        </div>
-        <div className="flex justify-between items-center">
-          <div className="font-semibold">{t("Số dư")}</div>
-          <span className='font-bold'>1200000</span>
+          <div className="font-semibold">{t("Đã đóng lệnh")}</div>
+          <span className='font-bold'>{total.totalCancelled}</span>
         </div>
       </div>
     </div>

@@ -1,3 +1,4 @@
+import type { IOrderTransaction } from "../pages/Transaction/type";
 import axiosClient from "../services/axiosClient";
 import type { IPostCloseOrder, QueryLots } from "../types/global";
 
@@ -76,6 +77,18 @@ export const getPositionTransaction = async (query: QueryLots) => {
             end_time: query.end_time,
             type: query.type,
             acc_transaction: query.acc_transaction
+        },
+    })
+
+    return {
+        data: data.data
+    }
+}
+
+export const postSendOrder = async (body?: IOrderTransaction) => {
+    const data = await axiosClient.post('/lot-transaction', body, {
+        headers: {
+            'Content-Type': 'application/json',
         },
     })
 

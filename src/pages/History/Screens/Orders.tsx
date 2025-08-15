@@ -23,11 +23,13 @@ export default function Orders() {
   const [filter, setFilter] = useState<IFilterAllLot>(initFilter)
   const [data, setData] = useState<ISymbol[]>([])
   const [query, setQuery] = useState<QueryLots>(initPara)
+  const [total, setTotal] = useState<{ totalOrder: number }>({ totalOrder: 0 })
 
   useEffect(() => {
     const fetchApi = async () => {
       const res = await getOrdersClose(query)
       setData(res.data.data);
+      setTotal({totalOrder: res.data.totalOrder})
       setQuery((prev) => ({ ...prev, total: res.data.total, totalPage: Math.ceil(res.data.total / res.data.limit) }))
     }
     fetchApi();
@@ -51,13 +53,13 @@ export default function Orders() {
 
       <div className="p-2 flex flex-col justify-center items-start gap-2">
         {data.map((a, idx) => <div key={idx} className="flex justify-between items-center w-full shadow-sm shadow-gray-300 p-2 rounded-sm">
-          <div className="">
-            <div className='font-bold'>{a.symbol} <span className={`text-sm font-semibold ${a.position_type === "SELL" ? "text-red-500" : "text-blue-500"}`}>{a.position_type}</span></div>
-            <div className='text-sm'>{a.volume} / {a.volume} {t("ở chợ")}</div>
+          <div className="text-sm">
+            <div className='font-bold mb-1 '>{a.symbol} <span className={`text-sm font-semibold ${a.position_type === "SELL" ? "text-red-500" : "text-blue-500"}`}>{a.position_type}</span></div>
+            <div>{a.volume} / {a.volume} {t("ở chợ")}</div>
           </div>
-          <div className="">
-            <div className={`text-right text-red-500 font-semibold`}>{t("Lệnh đã đóng")}</div>
-            <div className='text-sm'>{(dayjs.utc(a.close_time)).tz("Asia/Ho_Chi_Minh").format("YYYY-MM-DD HH:mm:ss")}</div>
+          <div className="text-sm">
+            <div className={`mb-1 text-right text-red-500 font-semibold`}>{t("Lệnh đã đóng")}</div>
+            <div>{a.account_id} | {(dayjs.utc(a.close_time)).tz("Asia/Ho_Chi_Minh").format("YYYY-MM-DD HH:mm:ss")}</div>
           </div>
         </div>)}
       </div>
@@ -65,15 +67,7 @@ export default function Orders() {
       <div className="sticky bottom-0 bg-white p-2">
         <div className="flex justify-between items-center">
           <div className="font-semibold">{t("Tổng lệnh")}</div>
-          <span className='font-bold'>{data.length}</span>
-        </div>
-        <div className="flex justify-between items-center">
-          <div className="font-semibold">Filled</div>
-          {/* <span className='font-bold'>{data.filter((a) => a.status === "filled").length}</span> */}
-        </div>
-        <div className="flex justify-between items-center">
-          <div className="font-semibold">{t("Bị hủy")}</div>
-          {/* <span className='font-bold'>{data.filter((a) => a.status !== "filled").length}</span> */}
+          <span className='font-bold'>{total.totalOrder}</span>
         </div>
       </div>
     </div>

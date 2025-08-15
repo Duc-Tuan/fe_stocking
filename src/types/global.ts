@@ -23,7 +23,11 @@ export interface IOptions<T = string> {
 }
 
 export interface ICurrentPnl {
-    by_symbol: { current_price: number, symbol: string, type: string }[],
+    by_symbol: {
+        current_price: number,
+        symbol: string,
+        type: "SELL" | "BUY"
+    }[],
     time: string,
     total_pnl: number
 }

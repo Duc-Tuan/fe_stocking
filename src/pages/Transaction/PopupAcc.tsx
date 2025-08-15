@@ -1,10 +1,12 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react'
 import { Button } from '../../components/button';
 import Icon from '../../assets/icon';
-import { dataAccTransaction, type IAccTransaction } from './type';
+import { dataAccTransaction, type IAccTransaction, type IOrderTransaction } from './type';
+import { useTranslation } from 'react-i18next';
 
-export default function PopupAcc() {
+export default function PopupAcc({ setDataSubmit }: { setDataSubmit: Dispatch<SetStateAction<IOrderTransaction | undefined>> }) {
     const popupRef: any = useRef(null);
+    const { t } = useTranslation()
     const [open, setOpen] = useState(false);
     const [visible, setVisible] = useState(false); // để delay unmount
     const [data, setData] = useState<IAccTransaction[]>(dataAccTransaction)
@@ -44,6 +46,7 @@ export default function PopupAcc() {
             active: a.usename === d.usename,
         }));
         setData(updated)
+        setDataSubmit((prev) => ({ ...prev, account_transaction_id: updated.find((a) => a.active)?.usename }))
         handleToggle()
     }
 
@@ -51,9 +54,9 @@ export default function PopupAcc() {
         <div ref={popupRef} className="col-span-2 font-semibold shadow-xs shadow-gray-500 rounded-md text-sm relative">
             <Button onClick={handleToggle} className="flex h-11 justify-between items-center w-full font-bold cursor-pointer text-black px-2 hover:bg-[var(--color-background-opacity-2)] transition text-md">
                 {data.find((a) => a.active) ?
-                    <span>Tài khoản: {data.find((a) => a.active)?.usename}</span>
+                    <span>{t("Tài khoản")}: {data.find((a) => a.active)?.usename}</span>
                     :
-                    <span>Chọn tài khoản giao dịch</span>
+                    <span>{t("Chọn tài khoản giao dịch")}</span>
                 }
                 <Icon name="icon-up" width={14} height={14} className={`transition-transform duration-200 ${open ? 'rotate-180' : 'rotate-0'
                     }`} />

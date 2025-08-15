@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
+import type { IOrderTransaction } from "./type";
 
-export default function Volume() {
+export default function Volume({ setData }: { setData: Dispatch<SetStateAction<IOrderTransaction | undefined>> }) {
     const [centerValue, setCenterValue] = useState(0.01);
     const [scale, setScale] = useState(1);
     const [inputValue, setInputValue] = useState(centerValue.toString());
@@ -50,13 +51,9 @@ export default function Volume() {
         setInputValue(e.target.value);
     };
 
-    // const steps = [
-    //     +(baseSteps[0] * scale).toFixed(2),
-    //     +(baseSteps[1] * scale).toFixed(2),
-    //     +centerValue.toFixed(2),
-    //     +(baseSteps[2] * scale).toFixed(2),
-    //     +(baseSteps[3] * scale).toFixed(2),
-    // ];
+    useEffect(() => {
+        setData((prev) => ({ ...prev, volume: centerValue }))
+    }, [centerValue])
 
     const steps = [
         +(baseSteps[0]).toFixed(2),
