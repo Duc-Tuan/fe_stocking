@@ -1,19 +1,32 @@
-import { useCallback, useEffect, useRef, useState, type ChangeEvent, type Dispatch, type SetStateAction } from 'react'
-import { useTranslation } from 'react-i18next'
-import { useClickOutside } from '../../../hooks/useClickOutside'
-import TooltipNavigate from '../../../layouts/TooltipNavigate'
-import { dataAccTransactionAllLot, dataHistoryLot, dataStatusAllLot, type IActiveHistoryLot, type IFilterAllLot, type IHistoryLot, type IStatusAllLot } from '../type'
-import type { EMO } from '../../Transaction/type'
-import Icon from '../../../assets/icon'
 import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react'
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline'
+import { useCallback, useEffect, useState, type ChangeEvent, type Dispatch, type SetStateAction } from 'react'
+import { useTranslation } from 'react-i18next'
+import { getLots, postCloseOrder } from '../../../api/historys'
+import Icon from '../../../assets/icon'
 import { Button } from '../../../components/button'
+import TooltipNavigate from '../../../layouts/TooltipNavigate'
+import type { IPostCloseOrder, QueryLots } from '../../../types/global'
+import type { EMO } from '../../Transaction/type'
 import Filter from '../components/Filter'
+import { type IActiveHistoryLot, type IFilterAllLot, type IHistoryLot } from '../type'
+import toast from 'react-hot-toast'
+import dayjs from 'dayjs'
+import { getTime } from '../../../utils/timeRange'
 
 const initFilter: IFilterAllLot = {
     accTransaction: null,
     status: null,
     toFrom: [undefined, undefined]
+}
+
+const initPara: QueryLots = {
+    page: 1,
+    limit: 10,
+    status: undefined,
+    acc_transaction: undefined,
+    end_time: undefined,
+    start_time: undefined,
 }
 
 export default function AllLot() {
@@ -22,6 +35,7 @@ export default function AllLot() {
     const [dataCurrent, setDataCurrent] = useState<IActiveHistoryLot | null>(null)
     const [open, setOpen] = useState(false)
     const [filter, setFilter] = useState<IFilterAllLot>(initFilter)
+    const [query, setQuery] = useState<QueryLots>(initPara)
 
     const colorbg = useCallback((status: EMO) => {
         let classC: string = ""
@@ -59,17 +73,30 @@ export default function AllLot() {
     }, [])
 
     useEffect(() => {
-        const priority = ["Lenh_thi_truong", "Nguoc_Limit", "Khac"];
-        const grouped = priority.flatMap(status =>
-            dataHistoryLot.filter(item => item.status === status)
-        )
-        setData(grouped);
-    }, [])
+        const fetchApi = async () => {
+            const res = await getLots(query)
+            setData(res.data.data);
+            setQuery((prev) => ({ ...prev, total: res.data.total, totalPage: Math.ceil(res.data.total / res.data.limit) }))
+        }
+        fetchApi();
+    }, [query.page, query.acc_transaction, query.status, query.end_time, query.end_time])
 
+    const handleFilter = (data: IFilterAllLot) => {
+        setQuery((prev) => {
+            return {
+                ...prev,
+                acc_transaction: data.accTransaction ?? undefined,
+                status: data.status ?? undefined,
+                end_time: getTime(data.toFrom[1]),
+                start_time: getTime(data.toFrom[0]),
+                page: 1,
+            }
+        })
+    }
 
     return (
         <div >
-            <Filter subButton={<TaskSquare />} setFilter={setFilter} filter={filter} />
+            <Filter subButton={<TaskSquare setDataLost={setData} query={query} idx={data.map((a) => a.id)} />} handleFilter={handleFilter} setFilter={setFilter} filter={filter} query={query} setQuery={setQuery} />
 
             <div className="mt-1 p-2">
                 {data.map((a, idx) =>
@@ -80,19 +107,19 @@ export default function AllLot() {
                                 <span className={`${colorbg(a.status).classC} rounded-md text-white px-2 py-1 text-sm font-bold`}>{t(colorbg(a.status).label)}</span>
                                 {a.type === "CLOSE" && <span className='font-semibold text-sm bg-red-600 py-1 px-2 rounded-md text-white'>{t("Lô đã đóng lệnh")}</span>}
                             </div>
-                            <span className="text-[13px] font-bold">{a.time}</span>
+                            <span className="text-[13px] font-bold">{(dayjs.utc(a.time)).tz("Asia/Ho_Chi_Minh").format("YYYY-MM-DD HH:mm:ss")}</span>
                         </div>
 
                         <div className="flex flex-col justify-center items-start gap-[2px] mt-3">
                             <div className="flex justify-start items-center gap-2">
                                 <span>{t("Tài khoản theo dõi")}:</span>
-                                <span className='font-semibold'>{a.accMonitor}</span>
+                                <span className='font-semibold'>{a.account_monitor_id}</span>
                             </div>
 
                             <div className="flex justify-start items-center gap-2">
                                 <span>{t("Tài khoản giao dịch")}:</span>
                                 <div className="flex justify-start items-center gap-1">
-                                    <span className='font-semibold'>{a.accTransaction}</span>
+                                    <span className='font-semibold'>{a.account_transaction_id}</span>
                                     <Icon name="icon-chart-transaction" className="text-[var(--color-background)] mt-[2px]" width={18} height={18} />
                                 </div>
                             </div>
@@ -106,11 +133,11 @@ export default function AllLot() {
                             </div>
                             <div className="flex justify-start items-center gap-2">
                                 <span>{t("Cắt lỗ")}(PNL): </span>
-                                <span className='font-semibold'>{a.sl}</span>
+                                <span className='font-semibold'>{a.stop_loss}</span>
                             </div>
                             <div className="flex justify-start items-center gap-2">
                                 <span>{t("Chốt lời")}(PNL): </span>
-                                <span className='font-semibold'>{a.tp}</span>
+                                <span className='font-semibold'>{a.take_profit}</span>
                             </div>
                             <div className="w-full">
                                 <div className="flex justify-between items-center">
@@ -132,7 +159,7 @@ export default function AllLot() {
                                         </div>
                                         <div className="border flex-1 border-gray-200">
                                             <div className="text-sm font-bold text-center border-b border-b-gray-200 p-1">{t("Giá vào lệnh")}</div>
-                                            {a.bySymbol.map((d, idx) => <div key={idx} className="text-sm text-center h-6">{d.current_price}</div>)}
+                                            {a.bySymbol.map((d, idx) => <div key={idx} className="text-sm text-center h-6">{d.price_transaction}</div>)}
                                         </div>
                                     </div>
                                 </div>
@@ -142,14 +169,12 @@ export default function AllLot() {
                 )}
             </div>
 
-            <Modal open={open} setOpen={setOpen} dataCurrent={dataCurrent} />
+            <Modal open={open} setOpen={setOpen} dataCurrent={dataCurrent} setDataLost={setData}/>
         </div>
     )
 }
 
-
-
-const TaskSquare = () => {
+const TaskSquare = ({ query, idx, setDataLost }: { query: QueryLots, idx: number[], setDataLost: Dispatch<SetStateAction<IHistoryLot[]>> }) => {
     const { t } = useTranslation()
     const [open, setOpen] = useState(false);
     const [openModal, setOpenModal] = useState(false);
@@ -170,9 +195,9 @@ const TaskSquare = () => {
     const changeValue = (value: ChangeEvent<HTMLInputElement>, title: "to" | "from") => {
         const v = value.target.value
         if (title === "from") {
-            return setData((prev) => ({ ...prev, from: Number(v) <= Number(data.to ?? '200') ? (Number(v) < 0 ? Math.abs(Number(v)).toString() : v) : "200" }))
+            return setData((prev) => ({ ...prev, from: Number(v) <= Number(data.to ?? query.total) ? (Number(v) < 0 ? Math.abs(Number(v)).toString() : v) : String(query.total) }))
         } else {
-            return setData((prev) => ({ ...prev, to: Number(v) >= 200 ? '200' : v }))
+            return setData((prev) => ({ ...prev, to: Number(v) >= Number(query.total) ? String(query.total) : v }))
         }
     }
 
@@ -190,12 +215,39 @@ const TaskSquare = () => {
             <TooltipNavigate handle={handleToggle} iconName='icon-task-square' path='#' title='Chốt lệnh nhanh' className='ml-2' />
         }
 
-        <ModalTaskSquare open={openModal} setOpen={setOpenModal} data={data} />
+        <ModalTaskSquare open={openModal} setOpen={setOpenModal} data={data} idx={idx} setDataLost={setDataLost} />
     </div>
 }
 
-const ModalTaskSquare = ({ open, setOpen, data }: { open: boolean, setOpen: Dispatch<SetStateAction<boolean>>, data: { to: string | undefined, from: string | undefined } }) => {
+const ModalTaskSquare = ({ open, setOpen, data, idx, setDataLost }: { setDataLost: Dispatch<SetStateAction<IHistoryLot[]>>, idx: number[], open: boolean, setOpen: Dispatch<SetStateAction<boolean>>, data: { to: string | undefined, from: string | undefined } }) => {
     const { t } = useTranslation()
+
+    const handleClick = async () => {
+        const start = Number(data.from);
+        const end = Number(data.to);
+
+        let body: IPostCloseOrder = {
+            data: []
+        }
+
+        if (data.from === data.to) {
+            body = { data: [{ id: idx[Number(data.to) - 1] }] }
+        } else {
+            const numbers = Array.from({ length: end - start + 1 }, (_, i) => start + i);
+            const dataNew = numbers.map((i) => ({ id: idx[i - 1] }))
+            body = { data: dataNew }
+        }
+
+        await postCloseOrder(body).then(() => {
+            setOpen(false)
+            setDataLost((prev) => prev.map((a) => ({
+                ...a,
+                type: "CLOSE"
+            })))
+            toast.success(`${t("Đóng lệnh từ lô")} ${start} ${t("đến")} ${end} ${t('thành công')}!`)
+        })
+    }
+
     return <Dialog open={open} onClose={setOpen} className="relative z-100">
         <DialogBackdrop
             transition
@@ -234,6 +286,7 @@ const ModalTaskSquare = ({ open, setOpen, data }: { open: boolean, setOpen: Disp
                     </div>
                     <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
                         <Button
+                            onClick={handleClick}
                             type="button"
                             className="shadow-gray-400 cursor-pointer inline-flex w-full justify-center rounded-md bg-[var(--color-background)] px-3 py-2 text-sm font-semibold text-white shadow-md sm:ml-3 sm:w-auto"
                         >
@@ -254,8 +307,21 @@ const ModalTaskSquare = ({ open, setOpen, data }: { open: boolean, setOpen: Disp
     </Dialog>
 }
 
-const Modal = ({ open, setOpen, dataCurrent }: { open: boolean, setOpen: Dispatch<SetStateAction<boolean>>, dataCurrent: IActiveHistoryLot | null }) => {
+const Modal = ({ open, setOpen, dataCurrent, setDataLost }: { setDataLost: Dispatch<SetStateAction<IHistoryLot[]>>, open: boolean, setOpen: Dispatch<SetStateAction<boolean>>, dataCurrent: IActiveHistoryLot | null }) => {
     const { t } = useTranslation()
+
+    const handleClick = async () => {
+        await postCloseOrder({ data: [{ id: Number(dataCurrent?.id) }] }).then(() => {
+            setOpen(false)
+            setDataLost((prev) => prev.map((a) => ({
+                ...a,
+                type: "CLOSE"
+            })))
+            toast.success(`${t("Đóng lệnh lô")} ${dataCurrent?.lot} ${t('thành công')}!`)
+        })
+        console.log(dataCurrent);
+    }
+
     return <Dialog open={open} onClose={setOpen} className="relative z-100">
         <DialogBackdrop
             transition
@@ -287,6 +353,7 @@ const Modal = ({ open, setOpen, dataCurrent }: { open: boolean, setOpen: Dispatc
                     </div>
                     <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
                         <Button
+                            onClick={handleClick}
                             type="button"
                             className="shadow-gray-400 cursor-pointer inline-flex w-full justify-center rounded-md bg-[var(--color-background)] px-3 py-2 text-sm font-semibold text-white shadow-md sm:ml-3 sm:w-auto"
                         >

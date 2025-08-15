@@ -10,9 +10,10 @@ interface IProps {
     iconName: string,
     path: string,
     handle?: () => void,
+    disabled?: boolean
 }
 
-export default function TooltipNavigate({ iconName, title, path, handle, className }: IProps) {
+export default function TooltipNavigate({ iconName, title, path, handle, className, disabled }: IProps) {
     const navigate = useNavigate();
     const { t } = useTranslation()
     return (
@@ -29,7 +30,8 @@ export default function TooltipNavigate({ iconName, title, path, handle, classNa
                     handle && handle()
                     navigate(path)
                 }}
-                className={`cursor-pointer inline-block p-2 rounded-lg active shadow-md shadow-gray-500 text-[var(--color-text)] bg-[var(--color-background)] ${className}`}
+                disabled={disabled}
+                className={`${disabled ? "text-black bg-gray-200" : "text-[var(--color-text)] bg-[var(--color-background)]"} cursor-pointer inline-block p-2 rounded-lg active shadow-md shadow-gray-500 ${className}`}
                 aria-current="page"
             >
                 <Icon name={iconName} width={20} height={20}/>

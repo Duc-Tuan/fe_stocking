@@ -13,6 +13,12 @@ import SplashScreen from "./components/SplashScreen";
 import "./i18n"
 import I18nApp from "./i18n";
 
+import utc from "dayjs/plugin/utc.js";
+import timezone from "dayjs/plugin/timezone.js";
+import dayjs from 'dayjs'
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
 function App() {
   const { serverMonitorActive } = useAppInfo()
   const [showSplash, setShowSplash] = useState(true);

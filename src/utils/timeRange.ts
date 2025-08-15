@@ -85,3 +85,7 @@ export const getColorChart = (t: string = '--color-background') => {
         .getPropertyValue(t)
         .trim()
 }
+
+export const getTime = (date: any) => {
+    return date ? (new Date(date)).getTime() : undefined
+}

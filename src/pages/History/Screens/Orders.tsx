@@ -1,26 +1,63 @@
-import React, { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { getOrdersClose } from '../../../api/historys'
+import type { QueryLots } from '../../../types/global'
 import Filter from '../components/Filter'
-import { dataSymbolTransaction, initFilter, type IFilterAllLot, type ISymbol } from '../type'
+import { initFilter, type IFilterAllLot, type ISymbol } from '../type'
+import dayjs from 'dayjs'
+import { getTime } from '../../../utils/timeRange'
+
+
+const initPara: QueryLots = {
+  page: 1,
+  limit: 10,
+  acc_transaction: undefined,
+  end_time: undefined,
+  start_time: undefined,
+  symbol: undefined,
+}
+
 
 export default function Orders() {
   const { t } = useTranslation()
   const [filter, setFilter] = useState<IFilterAllLot>(initFilter)
-  const [data, setData] = useState<ISymbol[]>(dataSymbolTransaction)
+  const [data, setData] = useState<ISymbol[]>([])
+  const [query, setQuery] = useState<QueryLots>(initPara)
+
+  useEffect(() => {
+    const fetchApi = async () => {
+      const res = await getOrdersClose(query)
+      setData(res.data.data);
+      setQuery((prev) => ({ ...prev, total: res.data.total, totalPage: Math.ceil(res.data.total / res.data.limit) }))
+    }
+    fetchApi();
+  }, [query.page, query.acc_transaction, query.symbol, query.end_time, query.end_time])
+
+  const handleFilter = (data: IFilterAllLot) => {
+    setQuery((prev) => {
+      return {
+        ...prev,
+        acc_transaction: data.accTransaction ?? undefined,
+        end_time: getTime(data.toFrom[1]),
+        start_time: getTime(data.toFrom[0]),
+        page: 1,
+      }
+    })
+  }
 
   return (
     <div className="relative">
-      <Filter setFilter={setFilter} filter={filter} isStatus />
+      <Filter setFilter={setFilter} filter={filter} isStatus query={query} setQuery={setQuery} handleFilter={handleFilter} />
 
       <div className="p-2 flex flex-col justify-center items-start gap-2">
         {data.map((a, idx) => <div key={idx} className="flex justify-between items-center w-full shadow-sm shadow-gray-300 p-2 rounded-sm">
           <div className="">
-            <div className='font-bold'>{a.symbol} <span className={`text-sm font-semibold ${a.type === "SELL" ? "text-red-500" : "text-blue-500"}`}>{a.type}</span></div>
+            <div className='font-bold'>{a.symbol} <span className={`text-sm font-semibold ${a.position_type === "SELL" ? "text-red-500" : "text-blue-500"}`}>{a.position_type}</span></div>
             <div className='text-sm'>{a.volume} / {a.volume} {t("ở chợ")}</div>
           </div>
           <div className="">
-            <div className={`text-right ${a.status === "filled" ? "text-blue-700" : "text-red-500"} font-semibold`}>{a.status}</div>
-            <div className='text-sm'>{a.time}</div>
+            <div className={`text-right text-red-500 font-semibold`}>{t("Lệnh đã đóng")}</div>
+            <div className='text-sm'>{(dayjs.utc(a.close_time)).tz("Asia/Ho_Chi_Minh").format("YYYY-MM-DD HH:mm:ss")}</div>
           </div>
         </div>)}
       </div>
@@ -32,11 +69,11 @@ export default function Orders() {
         </div>
         <div className="flex justify-between items-center">
           <div className="font-semibold">Filled</div>
-          <span className='font-bold'>{data.filter((a) => a.status === "filled").length}</span>
+          {/* <span className='font-bold'>{data.filter((a) => a.status === "filled").length}</span> */}
         </div>
         <div className="flex justify-between items-center">
           <div className="font-semibold">{t("Bị hủy")}</div>
-          <span className='font-bold'>{data.filter((a) => a.status !== "filled").length}</span>
+          {/* <span className='font-bold'>{data.filter((a) => a.status !== "filled").length}</span> */}
         </div>
       </div>
     </div>
