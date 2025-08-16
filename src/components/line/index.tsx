@@ -155,12 +155,7 @@ export const ChartComponent = (props: any) => {
             }
 
             if (range.from <= 5) {
-                setPagination((prev: any) => {
-                    if (prev.totalPage > prev.page) {
-                        return { ...prev, page: prev.page + 1 }
-                    }
-                    return { ...prev };
-                });
+                setPagination((prev: any) => ({ ...prev, page: prev.page + 1 }));
             }
         });
 

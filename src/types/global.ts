@@ -1,8 +1,10 @@
 export interface IPagination {
-    page: number;
+    page?: number;
     limit: number;
     totalPage?: number;
-    total?: number
+    total?: number;
+    last_time?: string;
+    has_more?: boolean;
 }
 
 export interface IDataRequest<T> {

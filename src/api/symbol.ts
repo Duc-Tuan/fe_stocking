@@ -4,7 +4,7 @@ import type { IPagination } from "../types/global";
 export const symbolApi = async (pagination: IPagination, id_symbol: number) => {
     const data = await axiosClient.get('/symbols', {
         params: {
-            page: pagination.page,
+            last_time: pagination.last_time,
             limit: pagination.limit,
             id_symbol
         },

@@ -226,17 +226,7 @@ export const CandlestickSeriesComponent = (props: any) => {
             }
 
             if (isAtLeftEdge) {
-                hasRequestedNextPage.current = true;
-                setPagination((prev: any) => {
-                    if (prev.totalPage > prev.page) {
-                        return { ...prev, page: prev.page + 1 };
-                    }
-                    return prev;
-                });
-
-                setTimeout(() => {
-                    hasRequestedNextPage.current = false;
-                }, 1000);
+                setPagination((prev: any) => ({ ...prev, page: prev.page + 1 }));
             }
         });
 

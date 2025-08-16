@@ -48,23 +48,30 @@ export default function HomePage() {
         limit: 5000,
         page: 1,
         total: 100,
-        totalPage: 1
+        totalPage: 1,
+        last_time: undefined,
+        has_more: false
     });
     const [loading, setLoading] = useState<boolean>(false);
 
+    const isFetchingRef = useRef(false);
+    
     const serverId: number = useMemo(() => { return Number(serverMonitorActive?.value) }, [serverMonitorActive?.value])
 
     // Gọi api khi page thay đổi
     const getSymbolApi = async (idServer: number) => {
         try {
             const res: IDataRequest<IDataSymbols> = await symbolApi(
-                { page: pagination.page, limit: pagination.limit },
+                { last_time: pagination.last_time, limit: pagination.limit },
                 idServer
             );
+
             setPagination((prev) => ({
                 ...prev,
                 total: res.data.total,
                 totalPage: Math.ceil(res.data.total / res.data.limit),
+                last_time: res.data.next_cursor,
+                has_more: res.data.has_more
             }));
 
             const dataNew = convertDataLine(res.data.data);
@@ -80,15 +87,17 @@ export default function HomePage() {
     const getSymbolApiServerId = async (serverId: number) => {
         setLoading(true);
         try {
-
             const res: IDataRequest<IDataSymbols> = await symbolApi(
-                { page: 1, limit: pagination.limit },
+                { last_time: undefined, limit: pagination.limit },
                 serverId
             );
+
             setPagination((prev) => ({
                 ...prev,
                 total: res.data.total,
                 totalPage: Math.ceil(res.data.total / res.data.limit),
+                has_more: res.data.has_more,
+                last_time: res.data.next_cursor,
             }));
 
             setSymbolsCand(convertDataCandline(res.data.data));
@@ -108,14 +117,27 @@ export default function HomePage() {
     }, [currentPnl]);
 
     useEffect(() => {
-        if (pagination.page !== 1) {
-            getSymbolApi(Number(serverMonitorActive?.value));
-        }
+        let ignore = false;
+
+    if (serverMonitorActive?.value && !pagination.has_more && !isFetchingRef.current) {
+        (async () => {
+            isFetchingRef.current = true; // đánh dấu đang gọi API
+            try {
+                if (!ignore) {
+                    await getSymbolApi(Number(serverMonitorActive?.value));
+                }
+            } finally {
+                isFetchingRef.current = false; // gọi xong thì reset lại
+            }
+        })();
+    }
+
+    return () => { ignore = true };
     }, [pagination.page]);
 
     useEffect(() => {
         if (serverId) {
-            setPagination((prev) => ({ ...prev, page: 1 }));
+            setPagination((prev) => ({ ...prev, last_time: undefined }));
             setSymbols([]);
             setSymbolsCand([]);
             getSymbolApiServerId(serverId);

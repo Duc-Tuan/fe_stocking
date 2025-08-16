@@ -5,6 +5,8 @@ export interface IDataSymbols {
     page: number;
     limit: number;
     total: number;
+    next_cursor: string;
+    has_more: boolean
 }
 
 export function normalizeChartData(data: any[]): BarData[] {
