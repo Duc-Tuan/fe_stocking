@@ -48,7 +48,7 @@ export default function Filter({ setFilter, filter, subButton, isStatus, isStatu
     };
 
     return (
-        <div className="sticky top-0 flex justify-between items-center bg-white shadow-lg shadow-gray-100 z-50">
+        <div className="sticky top-0 flex justify-between items-center bg-white shadow-lg shadow-gray-100 z-10">
             <div ref={popupRef} className="w-fit z-10 col-span-2 font-semibold rounded-md text-sm p-2">
                 <div className="flex justify-start items-center">
                     <TooltipNavigate handle={handleToggle} iconName='icon-filter' path='#' title='Bộ lọc' />
@@ -84,13 +84,13 @@ export default function Filter({ setFilter, filter, subButton, isStatus, isStatu
             </div>
 
             <div className="flex justify-between items-center gap-4 mr-2">
-                <TooltipNavigate disabled={query?.page === 1} handle={() => { setQuery && setQuery((prev) => ({ ...prev, page: query?.page === 1 ? 1 : prev.page - 1 })) }} iconName='icon-left' path='#' title='Trang trước' className="w-[36px] h-[36px] p-0 flex justify-center items-center" />
+                <TooltipNavigate disabled={query?.page === 1} handle={() => { setQuery && setQuery((prev) => ({ ...prev, page: query?.page === 1 ? 1 : (prev.page ?? 0) - 1 })) }} iconName='icon-left' path='#' title='Trang trước' className="w-[36px] h-[36px] p-0 flex justify-center items-center" />
                 <div className="flex justify-between items-center gap-1">
                     <div className="w-[36px] h-[36px] shadow-md shadow-gray-500 flex justify-center items-center rounded-lg">{query?.page}</div>
                     <div className="">/</div>
                     <div className="w-[36px] h-[36px] shadow-md shadow-gray-500 flex justify-center items-center rounded-lg">{query?.totalPage}</div>
                 </div>
-                <TooltipNavigate disabled={query?.page === query?.totalPage || query?.totalPage === 0} handle={() => { setQuery && setQuery((prev) => ({ ...prev, page: query?.page === query?.totalPage ? prev.page : prev.page + 1 })) }} iconName='icon-right' path='#' title='Trang sau' className="w-[36px] h-[36px] p-0 flex justify-center items-center" />
+                <TooltipNavigate disabled={query?.page === query?.totalPage || query?.totalPage === 0} handle={() => { setQuery && setQuery((prev) => ({ ...prev, page: query?.page === query?.totalPage ? prev.page : (prev.page ?? 0) + 1 })) }} iconName='icon-right' path='#' title='Trang sau' className="w-[36px] h-[36px] p-0 flex justify-center items-center" />
                 <div className="h-[36px] px-2 ml-2 shadow-md shadow-gray-500 flex justify-center items-center rounded-lg font-semibold">{t("Tổng số bản")}: {query?.total}</div>
             </div>
         </div>

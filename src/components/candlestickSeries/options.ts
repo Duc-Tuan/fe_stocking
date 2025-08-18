@@ -1,4 +1,4 @@
-import type { BarData, UTCTimestamp } from "lightweight-charts";
+import type { BarData, ISeriesApi, UTCTimestamp } from "lightweight-charts";
 
 export interface IDataSymbols {
     data: any[];
@@ -46,3 +46,16 @@ export function normalizeChartData(data: any[]): BarData[] {
 
     return result;
 }
+
+export const extendXAxisWithFuture = (series: ISeriesApi<'Candlestick'>, lastTime: number, minutes: number) => {
+    for (let i = 1; i <= minutes; i++) {
+        const future = lastTime + i * 60; // 60s = 1 phút
+        series.update({
+            time: future as UTCTimestamp,
+            open: NaN,
+            high: NaN,
+            low: NaN,
+            close: NaN,
+        });
+    }
+};

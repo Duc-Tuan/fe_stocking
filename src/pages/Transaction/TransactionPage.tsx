@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
+import React, { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import Icon from "../../assets/icon";
 import { Button } from "../../components/button";
 import { dataActivateTypetransaction, type IActivateTypetransaction, type IOrderTransaction } from "./type";
@@ -11,6 +11,7 @@ import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from "@headlessui/re
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import { getPositionTransaction, postSendOrder } from "../../api/historys";
 import toast from "react-hot-toast";
+import TooltipCustom from "../../components/tooltip";
 
 const init: IOrderTransaction = {
     account_monitor_id: undefined,
@@ -90,6 +91,24 @@ export default function TransactionPage() {
         }
     }
 
+    const isCheckSumbit = useMemo(() => {
+        if (data?.status === "Xuoi_Limit" || data?.status === "Nguoc_Stop") {
+            const isPrice = pnl >= (currentPnl?.total_pnl ?? 0)
+            if (data.status_sl_tp === "Nguoc") {
+                return isPrice && (currentPnl?.total_pnl ?? 0) < stopLoss && ((currentPnl?.total_pnl ?? 0) > takeProfit)
+            } else if (data.status_sl_tp === "Xuoi") {
+                return isPrice && (currentPnl?.total_pnl ?? 0) > stopLoss && ((currentPnl?.total_pnl ?? 0) < takeProfit)
+            }
+        } else if (data?.status === "Nguoc_Limit" || data?.status === "Xuoi_Stop") {
+            const isPrice = pnl <= (currentPnl?.total_pnl ?? 0)
+            if (data.status_sl_tp === "Nguoc") {
+                return isPrice && (currentPnl?.total_pnl ?? 0) < stopLoss && ((currentPnl?.total_pnl ?? 0) > takeProfit)
+            } else if (data.status_sl_tp === "Xuoi") {
+                return isPrice && (currentPnl?.total_pnl ?? 0) > stopLoss && ((currentPnl?.total_pnl ?? 0) < takeProfit)
+            }
+        }
+    }, [data?.status_sl_tp, stopLoss, pnl, takeProfit])
+
     return (
         <div className="flex justify-center items-center mt-20">
             <div className="w-full max-w-4xl p-4 space-y-4">
@@ -115,7 +134,7 @@ export default function TransactionPage() {
                                         {item.symbol}
                                         <span className={`text-[10px] pl-1 ${item.type === "SELL" ? "text-rose-600" : "text-blue-600"}`}>{item.type}</span>
                                     </span>
-                                    <span>{item.current_price.toFixed(6)}</span>
+                                    <span>{item.current_price?.toFixed(6)}</span>
                                 </div>
                             ))}
                         </div>
@@ -216,10 +235,14 @@ export default function TransactionPage() {
                     <div className="col-span-1 shadow-xs shadow-gray-500 rounded-lg p-3 space-y-2">
                         {activateTypetransaction.map((a: IActivateTypetransaction, i: number) => {
                             return (
-                                <Button onClick={() => handlClickActive(a.type)} key={i} className={`flex w-full justify-between items-center  ${i === 0 ? "rounded-none border-b border-b-gray-300 border-solid py-1 px-2" : "py-2 px-2"} cursor-pointer shadow-none hover:bg-[var(--color-background-opacity-2)] transition`}>
-                                    <div className={`text-sm font-bold ${a.color}`}>{t(a.title)}</div>
-                                    {a.active && <span><Icon name="icon-check" width={18} height={18} className="text-[var(--color-background)]" /></span>}
-                                </Button>
+                                <React.Fragment key={i}>
+                                    <TooltipCustom isButton titleTooltip={ <p style={{ whiteSpace: "pre-line" }}>{a.subTitle}</p> } placement="right-end">
+                                        <Button onClick={() => handlClickActive(a.type)} className={`flex w-full justify-between items-center  ${i === 0 ? "rounded-none border-b border-b-gray-300 border-solid py-1 px-2" : "py-2 px-2"} cursor-pointer shadow-none hover:bg-[var(--color-background-opacity-2)] transition`}>
+                                            <div className={`text-sm font-bold ${a.color}`}>{t(a.title)}</div>
+                                            {a.active && <span><Icon name="icon-check" width={18} height={18} className="text-[var(--color-background)]" /></span>}
+                                        </Button>
+                                    </TooltipCustom>
+                                </React.Fragment>
                             )
                         })}
                     </div>
@@ -240,15 +263,21 @@ export default function TransactionPage() {
 
                 {/* Nút Xuôi / Ngược */}
                 {activateTypetransaction.filter((a) => a.active && a.type === "Lenh_thi_truong").length === 0 ?
-                    <Button onClick={() => handleSendOrder()} className="p-0 w-full h-10 font-bold cursor-pointer text-white px-2 bg-[var(--color-background)] shadow-md shadow-gray-500">
+                    <Button onClick={() => {
+                        isCheckSumbit && handleSendOrder()
+                    }} className={`${isCheckSumbit ? "bg-[var(--color-background)]" : "bg-gray-300"} p-0 w-full h-10 font-bold cursor-pointer text-white px-2 shadow-md shadow-gray-500`}>
                         <span>{t("Đặt lệnh")}</span>
                     </Button>
                     :
                     <div className="flex gap-2 h-10">
-                        <Button onClick={() => handleSendOrder("Xuoi")} aria-current="page" className="p-0 flex-1 bg-rose-600 text-white rounded-lg shadow-xs shadow-gray-500  hover:bg-red-600 cursor-pointer font-bold">
+                        <Button onClick={() => {
+                            ((currentPnl?.total_pnl ?? 0) > stopLoss && ((currentPnl?.total_pnl ?? 0) < takeProfit)) && handleSendOrder("Xuoi")
+                        }} aria-current="page" className={`${((currentPnl?.total_pnl ?? 0) > stopLoss && ((currentPnl?.total_pnl ?? 0) < takeProfit)) ? "bg-rose-600 hover:bg-red-600" : "bg-gray-300"} p-0 flex-1  text-white rounded-lg shadow-xs shadow-gray-500  cursor-pointer font-bold`}>
                             {t("Xuôi")}
                         </Button>
-                        <Button onClick={() => handleSendOrder("Nguoc")} aria-current="page" className="p-0 flex-1 bg-blue-600 text-white rounded-lg shadow-xs shadow-gray-500  hover:bg-blue-800 cursor-pointer font-bold">
+                        <Button onClick={() => {
+                            ((currentPnl?.total_pnl ?? 0) < stopLoss && ((currentPnl?.total_pnl ?? 0) > takeProfit)) && handleSendOrder("Nguoc")
+                        }} aria-current="page" className={`${((currentPnl?.total_pnl ?? 0) < stopLoss && ((currentPnl?.total_pnl ?? 0) > takeProfit)) ? "bg-blue-600 hover:bg-blue-800" : "bg-gray-300"} p-0 flex-1 text-white rounded-lg shadow-xs shadow-gray-500 cursor-pointer font-bold`}>
                             {t("Ngược")}
                         </Button>
                     </div>
@@ -262,20 +291,22 @@ export default function TransactionPage() {
     )
 }
 
-
-
-
 const Modal = ({ open, setOpen, dataCurrent }: { open: boolean, setOpen: Dispatch<SetStateAction<boolean>>, dataCurrent?: IOrderTransaction }) => {
     const { t } = useTranslation()
     const [loading, setLoading] = useState<boolean>(false)
 
     const handleClick = async () => {
         setLoading(true)
-        await postSendOrder(dataCurrent).then(() => {
-            setOpen(false)
+        await postSendOrder(dataCurrent).then((data) => {
             setLoading(false)
+            const isError = data.data.message && data.data.message.find((a: any) => a.status === "error")
+            if (isError) {
+                const mess = (data.data.message.map((a: any) => a.symbol)).map((s: any) => s.trim()).join(", ")
+                return toast.error(`Vào lệnh ${mess} thất bại / ${isError.message}`)
+            }
+            setOpen(false)
             toast.success("Vào lệnh thành công!")
-        })
+        }).catch(() => setLoading(false))
     }
 
     return <Dialog open={open} onClose={setOpen} className="relative z-100">
@@ -308,7 +339,7 @@ const Modal = ({ open, setOpen, dataCurrent }: { open: boolean, setOpen: Dispatc
                                         <span>{t("Tk giao dịch")}:</span>
                                         <span className="ml-1 font-semibold text-[var(--color-background)]">{dataCurrent?.account_transaction_id}</span>
                                     </div>
-                                    <div className="flex col-span-1">
+                                    <div className="flex col-span-2">
                                         <span>{t("Trạng thái")}:</span>
                                         <span className="ml-1 font-semibold text-[var(--color-background)]">{t(String(dataActivateTypetransaction.find((a) => a.type === dataCurrent?.status)?.title))}</span>
                                     </div>
@@ -342,7 +373,7 @@ const Modal = ({ open, setOpen, dataCurrent }: { open: boolean, setOpen: Dispatc
                                                 </div>
                                                 <div className="border flex-1 border-gray-200">
                                                     <div className="text-sm font-bold text-center border-b border-b-gray-200 p-1">{t("Giá vào lệnh")}</div>
-                                                    {dataCurrent?.by_symbol?.map((d, idx) => <div key={idx} className="text-sm text-center h-6">{d.current_price.toFixed(5)}</div>)}
+                                                    {dataCurrent?.by_symbol?.map((d, idx) => <div key={idx} className="text-sm text-center h-6">{d.current_price?.toFixed(5)}</div>)}
                                                 </div>
                                             </div>
                                         </div>

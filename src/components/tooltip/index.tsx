@@ -3,6 +3,7 @@ import { type JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../button';
 import { LoadingOnly } from '../loading/indexOnly';
+import type { placement } from '@material-tailwind/react/types/components/menu';
 
 interface IProps {
     children: JSX.Element;
@@ -13,7 +14,7 @@ interface IProps {
     w?: string;
     h?: string;
     classNameButton?: string
-    placement?: string
+    placement?: placement
 }
 
 export default function TooltipCustom({ placement = "bottom", children, titleTooltip, loading, handleClick, isButton, w, h, classNameButton }: IProps) {

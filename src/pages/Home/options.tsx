@@ -1,4 +1,4 @@
-import type { Time } from "lightweight-charts";
+import type { ISeriesApi, Time, UTCTimestamp } from "lightweight-charts";
 import Icon from "../../assets/icon";
 import type { IOptionsTabsCharts } from "../../types/global";
 

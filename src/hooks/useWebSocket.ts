@@ -29,11 +29,18 @@ export function useSocket(
       });
 
       socket.on('chat_message', (data) => {
-        const a = JSON.parse(data.by_symbol)
-        const result = Object.entries(a).map(([key, value]: any[]) => ({
+        let parsed = JSON.parse(data.by_symbol);
+
+        // Nếu parse ra mảng ký tự → nghĩa là bị double-encode → parse thêm lần nữa
+        if (typeof parsed === "string") {
+          parsed = JSON.parse(parsed);
+        }
+
+        const result = Object.entries(parsed).map(([key, value]: any[]) => ({
           symbol: key,
           ...value
         }));
+
         setDataCurrent({
           ...data,
           by_symbol: result

@@ -23,7 +23,7 @@ export const datafunction: IOptionDatafunction[] = [
     },
     {
         active: false,
-        title: "Tất cả lệnh gửi",
+        title: "Tất cả lệnh",
         type: "Deals"
     },
     {

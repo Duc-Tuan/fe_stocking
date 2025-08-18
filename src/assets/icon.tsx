@@ -20,6 +20,8 @@ import IconArrowLeft from './icons/IconArrowLeft.svg?react';
 import IconArrowRight from './icons/IconArrowRight.svg?react';
 import IconTaskSquare from './icons/IconTaskSquare.svg?react';
 import IconArrowRightV2 from './icons/IconArrowRightV2.svg?react';
+import IconFibonacci from './icons/IconFibonacci.svg?react';
+import IconDelete from './icons/IconDelete.svg?react';
 
 export default function Icon(props: any) {
     switch (props?.name?.toLowerCase()) {
@@ -67,6 +69,10 @@ export default function Icon(props: any) {
             return <IconTaskSquare {...props} />;
         case 'icon-right-v2':
             return <IconArrowRightV2 {...props} />;
+        case 'icon-fibonacci':
+            return <IconFibonacci {...props} />;
+        case 'icon-delete':
+            return <IconDelete {...props} />;
         default:
             return null;
     }

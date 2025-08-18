@@ -1,14 +1,14 @@
 import { createBrowserRouter } from 'react-router-dom';
 
 import DashboardLayout from '../layouts/DashboardLayout';
+import HistoryTransaction from '../pages/History/HistoryTransaction';
 import HomePage from '../pages/Home/HomePage';
 import NotFoundPage from '../pages/NotFoundPage';
-import LoginPage from '../pages/auth/LoginPage';
-import ProtectedRoute from './protectedRoute';
-import TransactionPage from '../pages/Transaction/TransactionPage';
-import HistoryTransaction from '../pages/History/HistoryTransaction';
-import { PathName } from './path';
 import SettingTransaction from '../pages/Settings/SettingTransaction';
+import TransactionPage from '../pages/Transaction/TransactionPage';
+import LoginPage from '../pages/auth/LoginPage';
+import { PathName } from './path';
+import ProtectedRoute from './protectedRoute';
 
 const router = createBrowserRouter([
   {

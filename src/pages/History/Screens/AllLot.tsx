@@ -1,6 +1,6 @@
 import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react'
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline'
-import { useCallback, useEffect, useState, type ChangeEvent, type Dispatch, type SetStateAction } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ChangeEvent, type Dispatch, type SetStateAction } from 'react'
 import { useTranslation } from 'react-i18next'
 import { getLots, postCloseOrder } from '../../../api/historys'
 import Icon from '../../../assets/icon'
@@ -94,9 +94,13 @@ export default function AllLot() {
         })
     }
 
+    const isClose = useMemo(() => {
+        return data.find((d) => d.status === "Lenh_thi_truong" && d.type === "RUNNING") ? true : false
+    }, [data])
+
     return (
         <div >
-            <Filter subButton={<TaskSquare setDataLost={setData} query={query} idx={data.map((a) => a.id)} />} handleFilter={handleFilter} setFilter={setFilter} filter={filter} query={query} setQuery={setQuery} />
+            <Filter subButton={<TaskSquare setDataLost={setData} query={query} idx={data.map((a) => a.id)} isClose={isClose} />} handleFilter={handleFilter} setFilter={setFilter} filter={filter} query={query} setQuery={setQuery} />
 
             <div className="mt-1 p-2">
                 {data.map((a, idx) =>
@@ -174,7 +178,7 @@ export default function AllLot() {
     )
 }
 
-const TaskSquare = ({ query, idx, setDataLost }: { query: QueryLots, idx: number[], setDataLost: Dispatch<SetStateAction<IHistoryLot[]>> }) => {
+const TaskSquare = ({ query, idx, setDataLost, isClose }: { query: QueryLots, idx: number[], setDataLost: Dispatch<SetStateAction<IHistoryLot[]>>, isClose: boolean }) => {
     const { t } = useTranslation()
     const [open, setOpen] = useState(false);
     const [openModal, setOpenModal] = useState(false);
@@ -209,7 +213,10 @@ const TaskSquare = ({ query, idx, setDataLost }: { query: QueryLots, idx: number
                 <span>{t("đến")}</span>
                 <input type="number" onChange={(e) => changeValue(e, "to")} value={data.to} placeholder='2' className='w-16 text-center border border-[var(--color-background)] rounded-sm font-bold px-1 py-0.5 appearance-none focus:outline-none focus:ring-0 focus:border [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [MozAppearance:textfield]' />
                 <Button onClick={handleToggle} className="ml-6 h-[30px] text-red-500 border p-0 px-2 cursor-pointer">{t("Hủy")}</Button>
-                <Button onClick={() => setOpenModal((prev) => !prev)} className="h-[30px] text-white bg-[var(--color-background)] border p-0 px-2 cursor-pointer">{t("Xác nhận")}</Button>
+                <Button onClick={() => {
+                    !isClose && toast.error(t("Hiện không có lô nào được đưa lên thị trường nên thể thực hiện chức năng này"))
+                    isClose && setOpenModal((prev) => !prev)
+                }} className={`${isClose ? "bg-[var(--color-background)]" : "bg-gray-300"} h-[30px] text-white border p-0 px-2 cursor-pointer`}>{t("Xác nhận")}</Button>
             </div>
             :
             <TooltipNavigate handle={handleToggle} iconName='icon-task-square' path='#' title='Chốt lệnh nhanh' className='ml-2' />

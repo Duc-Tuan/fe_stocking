@@ -1,7 +1,6 @@
 import {
     ColorType,
     createChart,
-    type ISeriesApi,
     type UTCTimestamp,
 } from 'lightweight-charts';
 import { useEffect, useRef } from 'react';
@@ -11,10 +10,13 @@ import { getColorChart } from '../../utils/timeRange';
 
 export const ChartComponent = (props: any) => {
     const {
+        chartRef,
+        chartContainerRef,
+        chartRefCurent,
+        seriesRef,
         dataOld,
         setPagination,
         latestData,
-        chartRef,
         colors: {
             backgroundColor = 'transparent',
             lineColor = getColorChart('--color-background'),
@@ -23,8 +25,6 @@ export const ChartComponent = (props: any) => {
         } = {},
     } = props;
 
-    const chartContainerRef = useRef<HTMLDivElement>(null);
-    const seriesRef = useRef<ISeriesApi<'Area'> | null>(null);
     const tooltipRef = useRef<HTMLDivElement>(null);
     const dataRef = useRef<any[]>([]);
 
@@ -34,7 +34,7 @@ export const ChartComponent = (props: any) => {
         if (!container) return;
 
         // Xóa các vạch cũ
-        container.querySelectorAll('.day-separator').forEach(el => el.remove());
+        container?.querySelectorAll('.day-separator')?.forEach((el: any) => el.remove());
 
         // ✅ Tìm ngày duy nhất có trong data
         const seenDates = new Set<string>();
@@ -51,7 +51,9 @@ export const ChartComponent = (props: any) => {
             seenDates.add(key);
 
             // Tạo timestamp tại 07:00 UTC của ngày đó
-            const t7 = Math.floor(Date.UTC(y, m, d, 0, 0, 0) / 1000);
+            const t7 = Math.floor(Date.UTC(y, m, d, 7, 0, 0) / 1000);
+
+            // Nhưng cần check: t7 có nằm trong range chart không?
             timestampsAt7UTC.push(t7);
         }
 
@@ -62,15 +64,15 @@ export const ChartComponent = (props: any) => {
             const line = document.createElement('div');
             line.className = 'day-separator';
             line.style.cssText = `
-                position: absolute;
-                top: 19%;
-                left: ${x}px;
-                width: 0;
-                height: 74%;
-                border-left: 1px dashed rgba(0, 0, 0, 0.4);
-                pointer-events: none;
-                z-index: 2;
-            `;
+                    position: absolute;
+                    top: 19%;
+                    left: ${x + 25}px;
+                    width: 0;
+                    height: 74%;
+                    border-left: 1px dashed rgba(0, 0, 0, 0.2);
+                    pointer-events: none;
+                    z-index: 2;
+                `;
             container.appendChild(line);
         }
     };
@@ -85,8 +87,9 @@ export const ChartComponent = (props: any) => {
         });
     };
 
-
     useEffect(() => {
+        if (!chartContainerRef.current) return;
+
         const chart = createChart(chartContainerRef.current!, {
             layout: {
                 background: { type: ColorType.Solid, color: backgroundColor },
@@ -130,6 +133,8 @@ export const ChartComponent = (props: any) => {
         });
 
         chartRef.current = chart;
+        chartRefCurent.current = chart;
+
         seriesRef.current = newSeries;
 
         chart.timeScale().subscribeVisibleLogicalRangeChange((range: any) => {
@@ -161,16 +166,16 @@ export const ChartComponent = (props: any) => {
 
         const tooltip = document.createElement('div');
         tooltip.style.cssText = `
-            position: absolute;
-            display: none;
-            padding: 6px 8px;
-            background: var(--color-background);
-            color: white;
-            border-radius: 4px;
-            font-size: 12px;
-            pointer-events: none;
-            z-index: 10;
-        `;
+                    position: absolute;
+                    display: none;
+                    padding: 6px 8px;
+                    background: var(--color-background);
+                    color: white;
+                    border-radius: 4px;
+                    font-size: 12px;
+                    pointer-events: none;
+                    z-index: 10;
+                `;
         chartContainerRef.current?.appendChild(tooltip);
         tooltipRef.current = tooltip;
 
@@ -205,6 +210,7 @@ export const ChartComponent = (props: any) => {
         const handleResize = () => {
             chart.applyOptions({ width: chartContainerRef.current!.clientWidth });
         };
+
         window.addEventListener('resize', handleResize);
 
         const resizeObserver = new ResizeObserver(() => {
@@ -306,5 +312,5 @@ export const ChartComponent = (props: any) => {
         }
     }, [latestData]);
 
-    return <div ref={chartContainerRef} />;
+    return null;
 };

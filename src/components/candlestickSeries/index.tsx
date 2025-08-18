@@ -7,19 +7,22 @@ import {
     type UTCTimestamp,
 } from 'lightweight-charts';
 import { useEffect, useRef } from 'react';
-import { formatVietnamTimeSmart, gridColor } from '../line/formatTime';
-import { normalizeChartData } from './options';
 import { adjustToUTCPlus_7, timeOptions } from '../../pages/Home/options';
 import { aggregateCandlesByInterval, getColorChart } from '../../utils/timeRange';
+import { formatVietnamTimeSmart, gridColor } from '../line/formatTime';
+import { normalizeChartData } from './options';
 
 export const CandlestickSeriesComponent = (props: any) => {
     const {
-        isOpen,
-        dataOld,
-        latestData,
-        setPagination,
         chartRef,
+        chartContainerRef,
+        candleSeriesRef,
+        chartRefCurent,
+        dataOld,
+        setPagination,
         currentRange,
+        latestData,
+        isOpen,
         colors: {
             backgroundColor = 'transparent',
             textColor = 'black',
@@ -32,8 +35,6 @@ export const CandlestickSeriesComponent = (props: any) => {
         } = {},
     } = props;
 
-    const chartContainerRef = useRef<HTMLDivElement>(null);
-    const candleSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
     const pLineSeriesRef = useRef<ISeriesApi<'Line'> | null>(null);
     const tooltipRef = useRef<HTMLDivElement>(null);
     const allData = useRef<BarData[]>([]);
@@ -46,7 +47,7 @@ export const CandlestickSeriesComponent = (props: any) => {
         if (!container) return;
 
         // Xóa vạch cũ
-        container.querySelectorAll('.day-separator').forEach(el => el.remove());
+        container.querySelectorAll('.day-separator').forEach((el: any) => el.remove());
 
         // ✅ Tìm ngày duy nhất có trong data
         const seenDates = new Set<string>();
@@ -63,7 +64,7 @@ export const CandlestickSeriesComponent = (props: any) => {
             seenDates.add(key);
 
             // Tạo timestamp tại 07:00 UTC của ngày đó
-            const t7 = Math.floor(Date.UTC(y, m, d, 0, 0, 0) / 1000);
+            const t7 = Math.floor(Date.UTC(y, m, d, 7, 0, 0) / 1000);
             timestampsAt7UTC.push(t7);
         }
 
@@ -75,15 +76,15 @@ export const CandlestickSeriesComponent = (props: any) => {
             const line = document.createElement('div');
             line.className = 'day-separator';
             line.style.cssText = `
-            position: absolute;
-            top: 0;
-            left: ${x}px;
-            width: 0;
-            height: 96%;
-            border-left: 1px dashed rgba(0, 0, 0, 0.4);
-            pointer-events: none;
-            z-index: 2;
-        `;
+                position: absolute;
+                top: 0;
+                left: ${x}px;
+                width: 0;
+                height: 95%;
+                border-left: 1px dashed rgba(0, 0, 0, 0.2);
+                pointer-events: none;
+                z-index: 2;
+            `;
             container.appendChild(line);
         }
     };
@@ -126,7 +127,7 @@ export const CandlestickSeriesComponent = (props: any) => {
                 mouseWheel: true,
                 pressedMouseMove: true,
                 horzTouchDrag: true,
-                vertTouchDrag: false,
+                vertTouchDrag: true,
             },
             handleScale: {
                 axisPressedMouseMove: true,
@@ -142,6 +143,7 @@ export const CandlestickSeriesComponent = (props: any) => {
             borderDownColor,
             wickUpColor,
             wickDownColor,
+            wickColor: "red"
         });
         candleSeriesRef.current = candleSeries;
 
@@ -154,19 +156,20 @@ export const CandlestickSeriesComponent = (props: any) => {
         pLineSeriesRef.current = pLineSeries;
 
         chartRef.current = chart;
+        chartRefCurent.current = chart;
 
         const tooltip = document.createElement('div');
         tooltip.style.cssText = `
-            position: absolute;
-            display: none;
-            padding: 6px 8px;
-            background: var(--color-background);
-            color: white;
-            border-radius: 4px;
-            font-size: 12px;
-            pointer-events: none;
-            z-index: 10;
-        `;
+                    position: absolute;
+                    display: none;
+                    padding: 6px 8px;
+                    background: var(--color-background);
+                    color: white;
+                    border-radius: 4px;
+                    font-size: 12px;
+                    pointer-events: none;
+                    z-index: 10;
+                `;
         chartContainerRef.current.appendChild(tooltip);
         tooltipRef.current = tooltip;
 
@@ -194,10 +197,10 @@ export const CandlestickSeriesComponent = (props: any) => {
                         .padStart(2, '0')}`;
 
             tooltip.innerHTML = `<strong>O:</strong> ${candle.open.toFixed(2)} 
-                <strong>H:</strong> ${candle.high.toFixed(2)} 
-                <strong>L:</strong> ${candle.low.toFixed(2)} 
-                <strong>C:</strong> ${candle.close.toFixed(2)}<br/>
-                <strong>Time:</strong> ${timeStr}`;
+                        <strong>H:</strong> ${candle.high.toFixed(2)} 
+                        <strong>L:</strong> ${candle.low.toFixed(2)} 
+                        <strong>C:</strong> ${candle.close.toFixed(2)}<br/>
+                        <strong>Time:</strong> ${timeStr}`;
             tooltip.style.display = 'block';
             tooltip.style.left = `${param.point.x + 10}px`;
             tooltip.style.top = `${param.point.y - 50}px`;
@@ -315,6 +318,7 @@ export const CandlestickSeriesComponent = (props: any) => {
         const data = renderData(allData.current)
 
         candleSeriesRef.current.setData(data);
+
         pLineSeriesRe(data);
         updateSeparators(data);
     }, [dataOld]);
@@ -352,7 +356,6 @@ export const CandlestickSeriesComponent = (props: any) => {
         const data = renderData(allData.current);
 
         candleSeriesRef.current.setData(data);
-
         pLineSeriesRe(data);
         updateSeparators(data);
     }, [latestData]);
@@ -363,5 +366,5 @@ export const CandlestickSeriesComponent = (props: any) => {
         }
     }, [isOpen]);
 
-    return <div ref={chartContainerRef} style={{ position: 'relative' }} />;
+    return null;
 };

@@ -11,7 +11,7 @@
   "Máy chủ": "Server",
   "Cặp tiền": "Currency pair",
   "Các lệnh đã đóng": "Closed orders",
-  "Tất cả lệnh gửi": "All orders submitted",
+  "Tất cả lệnh": "All orders",
   "Giao dịch khớp lệnh thực tế": "Actual matching transactions",
   "Thông tin của tôi": "My information",
   "Tài khoản giao dịch": "Trading accounts",
@@ -95,5 +95,18 @@
   "Bạn xác nhận muốn vào lệnh bằng thông tin dưới đây": "Please confirm that you want to place an order using the information below.",
   "Ngược": "Reverse",
   "Đặt lệnh": "Place an order",
-  "Vào lệnh thành công!": "Order successful!"
+  "Vào lệnh thành công!": "Order successful!",
+  "Hiện không có lô nào được đưa lên thị trường nên thể thực hiện chức năng này": "There are currently no lots available for sale so this function cannot be performed",
+  "bản vẽ": "drawing",
+  "Xóa bản vẽ": "Delete drawing",
+  "Xóa fibonacci thoái lui": "Clear fibonacci retracement",
+  "fibonacci thoái lui": "Fibonacci retracement",
+  "Chủ nhật": "Sunday",
+  "Thứ 2": "Monday",
+  "Thứ 3": "Tuesday",
+  "Thứ 4": "Wednesday",
+  "Thứ 5": "Thursday",
+  "Thứ 6": "Friday",
+  "Thứ 7": "Saturday",
+  "tháng": "month"
 }

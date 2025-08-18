@@ -36,7 +36,7 @@ export default function DashboardLayout() {
     }
     return (
         <div >
-            <header className='w-full p-4 flex justify-between items-center fixed top-0 backdrop-blur-2xl z-20'>
+            <header className='w-full p-4 flex justify-between items-center fixed top-0 backdrop-blur-2xl z-50'>
                 <div className="flex gap-2">
                     {dataHeader.map((a) => <TooltipNavigate iconName={a.nameIcon} path={a.path} title={a.title} key={a.nameIcon} />)}
                     <FilterServer />

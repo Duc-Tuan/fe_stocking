@@ -5,6 +5,7 @@ export interface IActivateTypetransaction {
     title: string,
     type: EMO,
     color: string,
+    subTitle: string
 }
 
 export const dataActivateTypetransaction: IActivateTypetransaction[] = [
@@ -13,11 +14,57 @@ export const dataActivateTypetransaction: IActivateTypetransaction[] = [
         color: "text-black",
         title: "Vào lệnh thị trường",
         type: "Lenh_thi_truong",
+        subTitle: `* Điều kiện để vào lệnh: 
+            1. Xuôi: Cắt lỗ(PNL) < PNL, 
+                  Chốt lời(PNL) > PNL
+            2. Ngược: Cắt lỗ(PNL) > PNL, 
+                  Chốt lời(PNL) < PNL
+        `
     },
-    { title: "Xuôi Limit", type: "Xuoi_Limit", color: "text-red-600", active: false },
-    { title: "Ngược Limit", type: "Nguoc_Limit", color: "text-blue-600", active: false },
-    { title: "Xuôi Stop", type: "Xuoi_Stop", color: "text-red-600", active: false },
-    { title: "Ngược Stop", type: "Nguoc_Stop", color: "text-blue-600", active: false },
+    {
+        title: "Xuôi Limit", 
+        type: "Xuoi_Limit", 
+        color: "text-red-600", 
+        active: false, 
+        subTitle: `Điều kiện để vào lệnh: 
+            Giá(PNL) > PNL, 
+            Cắt lỗ(PNL) < PNL, 
+            Chốt lời(PNL) > PNL
+        ` 
+    },
+    { 
+        title: "Ngược Limit", 
+        type: "Nguoc_Limit", 
+        color: "text-blue-600", 
+        active: false, 
+        subTitle: `Điều kiện để vào lệnh: 
+            Giá(PNL) < PNL, 
+            Cắt lỗ(PNL) > PNL, 
+            Chốt lời(PNL) < PNL
+        ` 
+    },
+    { 
+        title: "Xuôi Stop", 
+        type: "Xuoi_Stop", 
+        color: "text-red-600", 
+        active: false, 
+        subTitle: `Điều kiện để vào lệnh: 
+            Giá(PNL) < PNL, 
+            Cắt lỗ(PNL) < PNL, 
+            Chốt lời(PNL) > PNL
+        ` 
+    },
+    { 
+        title: "Ngược Stop", 
+        type: "Nguoc_Stop", 
+        color: "text-blue-600", 
+        active: false, 
+        subTitle: `Điều kiện để vào lệnh: 
+            Giá(PNL) > PNL, 
+            Cắt lỗ(PNL) > PNL, 
+            Chốt lời(PNL) < PNL
+        ` 
+    },
 ]
 
 export interface IAccTransaction {

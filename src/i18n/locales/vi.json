@@ -13,7 +13,7 @@
   "Máy chủ": "Máy chủ",
   "Cặp tiền": "Cặp tiền",
   "Các lệnh đã đóng": "Các lệnh đã đóng",
-  "Tất cả lệnh gửi": "Tất cả lệnh gửi",
+  "Tất cả lệnh": "Tất cả lệnh",
   "Giao dịch khớp lệnh thực tế": "Giao dịch khớp lệnh thực tế",
   "Thông tin của tôi": "Thông tin của tôi",
   "Tài khoản giao dịch": "Tài khoản giao dịch",
@@ -94,5 +94,18 @@
   "Ngược": "Ngược",
   "Vào lệnh thành công!": "Vào lệnh thành công!",
   "Bạn xác nhận muốn vào lệnh bằng thông tin dưới đây": "Bạn xác nhận muốn vào lệnh bằng thông tin dưới đây",
-  "Đặt lệnh": "Đặt lệnh"
+  "Đặt lệnh": "Đặt lệnh",
+  "Hiện không có lô nào được đưa lên thị trường nên thể thực hiện chức năng này": "Hiện không có lô nào được đưa lên thị trường nên thể thực hiện chức năng này",
+  "bản vẽ": "bản vẽ",
+  "Xóa bản vẽ": "Xóa bản vẽ",
+  "Xóa fibonacci thoái lui": "Xóa fibonacci thoái lui",
+  "fibonacci thoái lui": "fibonacci thoái lui",
+  "Chủ nhật": "Chủ nhật",
+  "Thứ 2": "Thứ 2",
+  "Thứ 3": "Thứ 3",
+  "Thứ 4": "Thứ 4",
+  "Thứ 5": "Thứ 5",
+  "Thứ 6": "Thứ 6",
+  "Thứ 7": "Thứ 7",
+  "tháng": "tháng"
 }
