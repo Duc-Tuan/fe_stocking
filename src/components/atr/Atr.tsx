@@ -1,34 +1,38 @@
+import { ColorType, createChart, type BarData, type IChartApi } from 'lightweight-charts';
 import React, { useEffect, useRef, useState } from 'react'
-import { calculateRSI } from './type';
-import { ColorType, createChart, type BarData, type IChartApi, type UTCTimestamp } from 'lightweight-charts';
+import { calculateATR } from './type';
 import { timeOptions, type IinitialDataCand } from '../../pages/Home/options';
-import { formatVietnamTimeSmart, gridColor } from '../line/formatTime';
 import { aggregateCandlesByInterval, getColorChart } from '../../utils/timeRange';
+import { formatVietnamTimeSmart, gridColor } from '../line/formatTime';
 import { normalizeChartData } from '../candlestickSeries/options';
-import { useTranslation } from 'react-i18next';
 
-export default function Rsi({ chartRefCurentRSI, candleData, chartRefCandl, currentRange, colors: {
-    backgroundColor = 'transparent',
-    lineColor = getColorChart('--color-background'),
-    textColor = 'black',
-} = {} }: { candleData: IinitialDataCand[], currentRange: any, chartRefCandl: any, colors?: any, chartRefCurentRSI: any }) {
-    const { t } = useTranslation()
-    const chartRef = useRef<any>(null);
-    const rsiChartRef = useRef<HTMLDivElement>(null);
+export default function Atr({
+    candleData,
+    chartRefCandl,
+    currentRange,
+    colors: {
+        backgroundColor = 'transparent',
+        lineColor = getColorChart('--color-background'),
+        textColor = 'black',
+    } = {}
+}: { candleData: IinitialDataCand[], currentRange: any, chartRefCandl: any, colors?: any }) {
+    const chartAtrRef = useRef<HTMLDivElement>(null);
+    const chartAtr = useRef<any>(null);
+
     const seriesRef = useRef<any>(null);
-
     const allData = useRef<BarData[]>([]);
 
     const currentData = useRef<any>(null);
 
-    const currentDataRsi = useRef<any>(null);
-    const [currentRsi, setCurrentRsi] = useState<any>(null)
+    // const currentAtr = useRef<any>(null);
+    const currentDataAtr = useRef<any>(null);
+    const [currentAtr, setCurrentAtr] = useState<{ time: any, value: any } | null>(null)
 
     useEffect(() => {
-        if (!rsiChartRef.current) return;
+        if (!chartAtrRef.current) return;
 
-        // === Chart RSI ===
-        const rsiChart: IChartApi = createChart(rsiChartRef.current, {
+        // Chart ATR
+        const atrChart = createChart(chartAtrRef.current, {
             layout: {
                 background: { type: ColorType.Solid, color: backgroundColor },
                 textColor,
@@ -69,60 +73,65 @@ export default function Rsi({ chartRefCurentRSI, candleData, chartRefCandl, curr
             },
         });
 
-        const rsiSeries = rsiChart.addLineSeries({
+        const atrSeries = atrChart.addLineSeries({
             color: lineColor,
             lineWidth: 1,
         });
 
-        seriesRef.current = rsiSeries;
-        chartRef.current = rsiChart;
-        chartRefCurentRSI.current = rsiChart;
+        chartAtr.current = atrChart;
+        seriesRef.current = atrSeries;
+
+        const handleResize = () => {
+            atrChart.applyOptions({ width: chartAtrRef.current!.clientWidth });
+        };
 
         return () => {
-            rsiChart.remove();
-            chartRef.current = null
+            window.removeEventListener('resize', handleResize);
+            atrChart.remove();
+            chartAtr.current = null;
         };
     }, []);
 
     useEffect(() => {
-        if (!chartRefCandl.current && !chartRef.current) return;
+        if (!chartRefCandl.current && !chartAtr.current) return;
         chartRefCandl.current.timeScale().subscribeVisibleLogicalRangeChange((range: any) => {
             if (range) {
-                chartRef.current.timeScale().setVisibleLogicalRange(range);
+                chartAtr.current?.timeScale().setVisibleLogicalRange(range);
             }
         });
-        chartRef.current.timeScale().subscribeVisibleLogicalRangeChange((range: any) => {
+        chartAtr.current.timeScale().subscribeVisibleLogicalRangeChange((range: any) => {
             if (range) {
-                chartRefCandl.current.timeScale().setVisibleLogicalRange(range);
+                chartRefCandl.current?.timeScale().setVisibleLogicalRange(range);
             }
         });
 
-        chartRefCandl.current.subscribeCrosshairMove((param: any) => {
-            if (param.time && chartRef.current) {
+        chartRefCandl.current?.subscribeCrosshairMove((param: any) => {
+            if (param.time && chartAtr.current) {
+
                 // Lấy RSI value tại đúng time
                 const rsiPoint = currentData.current.find((p: any) => p.time === param.time);
-
-                const data = currentDataRsi.current.find((p: any) => p.time === param.time);
-                setCurrentRsi(data);
+                
+                const data = currentDataAtr.current.find((p: any) => p.time === param.time);
+                setCurrentAtr(data);
 
                 if (rsiPoint) {
-                    chartRef.current.setCrosshairPosition(
+                    chartAtr.current.setCrosshairPosition(
                         rsiPoint.value,   // Y position
                         param.time,       // X (time)
                         seriesRef.current // RSI series
                     );
                 }
             } else {
-                chartRef.current && chartRef.current?.clearCrosshairPosition();
-                currentDataRsi.current && setCurrentRsi(currentDataRsi.current[currentDataRsi.current.length - 1])
+                chartAtr.current && chartAtr.current?.clearCrosshairPosition();
+                currentDataAtr.current && setCurrentAtr(currentDataAtr.current[currentDataAtr.current.length - 1])
             }
         });
-    }, [chartRefCandl.current, chartRef.current])
+    }, [chartRefCandl.current, chartAtr.current])
 
     useEffect(() => {
-        if (!chartRefCandl.current._private__chartWidget._private__width && !chartRefCandl.current && !chartRef.current) return;
-        chartRef.current.applyOptions({ width: chartRefCandl.current._private__chartWidget._private__width });
-        chartRef.current.priceScale("right").applyOptions({ minimumWidth: 58 });
+        if (!chartRefCandl.current._private__chartWidget._private__width && !chartRefCandl.current && !chartAtr.current) return;
+        chartAtr.current.applyOptions({ width: chartRefCandl.current._private__chartWidget._private__width });
+        chartAtr.current.priceScale("right").applyOptions({ minimumWidth: 58 });
     }, [chartRefCandl.current?._private__chartWidget?._private__width])
 
     const renderData = (data: any) => {
@@ -154,17 +163,17 @@ export default function Rsi({ chartRefCurentRSI, candleData, chartRefCandl, curr
 
         allData.current = merged.sort((a: any, b: any) => a.time - b.time);
         const data = renderData(allData.current)
-        const rsiData = calculateRSI(data, 14);
+        const rsiData = calculateATR(data, 14);
 
         currentData.current = data
-        currentDataRsi.current = rsiData
+        currentDataAtr.current = rsiData
+
+        setCurrentAtr(rsiData[rsiData.length - 1])
 
         seriesRef.current.setData(rsiData);
     }, [candleData, currentRange]);
 
-    return <div ref={rsiChartRef} style={{ position: "relative" }}>
-        <div className="absolute w-[calc(100%-58px)] h-[120px] bg-[var(--color-background-opacity-1)] left-0 right-0 bottom-0" />
-
-        <div className="absolute left-4 top-0 text-[12px]">{t("Chỉ báo hội tụ RSI")} <span className='text-gray-400'>14 close</span> <span className='text-[var(--color-background)] ml-2'>{currentRsi && currentRsi.value.toFixed(2)}</span></div>
+    return <div ref={chartAtrRef} style={{ position: "relative" }}>
+        <div className="absolute left-4 top-0 text-[12px]">ATR 14 <span className='text-gray-400'>RMA</span> <span className='text-[var(--color-background)] ml-2'>{currentAtr && currentAtr.value.toFixed(2)}</span></div>
     </div>
 }

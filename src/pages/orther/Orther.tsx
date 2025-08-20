@@ -1,122 +1,136 @@
+// ChartWithATR.tsx
 import React, { useEffect, useRef } from "react";
 import {
     createChart,
-    ColorType,
     type IChartApi,
+    type ISeriesApi,
+    type LineData,
     type UTCTimestamp,
+    ColorType,
 } from "lightweight-charts";
 
-// === RSI function ===
-function calculateRSI(data: any[], period = 14) {
-    if (!data || data.length === 0) return [];
-    let gains: number[] = [];
-    let losses: number[] = [];
-    let rsi: any[] = [];
-
-    for (let i = 1; i < data.length; i++) {
-        const change = data[i].close - data[i - 1].close;
-        gains.push(change > 0 ? change : 0);
-        losses.push(change < 0 ? -change : 0);
-
-        const avgGain =
-            gains.slice(i - period, i).reduce((a, b) => a + b, 0) / period;
-        const avgLoss =
-            losses.slice(i - period, i).reduce((a, b) => a + b, 0) / period;
-        const rs = avgLoss === 0 ? 100 : avgGain / avgLoss;
-        const rsiValue = 100 - 100 / (1 + rs);
-
-        rsi.push({ time: data[i].time, value: rsiValue });
-    }
-    return rsi;
+interface Candle {
+    time: number; // timestamp in seconds
+    open: number;
+    high: number;
+    low: number;
+    close: number;
 }
 
-// === Fake data (5 phút 1 nến) ===
-const candleData = Array.from({ length: 100 }, (_, i) => {
-    const base = 1.35 + i * 0.0005;
-    return {
-        time: (1723708800 + i * 300) as UTCTimestamp,
-        open: base,
-        high: base + 0.002,
-        low: base - 0.002,
-        close: base + (Math.random() - 0.5) * 0.004,
-    };
-});
+// --- Dữ liệu mẫu ---
+export const sampleCandles: any[] = (() => {
+    const candles: Candle[] = [];
+    let time = Math.floor(Date.now() / 1000) - 3600 * 24;
+    let price = 100;
+    for (let i = 0; i < 50; i++) {
+        const open = price;
+        const close = price + (Math.random() - 0.5) * 2;
+        const high = Math.max(open, close) + Math.random();
+        const low = Math.min(open, close) - Math.random();
+        candles.push({ time, open, high, low, close });
+        price = close;
+        time += 60 * 60;
+    }
+    return candles;
+})();
 
-const ChartWithRSIPane = () => {
-    const candleChartRef = useRef<HTMLDivElement>(null);
-    const rsiChartRef = useRef<HTMLDivElement>(null);
+// --- Tính ATR ---
+export function calculateATR(
+    candles: Candle[],
+    period: number = 14
+): (LineData | { time: UTCTimestamp; value: number })[] {
+    if (candles.length < period + 1) return [];
+
+    const atrArray: (LineData | { time: UTCTimestamp; value: number })[] = [];
+    const trArray: number[] = [];
+
+    for (let i = 1; i < candles.length; i++) {
+        const curr = candles[i];
+        const prev = candles[i - 1];
+        const tr = Math.max(
+            curr.high - curr.low,
+            Math.abs(curr.high - prev.close),
+            Math.abs(curr.low - prev.close)
+        );
+        trArray.push(tr);
+    }
+
+    // pad NaN cho 14 cây đầu
+    for (let i = 0; i < period; i++) {
+        atrArray.push({ time: candles[i].time as UTCTimestamp, value: NaN });
+    }
+
+    let atr = trArray.slice(0, period).reduce((a, b) => a + b, 0) / period;
+    atrArray.push({ time: candles[period].time as UTCTimestamp, value: atr });
+
+    for (let i = period; i < trArray.length; i++) {
+        atr = (atr * (period - 1) + trArray[i]) / period;
+        atrArray.push({ time: candles[i + 1].time as UTCTimestamp, value: atr });
+    }
+    return atrArray;
+}
+
+export const ChartWithATR = () => {
+    const chartCandleRef = useRef<HTMLDivElement>(null);
+    const chartAtrRef = useRef<HTMLDivElement>(null);
+
+    const chartCandle = useRef<IChartApi | null>(null);
+    const chartAtr = useRef<IChartApi | null>(null);
 
     useEffect(() => {
-        if (!candleChartRef.current || !rsiChartRef.current) return;
+        if (!chartCandleRef.current || !chartAtrRef.current) return;
 
-        // === Chart chính: Candle + Volume ===
-        const candleChart: IChartApi = createChart(candleChartRef.current, {
-            height: 400,
-            layout: {
-                background: { type: ColorType.Solid, color: "white" },
-                textColor: "black",
-            },
-            rightPriceScale: { borderColor: "#00000030" },
-            timeScale: {
-                borderColor: "#00000030",
-                timeVisible: true,
-                secondsVisible: true,
-            },
+        // Chart nến
+        const candleChart = createChart(chartCandleRef.current, {
+            width: chartCandleRef.current.clientWidth,
+            height: 300,
+            layout: { background: { type: ColorType.Solid, color: "white" }, textColor: "#333" },
+            timeScale: { timeVisible: true, secondsVisible: false },
+        });
+        const candleSeries = candleChart.addCandlestickSeries();
+        candleSeries.setData(sampleCandles);
+        chartCandle.current = candleChart;
+
+        // Chart ATR
+        const atrChart = createChart(chartAtrRef.current, {
+            width: chartAtrRef.current.clientWidth,
+            height: 150,
+            layout: { background: { type: ColorType.Solid, color: "white" }, textColor: "#333" },
+            timeScale: { timeVisible: true, secondsVisible: false },
+        });
+        const atrSeries = atrChart.addLineSeries({ color: "orange", lineWidth: 2 });
+        console.log(calculateATR(sampleCandles, 14), sampleCandles);
+        
+        atrSeries.setData(calculateATR(sampleCandles, 14));
+        chartAtr.current = atrChart;
+
+        // Đồng bộ timeScale
+        candleChart.timeScale().subscribeVisibleTimeRangeChange((range) => {
+            if (range) atrChart.timeScale().setVisibleRange(range);
+        });
+        atrChart.timeScale().subscribeVisibleTimeRangeChange((range) => {
+            if (range) candleChart.timeScale().setVisibleRange(range);
         });
 
-        const candleSeries = candleChart.addCandlestickSeries({
-            upColor: "#4bffb5",
-            borderUpColor: "#4bffb5",
-            wickUpColor: "#4bffb5",
-            downColor: "#ff4976",
-            borderDownColor: "#ff4976",
-            wickDownColor: "#ff4976",
-        });
-        candleSeries.setData(candleData);
-
-        // === Chart RSI ===
-        const rsiChart: IChartApi = createChart(rsiChartRef.current, {
-            height: 200,
-            layout: {
-                background: { type: ColorType.Solid, color: "white" },
-                textColor: "black",
-            },
-            rightPriceScale: { borderColor: "#00000030" },
-            timeScale: { borderColor: "#00000030", timeVisible: true },
-        });
-
-        const rsiSeries = rsiChart.addLineSeries({
-            color: "blue",
-            lineWidth: 1,
-        });
-        const rsiData = calculateRSI(candleData, candleData.length);
-        rsiSeries.setData(rsiData);
-
-        // Fix trục RSI 0–100
-        (rsiSeries as any).autoscaleInfoProvider = () => ({
-            priceRange: { minValue: 0, maxValue: 100 },
-        });
-
-        // === Đồng bộ timeScale ===
-        candleChart.timeScale().subscribeVisibleTimeRangeChange((range: any) => {
-            rsiChart.timeScale().setVisibleRange(range);
-        });
-
-        candleChart.priceScale("right").applyOptions({ minimumWidth: 60 });
-        rsiChart.priceScale("right").applyOptions({ minimumWidth: 60 });
+        // Resize
+        const handleResize = () => {
+            const width = chartCandleRef.current?.clientWidth ?? 800;
+            candleChart.applyOptions({ width });
+            atrChart.applyOptions({ width });
+        };
+        window.addEventListener("resize", handleResize);
 
         return () => {
+            window.removeEventListener("resize", handleResize);
             candleChart.remove();
-            rsiChart.remove();
+            atrChart.remove();
         };
     }, []);
 
     return (
-        <div style={{ display: "flex", flexDirection: "column" }}>
-            <div ref={candleChartRef} style={{ width: "100%", height: 400 }} />
-            <div ref={rsiChartRef} style={{ width: "100%", height: 200 }} />
+        <div>
+            <div ref={chartCandleRef} style={{ width: "100%", height: 300 }} />
+            <div ref={chartAtrRef} style={{ width: "100%", height: 150 }} />
         </div>
     );
 };
-
-export default ChartWithRSIPane;

@@ -7,9 +7,9 @@ import NotFoundPage from '../pages/NotFoundPage';
 import SettingTransaction from '../pages/Settings/SettingTransaction';
 import TransactionPage from '../pages/Transaction/TransactionPage';
 import LoginPage from '../pages/auth/LoginPage';
+import { ChartWithATR } from '../pages/orther/Orther';
 import { PathName } from './path';
 import ProtectedRoute from './protectedRoute';
-import ChartWithRSI from '../pages/orther/Orther';
 
 const router = createBrowserRouter([
   {
@@ -42,7 +42,7 @@ const router = createBrowserRouter([
       },
       {
         path: PathName.ORTHER,
-        element: <ChartWithRSI />,
+        element: <ChartWithATR />,
       },
     ],
   },

@@ -1,5 +1,6 @@
 import type { UTCTimestamp } from "lightweight-charts";
 import i18 from '../../i18n'
+import type { Option } from "../History/type";
 
 export const FIB_TOLERANCE = 5; // px cho phép lệch
 
@@ -93,3 +94,20 @@ export function drawTimeLabel(ctx: CanvasRenderingContext2D, text: string, x: nu
     ctx.textBaseline = "top";
     ctx.fillText(text, x, rectY + paddingY);
 }
+
+export interface Iindicator extends Option<String> {
+    active: boolean
+}
+
+export const dataIndicator: Iindicator[] = [
+    {
+        label: "Chỉ báo hội tụ RSI 14",
+        value: "rsi",
+        active: false
+    },
+    {
+        label: "Khoảng giao động trung bình thực tế ATR 14",
+        value: "atr",
+        active: false
+    }
+]

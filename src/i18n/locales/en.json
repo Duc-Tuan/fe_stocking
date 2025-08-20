@@ -110,5 +110,7 @@
   "Thứ 7": "Saturday",
   "tháng": "month",
   "Xóa tất cả các bản vẽ": "Delete all drawings",
-  "Chỉ báo hội tụ RSI 14": "RSI 14 convergence indicator"
+  "Chỉ báo hội tụ RSI": "RSI convergence indicator",
+  "Chỉ báo hội tụ RSI 14": "RSI 14 convergence indicator",
+  "Khoảng giao động trung bình thực tế ATR 14": "ATR 14 average true range"
 }

@@ -26,9 +26,11 @@ import {
     type IinitialData,
     type IinitialDataCand,
 } from "./options";
-import { drawLabelWithBackground, FIB_TOLERANCE, fibBaseColors, fibLevels, formatDateLabel, getCssVar, type FibBlock } from "./type";
+import { dataIndicator, drawLabelWithBackground, FIB_TOLERANCE, fibBaseColors, fibLevels, formatDateLabel, getCssVar, type FibBlock, type Iindicator } from "./type";
 import Icon from "../../assets/icon";
 import Rsi from "../../components/rsi/Rsi";
+import Atr from "../../components/atr/Atr";
+import type { Option } from "../History/type";
 
 // Khoảng thời gian 1 nến (M5 = 300 giây)
 const BAR_INTERVAL = 300;
@@ -37,6 +39,8 @@ export default function HomePage() {
     const { t } = useTranslation()
     const { serverMonitorActive } = useAppInfo()
     const { currentPnl } = useCurrentPnl()
+
+    const chartRefCurentRSI = useRef<any>(null);
 
     const chartRefCurent = useRef<any>(null);
     const chartContainerRef = useRef<HTMLDivElement>(null);
@@ -85,7 +89,8 @@ export default function HomePage() {
 
     const [fibBlocks, setFibBlocks] = useState<FibBlock[]>([]);
     const [activeFibId, setActiveFibId] = useState<string | null>(null);
-    const [isRsi, setIsRsi] = useState<boolean>(false);
+
+    const [indicator, setIndicator] = useState<Iindicator[]>(dataIndicator)
 
     // Gọi api khi page thay đổi
     const getSymbolApi = async (idServer: number) => {
@@ -183,9 +188,7 @@ export default function HomePage() {
             canvasRef.current.style.pointerEvents = "none"
         }
         setIsCheckFibonacci((selected.tabsName === "Biểu đồ đường"))
-
         setActiveTab(updated);
-        setIsRsi(false)
     };
 
     const handleRangeChange = (seconds: number | null, label: string) => {
@@ -216,7 +219,7 @@ export default function HomePage() {
         const resize = () => {
             if (!canvasRef.current || !chartContainerRef.current) return;
             canvasRef.current.width = chartContainerRef.current!.clientWidth;
-            canvasRef.current.height = chartContainerRef.current!.clientHeight;
+            canvasRef.current.height = indicator.filter((a) => a.active).length > 1 ? chartContainerRef.current!.clientHeight + 240 :  chartContainerRef.current!.clientHeight;
             drawFib()
         };
         resize();
@@ -716,13 +719,34 @@ export default function HomePage() {
     useEffect(() => {
         if (!chartRefCurent.current) return
 
-        chartRefCurent.current.applyOptions({
-            timeScale: {
-                visible: !isRsi
-            },
-            height: isRsi ? 450 : 600
-        })
-    }, [isRsi, chartRefCurent.current])
+        if (activeTab.find((a) => a.active && a.tabsName === "Biểu đồ đường")) {
+            chartRefCurent.current.applyOptions({
+                timeScale: {
+                    visible: true
+                },
+                height: 600
+            })
+
+        } else {
+            chartRefCurent.current.applyOptions({
+                timeScale: {
+                    visible: !indicator.some((a) => a.active)
+                },
+                height: indicator.some((a) => a.active) ? 480 : 600
+            })
+
+            if (chartRefCurentRSI.current && indicator.filter((a) => a.active).length > 1) {
+                chartRefCurentRSI.current.applyOptions({
+                    timeScale: {
+                        visible: false
+                    },
+                })
+                chartRefCurent.current.applyOptions({
+                    height: 360
+                })
+            }
+        }
+    }, [indicator, chartRefCurent.current, chartRefCurentRSI.current, activeTab])
 
     return (
         <div className="text-center">
@@ -767,11 +791,7 @@ export default function HomePage() {
 
                                 <DeleteFibonacci data={fibBlocks} onClick={handleDelete} />
 
-                                <TooltipCustom handleClick={() => {
-                                    setIsRsi((prev) => !prev)
-                                }} w="w-[40px]" h="h-[40px]" titleTooltip={"Chỉ báo hội tụ RSI 14"} classNameButton={`${isRsi ? "bg-[var(--color-background)] text-white" : "text-black bg-gray-200"}`}>
-                                    <Icon name="icon-rsi" width={22} height={22} />
-                                </TooltipCustom>
+                                <CompIndicator indicator={indicator} setIndicator={setIndicator} />
 
                                 <button className="flex items-center ml-4 cursor-pointer" onClick={toggleOpen}>
                                     <input checked={isOpen} readOnly type="checkbox" value="" className="custom-checkbox cursor-pointer appearance-none bg-gray-100 checked:bg-[var(--color-background)] w-4 h-4 rounded-sm dark:bg-white border border-[var(--color-background)] ring-offset-[var(--color-background)]" />
@@ -815,13 +835,13 @@ export default function HomePage() {
                             )}
                         </React.Fragment>
                     ))}
-                    {
-                        activeTab.find((a) => a.active && a.tabsName === "Biểu đồ nến") && isRsi && <>
-                            <Rsi candleData={symbolsCand} chartRefCandl={chartRef} currentRange={currentRange} />
-                            <div className="absolute w-[calc(100%-58px)] h-[120px] bg-[var(--color-background-opacity-1)] bottom-[27px] left-0 right-0"></div>
-                        </>
-                    }
                 </div>
+                {
+                    (activeTab.find((a) => a.active && a.tabsName === "Biểu đồ nến")) ? <>
+                        {indicator.find((a) => a.active && a.value === "rsi") && <Rsi candleData={symbolsCand} chartRefCandl={chartRef} currentRange={currentRange} chartRefCurentRSI={chartRefCurentRSI} />}
+                        {indicator.find((a) => a.active && a.value === "atr") && <Atr candleData={symbolsCand} chartRefCandl={chartRef} currentRange={currentRange} />}
+                    </> : <></>
+                }
             </div>
         </div>
     );
@@ -917,6 +937,57 @@ const DeleteFibonacci = ({ data, onClick }: { data: any, onClick: any }) => {
                 })}
 
                 <Button className="shadow-none text-black cursor-pointer font-semibold w-[200px] text-left px-4 hover:bg-[var(--color-background-opacity-2)] hover:text-[var(--color-background)] py-2" onClick={() => onClick(-1)}>{t("Xóa tất cả các bản vẽ")}</Button>
+            </div>
+        )}
+    </div>
+}
+
+const CompIndicator = ({ indicator, setIndicator }: {
+    indicator: Iindicator[]
+    , setIndicator: React.Dispatch<React.SetStateAction<Iindicator[]>>
+}) => {
+    const { t } = useTranslation()
+    const popupRef: any = useRef(null);
+    const [open, setOpen] = useState(false);
+    const [visible, setVisible] = useState(false); // để delay unmount
+
+    const handleToggle = () => {
+        if (open) {
+            // Đóng có delay để chạy animation
+            setOpen(false);
+            setTimeout(() => setVisible(false), 200); // khớp với duration
+        } else {
+            setVisible(true);
+            setTimeout(() => setOpen(true), 10); // delay nhẹ để Tailwind áp transition
+        }
+    };
+
+    useClickOutside(popupRef, () => {
+        setOpen(false);
+        setTimeout(() => setVisible(false), 200);
+    }, visible);
+
+    const onClick = (idx: number) => {
+        const dataNew: Iindicator[] = [...indicator].map((a, id) => {
+            if (idx === id) {
+                return { ...a, active: !a.active }
+            } else {
+                return { ...a }
+            }
+        })
+        setIndicator(dataNew)
+    }
+
+    return <div ref={popupRef} className="relative z-20">
+        <TooltipCustom handleClick={handleToggle} w="w-[40px]" h="h-[40px]" titleTooltip={"Các chỉ báo"} classNameButton={`${indicator.find((a) => a.active) ? "bg-[var(--color-background)] text-white" : "text-black bg-gray-200"}`}>
+            <Icon name="icon-rsi" width={18} height={18} />
+        </TooltipCustom>
+
+        {visible && (
+            <div className={`ml-2 transition-all duration-200 absolute -top-2 left-full mt-2 bg-white shadow-sm shadow-gray-300 rounded-lg border border-gray-300 p-2 ${open ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-2'} flex flex-col justify-center items-center gap-1`}>
+                {indicator?.map((d: Iindicator, idx: number) => {
+                    return <Button onClick={() => onClick(idx)} key={idx} className={`${d.active ? "bg-[var(--color-background)] text-white" : "text-black hover:bg-[var(--color-background-opacity-2)] hover:text-[var(--color-background)]"} shadow-none text-sm cursor-pointer font-semibold w-[320px] text-left px-4 py-2`} >{t(d.label)}</Button>
+                })}
             </div>
         )}
     </div>
