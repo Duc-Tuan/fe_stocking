@@ -1,6 +1,7 @@
 import {
     ColorType,
     createChart,
+    type IChartApi,
     type UTCTimestamp,
 } from 'lightweight-charts';
 import { useEffect, useRef } from 'react';

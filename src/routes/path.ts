@@ -4,4 +4,5 @@ export const PathName = {
     TRANSACTION: "transactions",
     HISTORY: "historys",
     SETTING: "settings",
+    ORTHER: "orther",
 }

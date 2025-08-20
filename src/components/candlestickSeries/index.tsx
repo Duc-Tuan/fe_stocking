@@ -320,7 +320,7 @@ export const CandlestickSeriesComponent = (props: any) => {
         candleSeriesRef.current.setData(data);
 
         pLineSeriesRe(data);
-        updateSeparators(data);
+        // updateSeparators(data);
     }, [dataOld]);
 
     useEffect(() => {
@@ -328,7 +328,7 @@ export const CandlestickSeriesComponent = (props: any) => {
         const data = renderData(allData.current);
         candleSeriesRef.current.setData(data);
         pLineSeriesRe(data);
-        updateSeparators(data);
+        // updateSeparators(data);
     }, [currentRange])
 
     useEffect(() => {
@@ -357,7 +357,7 @@ export const CandlestickSeriesComponent = (props: any) => {
 
         candleSeriesRef.current.setData(data);
         pLineSeriesRe(data);
-        updateSeparators(data);
+        // updateSeparators(data);
     }, [latestData]);
 
     useEffect(() => {

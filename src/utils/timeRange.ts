@@ -56,7 +56,7 @@ export function handleTimeRangeChange(
 
     if (seconds === null) {
         // ✅ Hiển thị toàn bộ
-        chartRef.current.timeScale().setVisibleRange({
+        chartRef.current?.timeScale().setVisibleRange({
             from: first.time,
             to: last.time,
         });
@@ -65,7 +65,7 @@ export function handleTimeRangeChange(
         const to = last.time;
         const from = Math.max(first.time, to - seconds);
         if (typeChar) {
-            chartRef.current.timeScale().setVisibleRange({ from: from as UTCTimestamp, to });
+            chartRef.current?.timeScale().setVisibleRange({ from: from as UTCTimestamp, to });
         }
     }
 

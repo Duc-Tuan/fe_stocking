@@ -9,6 +9,7 @@ import TransactionPage from '../pages/Transaction/TransactionPage';
 import LoginPage from '../pages/auth/LoginPage';
 import { PathName } from './path';
 import ProtectedRoute from './protectedRoute';
+import ChartWithRSI from '../pages/orther/Orther';
 
 const router = createBrowserRouter([
   {
@@ -38,6 +39,10 @@ const router = createBrowserRouter([
       {
         path: PathName.SETTING,
         element: <SettingTransaction />,
+      },
+      {
+        path: PathName.ORTHER,
+        element: <ChartWithRSI />,
       },
     ],
   },

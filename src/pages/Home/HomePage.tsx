@@ -28,6 +28,7 @@ import {
 } from "./options";
 import { drawLabelWithBackground, FIB_TOLERANCE, fibBaseColors, fibLevels, formatDateLabel, getCssVar, type FibBlock } from "./type";
 import Icon from "../../assets/icon";
+import Rsi from "../../components/rsi/Rsi";
 
 // Khoảng thời gian 1 nến (M5 = 300 giây)
 const BAR_INTERVAL = 300;
@@ -80,9 +81,11 @@ export default function HomePage() {
     const [isCheckFibonacci, setIsCheckFibonacci] = useState(false);
 
     const allData = useRef<BarData[]>([]);
+    const widthCharRef = useRef<any>(0);
 
     const [fibBlocks, setFibBlocks] = useState<FibBlock[]>([]);
     const [activeFibId, setActiveFibId] = useState<string | null>(null);
+    const [isRsi, setIsRsi] = useState<boolean>(false);
 
     // Gọi api khi page thay đổi
     const getSymbolApi = async (idServer: number) => {
@@ -175,7 +178,14 @@ export default function HomePage() {
             ...tab,
             active: tab.tabsName === selected.tabsName,
         }));
+
+        if (canvasRef.current && selected.tabsName === "Biểu đồ đường") {
+            canvasRef.current.style.pointerEvents = "none"
+        }
+        setIsCheckFibonacci((selected.tabsName === "Biểu đồ đường"))
+
         setActiveTab(updated);
+        setIsRsi(false)
     };
 
     const handleRangeChange = (seconds: number | null, label: string) => {
@@ -244,6 +254,11 @@ export default function HomePage() {
         }
     }, [symbolsCand]);
 
+    useEffect(() => {
+        if (!chartRef.current) return
+        widthCharRef.current = chartRef.current.timeScale().width()
+    }, [])
+
     const drawFib = () => {
         const ctx = canvasRef.current?.getContext("2d");
         if (!ctx || !chartRef.current || !candleSeriesRef.current) return;
@@ -306,8 +321,8 @@ export default function HomePage() {
                     // 🎯 Chỉ bôi màu Y-axis cho 5 vạch đầu
                     if (idx < 6) {
                         const axisWidth = 60;
-                        const chartWidth = chartRef.current.timeScale().width();
-                        const priceScaleLeft = chartWidth;   // mép trái của trục Y
+                        // const chartWidth = chartRef.current.timeScale().width();
+                        const priceScaleLeft = widthCharRef.current - 58;   // mép trái của trục Y
 
                         const top = Math.min(y, y2);
                         const height = Math.abs(y2 - y);
@@ -690,9 +705,24 @@ export default function HomePage() {
     }, [fibMode, dragging, activeFibId, fibBlocks]);
 
     const handleDelete = (idx: number) => {
-        const dataNew = fibBlocks.filter((_, id) => id !== idx)
-        setFibBlocks(dataNew)
+        if (idx >= 0) {
+            const dataNew = fibBlocks.filter((_, id) => id !== idx)
+            setFibBlocks(dataNew)
+        } else if (idx < 0) {
+            setFibBlocks([])
+        }
     }
+
+    useEffect(() => {
+        if (!chartRefCurent.current) return
+
+        chartRefCurent.current.applyOptions({
+            timeScale: {
+                visible: !isRsi
+            },
+            height: isRsi ? 450 : 600
+        })
+    }, [isRsi, chartRefCurent.current])
 
     return (
         <div className="text-center">
@@ -737,6 +767,12 @@ export default function HomePage() {
 
                                 <DeleteFibonacci data={fibBlocks} onClick={handleDelete} />
 
+                                <TooltipCustom handleClick={() => {
+                                    setIsRsi((prev) => !prev)
+                                }} w="w-[40px]" h="h-[40px]" titleTooltip={"Chỉ báo hội tụ RSI 14"} classNameButton={`${isRsi ? "bg-[var(--color-background)] text-white" : "text-black bg-gray-200"}`}>
+                                    <Icon name="icon-rsi" width={22} height={22} />
+                                </TooltipCustom>
+
                                 <button className="flex items-center ml-4 cursor-pointer" onClick={toggleOpen}>
                                     <input checked={isOpen} readOnly type="checkbox" value="" className="custom-checkbox cursor-pointer appearance-none bg-gray-100 checked:bg-[var(--color-background)] w-4 h-4 rounded-sm dark:bg-white border border-[var(--color-background)] ring-offset-[var(--color-background)]" />
                                     <label htmlFor="green-checkbox" className="cursor-pointer ms-2 text-sm font-medium text-gray-900 dark:text-gray-900">{t("Đường trung bình")}</label>
@@ -779,6 +815,12 @@ export default function HomePage() {
                             )}
                         </React.Fragment>
                     ))}
+                    {
+                        activeTab.find((a) => a.active && a.tabsName === "Biểu đồ nến") && isRsi && <>
+                            <Rsi candleData={symbolsCand} chartRefCandl={chartRef} currentRange={currentRange} />
+                            <div className="absolute w-[calc(100%-58px)] h-[120px] bg-[var(--color-background-opacity-1)] bottom-[27px] left-0 right-0"></div>
+                        </>
+                    }
                 </div>
             </div>
         </div>
@@ -873,6 +915,8 @@ const DeleteFibonacci = ({ data, onClick }: { data: any, onClick: any }) => {
                 {data?.map((_: any, idx: number) => {
                     return <Button key={idx} className="shadow-none text-black cursor-pointer font-semibold w-[200px] text-left px-4 hover:bg-[var(--color-background-opacity-2)] hover:text-[var(--color-background)] py-2" onClick={() => onClick(idx)}>{t("Xóa bản vẽ")} {idx + 1}</Button>
                 })}
+
+                <Button className="shadow-none text-black cursor-pointer font-semibold w-[200px] text-left px-4 hover:bg-[var(--color-background-opacity-2)] hover:text-[var(--color-background)] py-2" onClick={() => onClick(-1)}>{t("Xóa tất cả các bản vẽ")}</Button>
             </div>
         )}
     </div>
