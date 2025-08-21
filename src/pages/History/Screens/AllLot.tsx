@@ -13,6 +13,7 @@ import { type IActiveHistoryLot, type IFilterAllLot, type IHistoryLot } from '..
 import toast from 'react-hot-toast'
 import dayjs from 'dayjs'
 import { getTime } from '../../../utils/timeRange'
+import { Loading } from '../../../components/loading'
 
 const initFilter: IFilterAllLot = {
     accTransaction: null,
@@ -36,6 +37,7 @@ export default function AllLot() {
     const [open, setOpen] = useState(false)
     const [filter, setFilter] = useState<IFilterAllLot>(initFilter)
     const [query, setQuery] = useState<QueryLots>(initPara)
+    const [loading, setLoading] = useState<boolean>(false)
 
     const colorbg = useCallback((status: EMO) => {
         let classC: string = ""
@@ -74,8 +76,10 @@ export default function AllLot() {
 
     useEffect(() => {
         const fetchApi = async () => {
+            setLoading(true)
             const res = await getLots(query)
             setData(res.data.data);
+            setLoading(false)
             setQuery((prev) => ({ ...prev, total: res.data.total, totalPage: Math.ceil(res.data.total / res.data.limit) }))
         }
         fetchApi();
@@ -103,74 +107,79 @@ export default function AllLot() {
             <Filter subButton={<TaskSquare setDataLost={setData} query={query} idx={data.map((a) => a.id)} isClose={isClose} />} handleFilter={handleFilter} setFilter={setFilter} filter={filter} query={query} setQuery={setQuery} />
 
             <div className="mt-1 p-2">
-                {data.map((a, idx) =>
-                    <div key={idx} className="shadow-sm shadow-gray-300 p-4 pt-2 mb-2 bg-[var(--color-background-opacity-1)]">
-                        <div className="flex justify-between items-center border-b border-b-gray-200 pb-2">
-                            <div className="flex justify-start items-center gap-2">
-                                <span className='font-bold mr-2'>{t("Lô")} {idx + 1}</span>
-                                <span className={`${colorbg(a.status).classC} rounded-md text-white px-2 py-1 text-sm font-bold`}>{t(colorbg(a.status).label)}</span>
-                                {a.type === "CLOSE" && <span className='font-semibold text-sm bg-red-600 py-1 px-2 rounded-md text-white'>{t("Lô đã đóng lệnh")}</span>}
-                            </div>
-                            <span className="text-[13px] font-bold">{(dayjs.utc(a.time)).tz("Asia/Ho_Chi_Minh").format("YYYY-MM-DD HH:mm:ss")}</span>
-                        </div>
-
-                        <div className="flex flex-col justify-center items-start gap-[2px] mt-3">
-                            <div className="flex justify-start items-center gap-2">
-                                <span>{t("Tài khoản theo dõi")}:</span>
-                                <span className='font-semibold'>{a.account_monitor_id}</span>
-                            </div>
-
-                            <div className="flex justify-start items-center gap-2">
-                                <span>{t("Tài khoản giao dịch")}:</span>
-                                <div className="flex justify-start items-center gap-1">
-                                    <span className='font-semibold'>{a.account_transaction_id}</span>
-                                    <Icon name="icon-chart-transaction" className="text-[var(--color-background)] mt-[2px]" width={18} height={18} />
+                {
+                    !loading ?
+                        data.map((a, idx) =>
+                            <div key={idx} className="shadow-sm shadow-gray-300 p-4 pt-2 mb-2 bg-[var(--color-background-opacity-1)]">
+                                <div className="flex justify-between items-center border-b border-b-gray-200 pb-2">
+                                    <div className="flex justify-start items-center gap-2">
+                                        <span className='font-bold mr-2'>{t("Lô")} {idx + 1}</span>
+                                        <span className={`${colorbg(a.status).classC} rounded-md text-white px-2 py-1 text-sm font-bold`}>{t(colorbg(a.status).label)}</span>
+                                        {a.type === "CLOSE" && <span className='font-semibold text-sm bg-red-600 py-1 px-2 rounded-md text-white'>{t("Lô đã đóng lệnh")}</span>}
+                                    </div>
+                                    <span className="text-[13px] font-bold">{(dayjs.utc(a.time)).tz("Asia/Ho_Chi_Minh").format("YYYY-MM-DD HH:mm:ss")}</span>
                                 </div>
-                            </div>
-                            <div className="flex justify-start items-center gap-2">
-                                <span>{t("Volume")}: </span>
-                                <span className='font-semibold'>{a.volume}</span>
-                            </div>
-                            <div className="flex justify-start items-center gap-2">
-                                <span>{t("Giá")}(PNL): </span>
-                                <span className='font-semibold'>{a.price}</span>
-                            </div>
-                            <div className="flex justify-start items-center gap-2">
-                                <span>{t("Cắt lỗ")}(PNL): </span>
-                                <span className='font-semibold'>{a.stop_loss}</span>
-                            </div>
-                            <div className="flex justify-start items-center gap-2">
-                                <span>{t("Chốt lời")}(PNL): </span>
-                                <span className='font-semibold'>{a.take_profit}</span>
-                            </div>
-                            <div className="w-full">
-                                <div className="flex justify-between items-center">
-                                    <span>{t("Thông tin chi tiết cặp tiền vào lệnh")}: </span>
-                                    {colorbg(a.status).label !== "Đang chờ" && a.type === "RUNNING" && <TooltipNavigate handle={() => {
-                                        setDataCurrent({ ...a, lot: idx + 1 })
-                                        setOpen((prev) => !prev)
-                                    }} className='shadow-sm w-[36px] h-[36px] p-0 flex justify-center items-center' iconName='icon-close-transaction' path='#' title='Đóng lệnh nhanh' />}
-                                </div>
-                                <div className="mt-2">
-                                    <div className="flex justify-between items-center">
-                                        <div className="border flex-1 border-gray-200">
-                                            <div className="text-sm font-bold text-center border-b border-b-gray-200 p-1">{t("Tên cặp tiền")}</div>
-                                            {a.bySymbol.map((d, idx) => <div key={idx} className="text-sm text-center font-semibold h-6">{d.symbol}</div>)}
+
+                                <div className="flex flex-col justify-center items-start gap-[2px] mt-3">
+                                    <div className="flex justify-start items-center gap-2">
+                                        <span>{t("Tài khoản theo dõi")}:</span>
+                                        <span className='font-semibold'>{a.account_monitor_id}</span>
+                                    </div>
+
+                                    <div className="flex justify-start items-center gap-2">
+                                        <span>{t("Tài khoản giao dịch")}:</span>
+                                        <div className="flex justify-start items-center gap-1">
+                                            <span className='font-semibold'>{a.account_transaction_id}</span>
+                                            <Icon name="icon-chart-transaction" className="text-[var(--color-background)] mt-[2px]" width={18} height={18} />
                                         </div>
-                                        <div className="border flex-1 border-gray-200">
-                                            <div className="text-sm font-bold text-center border-b border-b-gray-200 p-1">{t("Trạng thái")}</div>
-                                            {a.bySymbol.map((d, idx) => <div key={idx} className={`text-center h-6 text-[12px] font-bold flex justify-center items-center ${colorTextType(d.type)}`}>{d.type}</div>)}
+                                    </div>
+                                    <div className="flex justify-start items-center gap-2">
+                                        <span>{t("Volume")}: </span>
+                                        <span className='font-semibold'>{a.volume}</span>
+                                    </div>
+                                    <div className="flex justify-start items-center gap-2">
+                                        <span>{t("Giá")}(PNL): </span>
+                                        <span className='font-semibold'>{a.price}</span>
+                                    </div>
+                                    <div className="flex justify-start items-center gap-2">
+                                        <span>{t("Cắt lỗ")}(PNL): </span>
+                                        <span className='font-semibold'>{a.stop_loss}</span>
+                                    </div>
+                                    <div className="flex justify-start items-center gap-2">
+                                        <span>{t("Chốt lời")}(PNL): </span>
+                                        <span className='font-semibold'>{a.take_profit}</span>
+                                    </div>
+                                    <div className="w-full">
+                                        <div className="flex justify-between items-center">
+                                            <span>{t("Thông tin chi tiết cặp tiền vào lệnh")}: </span>
+                                            {colorbg(a.status).label !== "Đang chờ" && a.type === "RUNNING" && <TooltipNavigate handle={() => {
+                                                setDataCurrent({ ...a, lot: idx + 1 })
+                                                setOpen((prev) => !prev)
+                                            }} className='shadow-sm w-[36px] h-[36px] p-0 flex justify-center items-center' iconName='icon-close-transaction' path='#' title='Đóng lệnh nhanh' />}
                                         </div>
-                                        <div className="border flex-1 border-gray-200">
-                                            <div className="text-sm font-bold text-center border-b border-b-gray-200 p-1">{t("Giá vào lệnh")}</div>
-                                            {a.bySymbol.map((d, idx) => <div key={idx} className="text-sm text-center h-6">{d.price_transaction}</div>)}
+                                        <div className="mt-2">
+                                            <div className="flex justify-between items-center">
+                                                <div className="border flex-1 border-gray-200">
+                                                    <div className="text-sm font-bold text-center border-b border-b-gray-200 p-1">{t("Tên cặp tiền")}</div>
+                                                    {a.bySymbol.map((d, idx) => <div key={idx} className="text-sm text-center font-semibold h-6">{d.symbol}</div>)}
+                                                </div>
+                                                <div className="border flex-1 border-gray-200">
+                                                    <div className="text-sm font-bold text-center border-b border-b-gray-200 p-1">{t("Trạng thái")}</div>
+                                                    {a.bySymbol.map((d, idx) => <div key={idx} className={`text-center h-6 text-[12px] font-bold flex justify-center items-center ${colorTextType(d.type)}`}>{d.type}</div>)}
+                                                </div>
+                                                <div className="border flex-1 border-gray-200">
+                                                    <div className="text-sm font-bold text-center border-b border-b-gray-200 p-1">{t("Giá vào lệnh")}</div>
+                                                    {a.bySymbol.map((d, idx) => <div key={idx} className="text-sm text-center h-6">{d.price_transaction}</div>)}
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                )}
+                        )
+                        :
+                        <Loading />
+                }
             </div>
 
             <Modal open={open} setOpen={setOpen} dataCurrent={dataCurrent} setDataLost={setData} />

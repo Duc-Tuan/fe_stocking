@@ -33,16 +33,17 @@ function App() {
     }
   }, [dispatch]);
 
-  const data = useSocket(
+  const { dataCurrent } = useSocket(
     import.meta.env.VITE_URL_API,
+    "chat_message",
     Number(serverMonitorActive?.value)
   );
 
   useEffect(() => {
-    if (data) {
-      dispatch(setCurrentPnl(data));
+    if (dataCurrent) {
+      dispatch(setCurrentPnl(dataCurrent));
     }
-  }, [data]);
+  }, [dataCurrent]);
 
   useEffect(() => {
     let language = localStorage.getItem('language')

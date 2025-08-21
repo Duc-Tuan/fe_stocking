@@ -18,7 +18,7 @@ const Tabs = (props: IProps) => {
     return (
         <>
             {options.map((item: IOptions) => (
-                <React.Fragment key={item.label}>
+                <React.Fragment key={item.value}>
                     <TooltipCustom isButton titleTooltip={<>
                         <div>
                             {t("Tài khoản")}: {item?.value}

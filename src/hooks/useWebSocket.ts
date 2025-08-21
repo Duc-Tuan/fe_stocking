@@ -5,11 +5,14 @@ import type { ICurrentPnl } from "../types/global";
 
 export function useSocket(
   url: string,
+  listen: string,
   id_symbol: number | null
 ) {
   const socketRef = useRef<Socket | null>(null);
   const token = useMemo(() => localStorage.getItem("token"), []);
   const [dataCurrent, setDataCurrent] = useState<ICurrentPnl>()
+
+  const [dataCurrentPosition, setDataCurrentPosition] = useState<any>()
 
   useEffect(() => {
     if (id_symbol) {
@@ -28,24 +31,32 @@ export function useSocket(
         console.log("❌ Socket disconnected");
       });
 
-      socket.on('chat_message', (data) => {
-        let parsed = JSON.parse(data.by_symbol);
+      if (listen === "chat_message") {
+        socket.on('chat_message', (data) => {
+          let parsed = JSON.parse(data.by_symbol);
 
-        // Nếu parse ra mảng ký tự → nghĩa là bị double-encode → parse thêm lần nữa
-        if (typeof parsed === "string") {
-          parsed = JSON.parse(parsed);
-        }
+          // Nếu parse ra mảng ký tự → nghĩa là bị double-encode → parse thêm lần nữa
+          if (typeof parsed === "string") {
+            parsed = JSON.parse(parsed);
+          }
 
-        const result = Object.entries(parsed).map(([key, value]: any[]) => ({
-          symbol: key,
-          ...value
-        }));
+          const result = Object.entries(parsed).map(([key, value]: any[]) => ({
+            symbol: key,
+            ...value
+          }));
 
-        setDataCurrent({
-          ...data,
-          by_symbol: result
-        })
-      });
+          setDataCurrent({
+            ...data,
+            by_symbol: result
+          })
+        });
+      }
+
+      if (listen === "position_message") {
+        socket.on('position_message', (data) => {
+          setDataCurrentPosition(data);
+        });
+      }
 
       return () => {
         socket.disconnect();
@@ -53,5 +64,7 @@ export function useSocket(
     }
   }, [url, id_symbol]);
 
-  return dataCurrent
+  return {
+    dataCurrentPosition, dataCurrent
+  }
 }

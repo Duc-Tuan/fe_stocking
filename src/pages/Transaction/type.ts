@@ -27,9 +27,9 @@ export const dataActivateTypetransaction: IActivateTypetransaction[] = [
         color: "text-red-600", 
         active: false, 
         subTitle: `Điều kiện để vào lệnh: 
-            Giá(PNL) > PNL, 
-            Cắt lỗ(PNL) < PNL, 
-            Chốt lời(PNL) > PNL
+            Giá(PNL) < PNL, 
+            Cắt lỗ(PNL) > Giá(PNL), 
+            Chốt lời(PNL) < Giá(PNL)
         ` 
     },
     { 
@@ -38,9 +38,9 @@ export const dataActivateTypetransaction: IActivateTypetransaction[] = [
         color: "text-blue-600", 
         active: false, 
         subTitle: `Điều kiện để vào lệnh: 
-            Giá(PNL) < PNL, 
-            Cắt lỗ(PNL) > PNL, 
-            Chốt lời(PNL) < PNL
+            Giá(PNL) > PNL, 
+            Cắt lỗ(PNL) < Giá(PNL), 
+            Chốt lời(PNL) > Giá(PNL)
         ` 
     },
     { 
@@ -49,9 +49,9 @@ export const dataActivateTypetransaction: IActivateTypetransaction[] = [
         color: "text-red-600", 
         active: false, 
         subTitle: `Điều kiện để vào lệnh: 
-            Giá(PNL) < PNL, 
-            Cắt lỗ(PNL) < PNL, 
-            Chốt lời(PNL) > PNL
+            Giá(PNL) > PNL, 
+            Cắt lỗ(PNL) < Giá(PNL), 
+            Chốt lời(PNL) > Giá(PNL)
         ` 
     },
     { 
@@ -60,9 +60,9 @@ export const dataActivateTypetransaction: IActivateTypetransaction[] = [
         color: "text-blue-600", 
         active: false, 
         subTitle: `Điều kiện để vào lệnh: 
-            Giá(PNL) > PNL, 
-            Cắt lỗ(PNL) > PNL, 
-            Chốt lời(PNL) < PNL
+            Giá(PNL) < PNL, 
+            Cắt lỗ(PNL) > Giá(PNL), 
+            Chốt lời(PNL) < Giá(PNL)
         ` 
     },
 ]

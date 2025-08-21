@@ -88,10 +88,10 @@ export default function Filter({ setFilter, filter, subButton, isStatus, isStatu
                 <div className="flex justify-between items-center gap-1">
                     <div className="w-[36px] h-[36px] shadow-md shadow-gray-500 flex justify-center items-center rounded-lg">{query?.page}</div>
                     <div className="">/</div>
-                    <div className="w-[36px] h-[36px] shadow-md shadow-gray-500 flex justify-center items-center rounded-lg">{query?.totalPage}</div>
+                    <div className="w-[36px] h-[36px] shadow-md shadow-gray-500 flex justify-center items-center rounded-lg">{query?.totalPage ?? 0}</div>
                 </div>
                 <TooltipNavigate disabled={query?.page === query?.totalPage || query?.totalPage === 0} handle={() => { setQuery && setQuery((prev) => ({ ...prev, page: query?.page === query?.totalPage ? prev.page : (prev.page ?? 0) + 1 })) }} iconName='icon-right' path='#' title='Trang sau' className="w-[36px] h-[36px] p-0 flex justify-center items-center" />
-                <div className="h-[36px] px-2 ml-2 shadow-md shadow-gray-500 flex justify-center items-center rounded-lg font-semibold">{t("Tổng số bản")}: {query?.total}</div>
+                <div className="h-[36px] px-2 ml-2 shadow-md shadow-gray-500 flex justify-center items-center rounded-lg font-semibold">{t("Tổng số bản")}: {query?.total ?? 0}</div>
             </div>
         </div>
     )

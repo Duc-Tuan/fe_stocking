@@ -1,17 +1,17 @@
-import React, { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from "react";
-import Icon from "../../assets/icon";
-import { Button } from "../../components/button";
-import { dataActivateTypetransaction, type IActivateTypetransaction, type IOrderTransaction } from "./type";
-import Volume from "./Volume";
-import PopupAcc from "./PopupAcc";
-import { useAppInfo } from "../../hooks/useAppInfo";
-import { useCurrentPnl } from "../../hooks/useCurrentPnl";
-import { useTranslation } from "react-i18next";
 import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from "@headlessui/react";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
-import { getPositionTransaction, postSendOrder } from "../../api/historys";
+import React, { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { postSendOrder } from "../../api/historys";
+import Icon from "../../assets/icon";
+import { Button } from "../../components/button";
 import TooltipCustom from "../../components/tooltip";
+import { useAppInfo } from "../../hooks/useAppInfo";
+import { useCurrentPnl } from "../../hooks/useCurrentPnl";
+import PopupAcc from "./PopupAcc";
+import { dataActivateTypetransaction, type IActivateTypetransaction, type IOrderTransaction } from "./type";
+import Volume from "./Volume";
 
 const init: IOrderTransaction = {
     account_monitor_id: undefined,
@@ -93,19 +93,11 @@ export default function TransactionPage() {
 
     const isCheckSumbit = useMemo(() => {
         if (data?.status === "Xuoi_Limit" || data?.status === "Nguoc_Stop") {
-            const isPrice = pnl >= (currentPnl?.total_pnl ?? 0)
-            if (data.status_sl_tp === "Nguoc") {
-                return isPrice && (currentPnl?.total_pnl ?? 0) < stopLoss && ((currentPnl?.total_pnl ?? 0) > takeProfit)
-            } else if (data.status_sl_tp === "Xuoi") {
-                return isPrice && (currentPnl?.total_pnl ?? 0) > stopLoss && ((currentPnl?.total_pnl ?? 0) < takeProfit)
-            }
-        } else if (data?.status === "Nguoc_Limit" || data?.status === "Xuoi_Stop") {
             const isPrice = pnl <= (currentPnl?.total_pnl ?? 0)
-            if (data.status_sl_tp === "Nguoc") {
-                return isPrice && (currentPnl?.total_pnl ?? 0) < stopLoss && ((currentPnl?.total_pnl ?? 0) > takeProfit)
-            } else if (data.status_sl_tp === "Xuoi") {
-                return isPrice && (currentPnl?.total_pnl ?? 0) > stopLoss && ((currentPnl?.total_pnl ?? 0) < takeProfit)
-            }
+            return isPrice && (pnl ?? 0) < stopLoss && ((pnl ?? 0) > takeProfit)
+        } else if (data?.status === "Nguoc_Limit" || data?.status === "Xuoi_Stop") {
+            const isPrice = pnl >= (currentPnl?.total_pnl ?? 0)
+            return isPrice && (pnl ?? 0) > stopLoss && ((pnl ?? 0) < takeProfit)
         }
     }, [data?.status_sl_tp, stopLoss, pnl, takeProfit])
 
@@ -236,7 +228,7 @@ export default function TransactionPage() {
                         {activateTypetransaction.map((a: IActivateTypetransaction, i: number) => {
                             return (
                                 <React.Fragment key={i}>
-                                    <TooltipCustom isButton titleTooltip={ <p style={{ whiteSpace: "pre-line" }}>{a.subTitle}</p> } placement="right-end">
+                                    <TooltipCustom isButton titleTooltip={<p style={{ whiteSpace: "pre-line" }}>{a.subTitle}</p>} placement="right-end">
                                         <Button onClick={() => handlClickActive(a.type)} className={`flex w-full justify-between items-center  ${i === 0 ? "rounded-none border-b border-b-gray-300 border-solid py-1 px-2" : "py-2 px-2"} cursor-pointer shadow-none hover:bg-[var(--color-background-opacity-2)] transition`}>
                                             <div className={`text-sm font-bold ${a.color}`}>{t(a.title)}</div>
                                             {a.active && <span><Icon name="icon-check" width={18} height={18} className="text-[var(--color-background)]" /></span>}

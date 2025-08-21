@@ -6,6 +6,7 @@ import Filter from '../components/Filter'
 import { initFilter, type IFilterAllLot, type ISymbolAll } from '../type'
 import { getTime } from '../../../utils/timeRange'
 import dayjs from 'dayjs'
+import { Loading } from '../../../components/loading'
 
 const initPara: QueryLots = {
   page: 1,
@@ -22,13 +23,15 @@ export default function Deals() {
   const [filter, setFilter] = useState<IFilterAllLot>(initFilter)
   const [data, setData] = useState<ISymbolAll[]>([])
   const [total, setTotal] = useState<{ totalFilled: number, totalCancelled: number, total: number }>({ total: 0, totalCancelled: 0, totalFilled: 0 })
-
+  const [loading, setLoading] = useState<boolean>(false)
   const [query, setQuery] = useState<QueryLots>(initPara)
 
   useEffect(() => {
     const fetchApi = async () => {
+      setLoading(true)
       const res = await getSymbolTransaction(query)
       setData(res.data.data);
+      setLoading(false)
       setTotal({
         total: res.data.total,
         totalFilled: res.data.totalFilled,
@@ -56,16 +59,20 @@ export default function Deals() {
     <div className='relative'>
       <Filter setFilter={setFilter} filter={filter} isStatus query={query} setQuery={setQuery} isStatusSymbol handleFilter={handleFilter} />
       <div className="p-2 flex flex-col justify-center items-start gap-2">
-        {data.map((a, idx) => <div key={idx} className="flex justify-between items-center w-full shadow-sm shadow-gray-300 p-2 rounded-sm">
-          <div className="text-sm">
-            <div className='font-bold mb-1'>{a.symbol} <span className={`text-sm font-semibold ${a.type === "SELL" ? "text-red-500" : "text-blue-500"}`}>{a.type}</span></div>
-            <div>{a.volume} {t("tại")} {a.price_open}</div>
-          </div>
-          <div className="text-sm">
-            <div className={`mb-1 text-right ${a.status === "filled" ? "text-blue-700" : "text-red-500"} font-semibold`}>{a.profit} <span>{a.status}</span></div>
-            <div>{a.account_transaction_id} | {(dayjs.utc(a.time)).tz("Asia/Ho_Chi_Minh").format("YYYY-MM-DD HH:mm:ss")}</div>
-          </div>
-        </div>)}
+        {
+          !loading ? data.map((a, idx) => <div key={idx} className="flex justify-between items-center w-full shadow-sm shadow-gray-300 p-2 rounded-sm">
+            <div className="text-sm">
+              <div className='font-bold mb-1'>{a.symbol} <span className={`text-sm font-semibold ${a.type === "SELL" ? "text-red-500" : "text-blue-500"}`}>{a.type}</span></div>
+              <div>{a.volume} {t("tại")} {a.price_open}</div>
+            </div>
+            <div className="text-sm">
+              <div className={`mb-1 text-right ${a.status === "filled" ? "text-blue-700" : "text-red-500"} font-semibold`}>{a.profit} <span>{a.status}</span></div>
+              <div>{a.account_transaction_id} | {(dayjs.utc(a.time)).tz("Asia/Ho_Chi_Minh").format("YYYY-MM-DD HH:mm:ss")}</div>
+            </div>
+          </div>)
+            :
+            <Loading />
+        }
       </div>
 
       <div className="sticky bottom-0 bg-white p-2">
