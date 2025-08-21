@@ -978,9 +978,9 @@ const CompIndicator = ({ indicator, setIndicator }: {
         setIndicator(dataNew)
     }
 
-    return <div ref={popupRef} className="relative z-20">
+    return <div ref={popupRef} className="relative z-10">
         <TooltipCustom handleClick={handleToggle} w="w-[40px]" h="h-[40px]" titleTooltip={"Các chỉ báo"} classNameButton={`${indicator.find((a) => a.active) ? "bg-[var(--color-background)] text-white" : "text-black bg-gray-200"}`}>
-            <Icon name="icon-rsi" width={18} height={18} />
+            <Icon name="icon-rsi" width={24} height={24} />
         </TooltipCustom>
 
         {visible && (

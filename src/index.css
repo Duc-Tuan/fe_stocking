@@ -14,6 +14,8 @@
 
 :root {
   --color-background: #ff637e;
+  --color-background-atr: #0000ff;
+  --color-background-atr-1: rgba(0, 0, 255, 0.05);
   --color-background-opacity-5: rgba(255, 99, 125, 0.5);
   --color-background-opacity-2: rgba(255, 99, 125, 0.2);
   --color-background-opacity-1: rgba(255, 99, 125, 0.05);

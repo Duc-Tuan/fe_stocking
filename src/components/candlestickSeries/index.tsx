@@ -77,7 +77,7 @@ export const CandlestickSeriesComponent = (props: any) => {
             line.className = 'day-separator';
             line.style.cssText = `
                 position: absolute;
-                bottom: 0;
+                top: 0;
                 left: ${x}px;
                 width: 0;
                 height: 95%;

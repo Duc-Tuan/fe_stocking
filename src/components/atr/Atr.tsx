@@ -12,7 +12,7 @@ export default function Atr({
     currentRange,
     colors: {
         backgroundColor = 'transparent',
-        lineColor = getColorChart('--color-background'),
+        lineColor = getColorChart('--color-background-atr'),
         textColor = 'black',
     } = {}
 }: { candleData: IinitialDataCand[], currentRange: any, chartRefCandl: any, colors?: any }) {
@@ -65,7 +65,7 @@ export default function Atr({
             },
             crosshair: {
                 vertLine: { labelBackgroundColor: getColorChart() },
-                horzLine: { labelBackgroundColor: getColorChart() },
+                horzLine: { labelBackgroundColor: getColorChart("--color-background-atr") },
             },
             localization: {
                 locale: 'vi-VN',
@@ -174,6 +174,8 @@ export default function Atr({
     }, [candleData, currentRange]);
 
     return <div ref={chartAtrRef} style={{ position: "relative" }}>
+        <div className="absolute w-[calc(100%-58px)] h-[92px] bg-[var(--color-background-atr-1)] left-0 right-0 top-0" />
+
         <div className="absolute left-4 top-0 text-[12px]">ATR 14 <span className='text-gray-400'>RMA</span> <span className='text-[var(--color-background)] ml-2'>{currentAtr && currentAtr.value.toFixed(2)}</span></div>
     </div>
 }
