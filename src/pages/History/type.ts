@@ -116,21 +116,6 @@ export const dataType: Option<"BUY" | "SELL">[] = [
     }
 ]
 
-export const dataAccTransactionAllLot: any[] = [
-    {
-        label: 12452534,
-        value: 12452534
-    },
-    {
-        label: 19678545,
-        value: 19678545
-    },
-    {
-        label: 65745656,
-        value: 65745656
-    }
-]
-
 export interface IFilterAllLot {
     status: EMO | "pending" | "filled" | "cancelled" | "rejected" | null,
     type?: 'BUY' | 'SELL'

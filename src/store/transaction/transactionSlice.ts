@@ -1,19 +1,23 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import type { ICurrentPnl, IOptions } from '../../types/global';
-import { serverSymbolApi } from '../../api/serverSymbol';
+import type { ICurrentPnl, IOptions, IServerTransaction } from '../../types/global';
+import { accmt5TransactionApi, serverSymbolApi } from '../../api/serverSymbol';
 
 interface AuthState {
     loading: boolean;
+    loadingserverTransaction: boolean;
     serverMonitor: IOptions[];
     serverMonitorActive: IOptions | null;
     currentPnl: ICurrentPnl | null;
+    dataServerTransaction: IServerTransaction[]
 }
 
 const initialState: AuthState = {
     loading: false,
+    loadingserverTransaction: false,
     serverMonitor: [],
     serverMonitorActive: null,
-    currentPnl: null
+    currentPnl: null,
+    dataServerTransaction: []
 };
 
 export const getServer = createAsyncThunk('server/getServer', async () => {
@@ -24,6 +28,10 @@ export const getServer = createAsyncThunk('server/getServer', async () => {
         data: JSON.parse(a.by_symbol)
     }));
     return dataNew;
+});
+
+export const getServerTransaction = createAsyncThunk('server/getServerTransaction', async () => {
+    return await accmt5TransactionApi();
 });
 
 const transactionSlice = createSlice({
@@ -49,6 +57,16 @@ const transactionSlice = createSlice({
             })
             .addCase(getServer.rejected, (state) => {
                 state.loading = false;
+            })
+            .addCase(getServerTransaction.pending, (state) => {
+                state.loadingserverTransaction = true;
+            })
+            .addCase(getServerTransaction.fulfilled, (state, action) => {
+                state.dataServerTransaction = action.payload
+                state.loadingserverTransaction = false;
+            })
+            .addCase(getServerTransaction.rejected, (state) => {
+                state.loadingserverTransaction = false;
             })
     },
 });

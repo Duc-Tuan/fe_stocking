@@ -13,6 +13,7 @@ export function useSocket(
   const [dataCurrent, setDataCurrent] = useState<ICurrentPnl>()
 
   const [dataCurrentPosition, setDataCurrentPosition] = useState<any>()
+  const [dataCurrentAccTransaction, setDataCurrentAccTransaction] = useState<any>()
 
   useEffect(() => {
     if (id_symbol) {
@@ -58,6 +59,12 @@ export function useSocket(
         });
       }
 
+      if (listen === "acc_transaction_message") {
+        socket.on('acc_transaction_message', (data) => {
+          setDataCurrentAccTransaction(data);
+        });
+      }
+
       return () => {
         socket.disconnect();
       };
@@ -65,6 +72,8 @@ export function useSocket(
   }, [url, id_symbol]);
 
   return {
-    dataCurrentPosition, dataCurrent
+    dataCurrentPosition, 
+    dataCurrent,
+    dataCurrentAccTransaction
   }
 }

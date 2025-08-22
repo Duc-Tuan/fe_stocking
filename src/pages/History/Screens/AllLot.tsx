@@ -2,12 +2,12 @@ import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/re
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 import { useCallback, useEffect, useMemo, useState, type ChangeEvent, type Dispatch, type SetStateAction } from 'react'
 import { useTranslation } from 'react-i18next'
-import { getLots, postCloseOrder } from '../../../api/historys'
+import { deleteLot, getLots, patchLot, postCloseOrder } from '../../../api/historys'
 import Icon from '../../../assets/icon'
 import { Button } from '../../../components/button'
 import TooltipNavigate from '../../../layouts/TooltipNavigate'
 import type { IPostCloseOrder, QueryLots } from '../../../types/global'
-import type { EMO } from '../../Transaction/type'
+import { titleSatusLot, type EMO } from '../../Transaction/type'
 import Filter from '../components/Filter'
 import { type IActiveHistoryLot, type IFilterAllLot, type IHistoryLot } from '../type'
 import toast from 'react-hot-toast'
@@ -35,6 +35,8 @@ export default function AllLot() {
     const [data, setData] = useState<IHistoryLot[]>([])
     const [dataCurrent, setDataCurrent] = useState<IActiveHistoryLot | null>(null)
     const [open, setOpen] = useState(false)
+    const [isDelete, setIsDelete] = useState(false)
+    const [isUpdate, setIsUpdate] = useState(false)
     const [filter, setFilter] = useState<IFilterAllLot>(initFilter)
     const [query, setQuery] = useState<QueryLots>(initPara)
     const [loading, setLoading] = useState<boolean>(false)
@@ -116,6 +118,18 @@ export default function AllLot() {
                                         <span className='font-bold mr-2'>{t("Lô")} {idx + 1}</span>
                                         <span className={`${colorbg(a.status).classC} rounded-md text-white px-2 py-1 text-sm font-bold`}>{t(colorbg(a.status).label)}</span>
                                         {a.type === "CLOSE" && <span className='font-semibold text-sm bg-red-600 py-1 px-2 rounded-md text-white'>{t("Lô đã đóng lệnh")}</span>}
+                                        {a.type === "RUNNING" && a.status !== "Lenh_thi_truong" &&
+                                            <TooltipNavigate handle={() => {
+                                                setDataCurrent({ ...a, lot: idx + 1 })
+                                                setIsDelete((prev) => !prev)
+                                            }} className='ml-1 shadow-sm w-[30px] h-[30px] p-0 flex justify-center items-center' iconName='icon-delete' path='#' title='Xóa lô' />
+                                        }
+                                        {a.type === "RUNNING" && a.status === "Lenh_thi_truong" &&
+                                            <TooltipNavigate handle={() => {
+                                                setDataCurrent({ ...a, lot: idx + 1 })
+                                                setIsUpdate((prev) => !prev)
+                                            }} className='ml-1 shadow-sm w-[30px] h-[30px] p-0 flex justify-center items-center' iconName='icon-edit-lot' path='#' title='Sửa thông tin lô' />
+                                        }
                                     </div>
                                     <span className="text-[13px] font-bold">{(dayjs.utc(a.time)).tz("Asia/Ho_Chi_Minh").format("YYYY-MM-DD HH:mm:ss")}</span>
                                 </div>
@@ -132,6 +146,10 @@ export default function AllLot() {
                                             <span className='font-semibold'>{a.account_transaction_id}</span>
                                             <Icon name="icon-chart-transaction" className="text-[var(--color-background)] mt-[2px]" width={18} height={18} />
                                         </div>
+                                    </div>
+                                    <div className="flex justify-start items-center gap-2">
+                                        <span>{t("Trạng thái")}: </span>
+                                        <span className='font-semibold'>{titleSatusLot(a.status)}</span>
                                     </div>
                                     <div className="flex justify-start items-center gap-2">
                                         <span>{t("Volume")}: </span>
@@ -183,6 +201,8 @@ export default function AllLot() {
             </div>
 
             <Modal open={open} setOpen={setOpen} dataCurrent={dataCurrent} setDataLost={setData} />
+            <ModalDelete open={isDelete} setOpen={setIsDelete} dataCurrent={dataCurrent} setDataLost={setData} />
+            <ModalUpdate open={isUpdate} setOpen={setIsUpdate} dataCurrent={dataCurrent} setDataLost={setData} />
         </div>
     )
 }
@@ -382,6 +402,185 @@ const Modal = ({ open, setOpen, dataCurrent, setDataLost }: { setDataLost: Dispa
                                     <p className="text-sm text-gray-500">
                                         {t("Nếu bạn xác nhận đóng lệnh của các cặp tiền này thì sẽ không thể nào mở lại được tại thời điểm này nữa. Bạn vẫn muốn xác nhận chứ!")}
                                     </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                        <Button
+                            isLoading={loading}
+                            onClick={
+                                () => {
+                                    !loading && handleClick()
+                                }
+                            }
+                            type="button"
+                            className="shadow-gray-400 cursor-pointer inline-flex w-full justify-center rounded-md bg-[var(--color-background)] px-3 py-2 text-sm font-semibold text-white shadow-md sm:ml-3 sm:w-auto"
+                        >
+                            {t("Xác nhận")}
+                        </Button>
+                        <Button
+                            type="button"
+                            data-autofocus
+                            onClick={() => setOpen(false)}
+                            className="shadow-gray-400 cursor-pointer mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-md inset-ring inset-ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
+                        >
+                            {t("Hủy")}
+                        </Button>
+                    </div>
+                </DialogPanel>
+            </div>
+        </div>
+    </Dialog>
+}
+
+const ModalDelete = ({ open, setOpen, dataCurrent, setDataLost }: { setDataLost: Dispatch<SetStateAction<IHistoryLot[]>>, open: boolean, setOpen: Dispatch<SetStateAction<boolean>>, dataCurrent: IActiveHistoryLot | null }) => {
+    const { t } = useTranslation()
+    const [loading, setLoading] = useState<boolean>(false)
+
+    const handleClick = async () => {
+        if (!dataCurrent) return;
+        setLoading(true)
+        await deleteLot(dataCurrent?.id).then(() => {
+            setOpen(false)
+            setLoading(false)
+            setDataLost((prev) => {
+                return prev.filter((a) => a.id !== dataCurrent?.id)
+            })
+            toast.success(`${t("Xóa lô")} ${dataCurrent?.lot} ${t('thành công')}!`)
+        }).catch(() => setLoading(false))
+    }
+
+    return <Dialog open={open} onClose={setOpen} className="relative z-100">
+        <DialogBackdrop
+            transition
+            className="fixed inset-0 bg-gray-500/75 transition-opacity data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in"
+        />
+
+        <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
+            <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                <DialogPanel
+                    transition
+                    className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in sm:my-8 sm:w-full sm:max-w-lg data-closed:sm:translate-y-0 data-closed:sm:scale-95"
+                >
+                    <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <div className="sm:flex sm:items-start">
+                            <div className="mx-auto flex size-12 shrink-0 items-center justify-center rounded-full bg-red-100 sm:mx-0 sm:size-10">
+                                <ExclamationTriangleIcon aria-hidden="true" className="size-6 text-red-600" />
+                            </div>
+                            <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                                <DialogTitle as="h3" className="text-base font-semibold text-gray-900">
+                                    {t("Bạn xác nhận muốn xóa lô")} {dataCurrent?.lot}
+                                </DialogTitle>
+                                <div className="mt-2">
+                                    <p className="text-sm text-gray-500">
+                                        {t("Nếu bạn xác nhận lô này thì các cặp tiền cũng trong lô cũng sẽ xóa theo. Bạn vẫn muốn xác nhận chứ!")}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                        <Button
+                            isLoading={loading}
+                            onClick={
+                                () => {
+                                    !loading && handleClick()
+                                }
+                            }
+                            type="button"
+                            className="shadow-gray-400 cursor-pointer inline-flex w-full justify-center rounded-md bg-[var(--color-background)] px-3 py-2 text-sm font-semibold text-white shadow-md sm:ml-3 sm:w-auto"
+                        >
+                            {t("Xác nhận")}
+                        </Button>
+                        <Button
+                            type="button"
+                            data-autofocus
+                            onClick={() => setOpen(false)}
+                            className="shadow-gray-400 cursor-pointer mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-md inset-ring inset-ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
+                        >
+                            {t("Hủy")}
+                        </Button>
+                    </div>
+                </DialogPanel>
+            </div>
+        </div>
+    </Dialog>
+}
+
+interface IinitUpdate {
+    stop_loss: string,
+    take_profit: string
+}
+const initUpdate = {
+    stop_loss: "",
+    take_profit: ""
+}
+const ModalUpdate = ({ open, setOpen, dataCurrent, setDataLost }: { setDataLost: Dispatch<SetStateAction<IHistoryLot[]>>, open: boolean, setOpen: Dispatch<SetStateAction<boolean>>, dataCurrent: IActiveHistoryLot | null }) => {
+    const { t } = useTranslation()
+    const [loading, setLoading] = useState<boolean>(false)
+    const [dataInput, setDataInput] = useState<IinitUpdate>(initUpdate)
+
+    const handleClick = async () => {
+        if (!dataCurrent) return;
+        if (dataInput.stop_loss === "" || dataInput.take_profit === "") return toast.error(t("Vui lòng nhập đầy đủ thông tin."))
+        setLoading(true)
+        await patchLot({ id: dataCurrent.id, stop_loss: Number(dataInput.stop_loss), take_profit: Number(dataInput.take_profit) })
+            .then(() => {
+                setLoading(false)
+                setOpen(false)
+                setDataLost((prev) => prev.map((a) => {
+                    if (a.id === dataCurrent?.id) {
+                        return {
+                            ...a,
+                            stop_loss: Number(dataInput.stop_loss),
+                            take_profit: Number(dataInput.take_profit),
+                        }
+                    }
+                    return a
+                }))
+                return toast.success(t("Cập nhập thành công"))
+            })
+            .catch(() => setLoading(false))
+    }
+
+    return <Dialog open={open} onClose={setOpen} className="relative z-100">
+        <DialogBackdrop
+            transition
+            className="fixed inset-0 bg-gray-500/75 transition-opacity data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in"
+        />
+
+        <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
+            <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                <DialogPanel
+                    transition
+                    className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in sm:my-8 sm:w-full sm:max-w-lg data-closed:sm:translate-y-0 data-closed:sm:scale-95"
+                >
+                    <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <div className="sm:flex sm:items-start">
+                            <div className="mx-auto flex size-12 shrink-0 items-center justify-center rounded-full bg-red-100 sm:mx-0 sm:size-10">
+                                <ExclamationTriangleIcon aria-hidden="true" className="size-6 text-red-600" />
+                            </div>
+                            <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left  flex-1">
+                                <DialogTitle as="h3" className="text-base font-semibold text-gray-900">
+                                    {t("Hãy nhập thông tin cần chỉnh sửa cho lô")} {dataCurrent?.lot}
+                                </DialogTitle>
+                                <div className="mt-2">
+                                    <label htmlFor="" className='text-md'>{t("Cắt lỗ")}: (PNL)</label>
+                                    <input
+                                        className="text-sm border p-2 w-full rounded-sm focus:border-[var(--color-background)] focus:outline-hidden border-gray-300 mb-2"
+                                        placeholder={t("Nhập thông tin...")}
+                                        value={dataInput.stop_loss}
+                                        type='number'
+                                        onChange={(e) => setDataInput((prev) => ({ ...prev, stop_loss: e.target.value }))}
+                                    />
+                                    <label htmlFor="" className='text-md'>{t("Chốt lời")}: (PNL)</label>
+                                    <input
+                                        className="text-sm border p-2 w-full rounded-sm focus:border-[var(--color-background)] focus:outline-hidden border-gray-300"
+                                        placeholder={t("Nhập thông tin...")}
+                                        value={dataInput.take_profit}
+                                        onChange={(e) => setDataInput((prev) => ({ ...prev, take_profit: e.target.value }))}
+                                    />
                                 </div>
                             </div>
                         </div>

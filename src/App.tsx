@@ -6,7 +6,7 @@ import router from "./routes";
 import type { AppDispatch } from "./store";
 import { Toaster } from 'react-hot-toast';
 import './App.css'
-import { getServer, setCurrentPnl } from "./store/transaction/transactionSlice";
+import { getServer, getServerTransaction, setCurrentPnl } from "./store/transaction/transactionSlice";
 import { useSocket } from "./hooks/useWebSocket";
 import { useAppInfo } from "./hooks/useAppInfo";
 import SplashScreen from "./components/SplashScreen";
@@ -30,6 +30,7 @@ function App() {
     if (token) {
       dispatch(getMe());
       dispatch(getServer());
+      dispatch(getServerTransaction());
     }
   }, [dispatch]);
 

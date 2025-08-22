@@ -34,6 +34,19 @@ export interface ICurrentPnl {
     total_pnl: number
 }
 
+export interface IServerTransaction {
+    id: number,
+    username: number,
+    name: string,
+    balance: number,
+    equity: number,
+    margin: number,
+    free_margin: number,
+    leverage: number,
+    server: string,
+    loginId: number
+}
+
 export interface QueryLots extends IPagination {
     start_time?: number,
     end_time?: number,
@@ -45,6 +58,12 @@ export interface QueryLots extends IPagination {
 
 export interface IPostCloseOrder {
     data: { id: number }[]
+}
+
+export interface IPatchLot {
+    id: number,
+    stop_loss: number,
+    take_profit: number,
 }
 
 export type Func<T> = (data: T) => void

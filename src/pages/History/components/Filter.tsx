@@ -1,15 +1,16 @@
-import React, { useRef, useState, type Dispatch, type SetStateAction } from 'react'
-import { dataAccTransactionAllLot, dataStatusAllLot, dataStatusSymbol, dataType, type IFilterAllLot } from '../type';
-import { useTranslation } from 'react-i18next';
-import { useClickOutside } from '../../../hooks/useClickOutside';
-import { Button } from '../../../components/button';
-import Icon from '../../../assets/icon';
 import type dayjs from 'dayjs';
-import RangePickerCustom from '../../../components/rangePicker';
 import type { Dayjs } from 'dayjs';
+import { useRef, useState, type Dispatch, type SetStateAction } from 'react';
+import { useTranslation } from 'react-i18next';
+import Icon from '../../../assets/icon';
+import { Button } from '../../../components/button';
+import { LoadingOnly } from '../../../components/loading/indexOnly';
+import RangePickerCustom from '../../../components/rangePicker';
+import { useAppInfo } from '../../../hooks/useAppInfo';
+import { useClickOutside } from '../../../hooks/useClickOutside';
 import TooltipNavigate from '../../../layouts/TooltipNavigate';
 import type { Func, QueryLots } from '../../../types/global';
-import { useAppInfo } from '../../../hooks/useAppInfo';
+import { dataStatusAllLot, dataStatusSymbol, dataType, type IFilterAllLot } from '../type';
 
 const initFilter: IFilterAllLot = {
     accTransaction: null,
@@ -73,7 +74,11 @@ export default function Filter({ setFilter, filter, subButton, isStatus, isStatu
 
                         <div className="flex justify-end items-center gap-2 w-full">
                             <Button onClick={handleToggle} className="cursor-pointer text-[var(--color-background)] px-3 py-2 border border-gray-300 border-solid shadow-md shadow-gray-300">{t("Hủy")}</Button>
-                            <Button onClick={() => setFilter(initFilter)} className="cursor-pointer bg-[var(--color-background)] px-3 py-2 shadow-md shadow-gray-300">{t("Làm mới")}</Button>
+                            <Button onClick={() => {
+                                setFilter(initFilter)
+                                handleFilter && handleFilter(initFilter)
+                            }
+                            } className="cursor-pointer bg-[var(--color-background)] px-3 py-2 shadow-md shadow-gray-300">{t("Làm mới")}</Button>
                             <Button onClick={() => {
                                 handleFilter && handleFilter(filter)
                                 handleToggle()
@@ -235,7 +240,7 @@ const FilterType = ({ setFilter, filter }: { setFilter: Dispatch<SetStateAction<
 
 const FilterAccTransaction = ({ setFilter, filter }: { setFilter: Dispatch<SetStateAction<IFilterAllLot>>, filter: IFilterAllLot }) => {
     const { t } = useTranslation();
-    const { serverMonitor } = useAppInfo()
+    const { dataServerTransaction, loadingserverTransaction } = useAppInfo()
     const popupFilterStatusRef: any = useRef(null);
     const [open, setOpen] = useState(false);
     const [visible, setVisible] = useState(false); // để delay unmount
@@ -260,20 +265,20 @@ const FilterAccTransaction = ({ setFilter, filter }: { setFilter: Dispatch<SetSt
     return <div ref={popupFilterStatusRef} className="col-span-1 w-fit z-10 font-semibold rounded-md text-sm p-2 relative">
         <div className="">{t("Tài khoản giao dịch")}:</div>
         <Button onClick={handleToggle} className="flex justify-between items-center gap-4 text-black px-2 cursor-pointer z-50 min-w-46">
-            <div className="">{serverMonitor.find((a) => Number(a.value) === filter.accTransaction)?.value ?? t("Chọn")}</div>
+            <div className="">{dataServerTransaction.find((a) => Number(a.username) === filter.accTransaction)?.username ?? t("Chọn")}</div>
             <div className=""><Icon name="icon-up" width={14} height={14} className={`transition-transform duration-200 ${open ? 'rotate-180' : 'rotate-0'}`} /></div>
         </Button>
 
         {visible && (
             <div className={`transition-all -mt-2 duration-200 absolute top-full w-[calc(100%-16px)] bg-white shadow-lg shadow-gray-300 rounded-lg border border-gray-300 p-2 ${open ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
-
                 {
-                    serverMonitor.map((item) => {
-                        return <Button onClick={() => {
-                            handleToggle()
-                            setFilter((prev) => ({ ...prev, accTransaction: Number(item.value) }))
-                        }} className={`${Number(item.value) === filter.accTransaction ? "text-[var(--color-background)]" : "text-black"}  shadow-none p-1 hover:bg-[var(--color-background-opacity-2)] w-full cursor-pointer hover:text-[var(--color-background)] rounded-none text-left font-semibold`} key={item.value}>{t(item.value)}</Button>
-                    })
+                    !loadingserverTransaction ?
+                        dataServerTransaction.map((item) => {
+                            return <Button onClick={() => {
+                                handleToggle()
+                                setFilter((prev) => ({ ...prev, accTransaction: Number(item.username) }))
+                            }} className={`${Number(item.username) === filter.accTransaction ? "text-[var(--color-background)]" : "text-black"}  shadow-none p-1 hover:bg-[var(--color-background-opacity-2)] w-full cursor-pointer hover:text-[var(--color-background)] rounded-none text-left font-semibold`} key={item.name}>{t(item.name)}</Button>
+                        }) : <div className="min-h-20 flex justify-center items-center"><LoadingOnly /></div>
                 }
             </div>
         )}

@@ -1,6 +1,6 @@
 import type { IOrderTransaction } from "../pages/Transaction/type";
 import axiosClient from "../services/axiosClient";
-import type { IPostCloseOrder, QueryLots } from "../types/global";
+import type { IPatchLot, IPostCloseOrder, QueryLots } from "../types/global";
 
 export const getLots = async (query: QueryLots) => {
     const data = await axiosClient.get('/lots-transaction', {
@@ -12,6 +12,33 @@ export const getLots = async (query: QueryLots) => {
             status: query.status,
             acc_transaction: query.acc_transaction
         },
+    })
+
+    return {
+        data: data.data
+    }
+}
+
+export const deleteLot = async (id: number) => {
+    const data = await axiosClient.delete('/lot-transaction', {
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        data: {
+            id
+        }
+    })
+
+    return {
+        data: data.data
+    }
+}
+
+export const patchLot = async (body: IPatchLot) => {
+    const data = await axiosClient.patch('/lot-transaction', body, {
+        headers: {
+            'Content-Type': 'application/json',
+        }
     })
 
     return {

@@ -22,48 +22,48 @@ export const dataActivateTypetransaction: IActivateTypetransaction[] = [
         `
     },
     {
-        title: "Xuôi Limit", 
-        type: "Xuoi_Limit", 
-        color: "text-red-600", 
-        active: false, 
+        title: "Xuôi Limit",
+        type: "Xuoi_Limit",
+        color: "text-red-600",
+        active: false,
         subTitle: `Điều kiện để vào lệnh: 
             Giá(PNL) < PNL, 
             Cắt lỗ(PNL) > Giá(PNL), 
             Chốt lời(PNL) < Giá(PNL)
-        ` 
+        `
     },
-    { 
-        title: "Ngược Limit", 
-        type: "Nguoc_Limit", 
-        color: "text-blue-600", 
-        active: false, 
+    {
+        title: "Ngược Limit",
+        type: "Nguoc_Limit",
+        color: "text-blue-600",
+        active: false,
         subTitle: `Điều kiện để vào lệnh: 
             Giá(PNL) > PNL, 
             Cắt lỗ(PNL) < Giá(PNL), 
             Chốt lời(PNL) > Giá(PNL)
-        ` 
+        `
     },
-    { 
-        title: "Xuôi Stop", 
-        type: "Xuoi_Stop", 
-        color: "text-red-600", 
-        active: false, 
+    {
+        title: "Xuôi Stop",
+        type: "Xuoi_Stop",
+        color: "text-red-600",
+        active: false,
         subTitle: `Điều kiện để vào lệnh: 
             Giá(PNL) > PNL, 
             Cắt lỗ(PNL) < Giá(PNL), 
             Chốt lời(PNL) > Giá(PNL)
-        ` 
+        `
     },
-    { 
-        title: "Ngược Stop", 
-        type: "Nguoc_Stop", 
-        color: "text-blue-600", 
-        active: false, 
+    {
+        title: "Ngược Stop",
+        type: "Nguoc_Stop",
+        color: "text-blue-600",
+        active: false,
         subTitle: `Điều kiện để vào lệnh: 
             Giá(PNL) < PNL, 
             Cắt lỗ(PNL) > Giá(PNL), 
             Chốt lời(PNL) < Giá(PNL)
-        ` 
+        `
     },
 ]
 
@@ -102,4 +102,19 @@ export interface IOrderTransaction {
         symbol: string,
         type: "SELL" | "BUY"
     }[]
-} 
+}
+
+export const titleSatusLot = (data: EMO) => {
+    switch (data) {
+        case "Lenh_thi_truong":
+            return "Lệnh thị trường";
+        case "Nguoc_Limit":
+            return "Ngược Limit";
+        case "Nguoc_Stop":
+            return "Ngược Stop";
+        case "Xuoi_Limit":
+            return "Xuôi Limit";
+        case "Xuoi_Stop":
+            return "Xuôi Stop";
+    }
+}

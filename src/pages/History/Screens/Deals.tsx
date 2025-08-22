@@ -66,7 +66,7 @@ export default function Deals() {
               <div>{a.volume} {t("tại")} {a.price_open}</div>
             </div>
             <div className="text-sm">
-              <div className={`mb-1 text-right ${a.status === "filled" ? "text-blue-700" : "text-red-500"} font-semibold`}>{a.profit} <span>{a.status}</span></div>
+              <div className={`mb-1 text-right ${a.status === "filled" ? "text-blue-700" : (a.status === "pending" ? "text-yellow-500" : "text-red-500")} font-semibold`}>{a.profit} <span>{a.status}</span></div>
               <div>{a.account_transaction_id} | {(dayjs.utc(a.time)).tz("Asia/Ho_Chi_Minh").format("YYYY-MM-DD HH:mm:ss")}</div>
             </div>
           </div>)

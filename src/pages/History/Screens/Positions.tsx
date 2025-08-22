@@ -101,7 +101,7 @@ export default function Positions() {
                             <div className='text-sm flex justify-start items-center gap-1'>{a.open_price} <Icon name="icon-right-v2" width={14} height={14} /> {a.current_price}</div>
                         </div>
                         <div className="">
-                            <div className={`text-right ${a.position_type === "SELL" ? "text-blue-700" : "text-red-500"} font-semibold`}>{a.profit}</div>
+                            <div className={`text-right ${a.profit > 0 ? "text-blue-700" : (a.profit === 0 ? "text-gray-400" : "text-red-500")} font-semibold`}>{a.profit}</div>
                             <div className='text-sm'>{a.account_id} | {(dayjs.utc(a.time)).tz("Asia/Ho_Chi_Minh").format("YYYY-MM-DD HH:mm:ss")}</div>
                         </div>
                     </div>) : <Loading />

@@ -9,7 +9,7 @@ import { Button } from '../../components/button';
 import toast from 'react-hot-toast';
 import { generateUUID } from '../../utils/timeRange';
 import { PathName } from '../../routes/path';
-import { getServer } from '../../store/transaction/transactionSlice';
+import { getServer, getServerTransaction } from '../../store/transaction/transactionSlice';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -30,6 +30,7 @@ export default function LoginPage() {
       await dispatch(login({ username, password, deviceId })).unwrap(); // ⬅️ thêm unwrap để bắt lỗi
       await dispatch(getMe());
       await dispatch(getServer());
+      await dispatch(getServerTransaction());
       toast.success('Đăng nhập thành công!');
       return navigate(PathName.HOME);
     } catch (e: any) {

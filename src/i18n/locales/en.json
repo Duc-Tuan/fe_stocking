@@ -112,5 +112,17 @@
   "Xóa tất cả các bản vẽ": "Delete all drawings",
   "Chỉ báo hội tụ RSI": "RSI convergence indicator",
   "Chỉ báo hội tụ RSI 14": "RSI 14 convergence indicator",
-  "Khoảng giao động trung bình thực tế ATR 14": "ATR 14 average true range"
+  "Khoảng giao động trung bình thực tế ATR 14": "ATR 14 average true range",
+  "Cặp tiền theo dõi": "Tracking currency pairs",
+  "Vốn chủ sở hữu / Tài sản ròng": "Equity",
+  "Ký quỹ": "Margin",
+  "Ký quỹ khả dụng": "Free Margin",
+  "Đòn bẩy": "Leverage",
+  "Số lệnh đang mở": "Number of open orders",
+  "Nếu bạn xác nhận lô này thì các cặp tiền cũng trong lô cũng sẽ xóa theo. Bạn vẫn muốn xác nhận chứ!": "If you confirm this lot, the currency pairs in the lot will also be deleted. Do you still want to confirm?",
+  "Bạn xác nhận muốn xóa lô": "You confirm that you want to delete the lot",
+  "Xóa lô": "Delete lot",
+  "Sửa thông tin lô": "Update lot",
+    "Cập nhập thành công": "Update successful",
+  "Vui lòng nhập đầy đủ thông tin.": "Please enter complete information."
 }

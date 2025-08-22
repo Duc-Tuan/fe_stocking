@@ -23,6 +23,7 @@ import IconArrowRightV2 from './icons/IconArrowRightV2.svg?react';
 import IconFibonacci from './icons/IconFibonacci.svg?react';
 import IconDelete from './icons/IconDelete.svg?react';
 import IconRsi from './icons/IconRsi.svg?react';
+import IconEditLot from './icons/IconEditLot.svg?react';
 
 export default function Icon(props: any) {
     switch (props?.name?.toLowerCase()) {
@@ -76,6 +77,8 @@ export default function Icon(props: any) {
             return <IconDelete {...props} />;
         case 'icon-rsi':
             return <IconRsi {...props} />;
+        case 'icon-edit-lot':
+            return <IconEditLot {...props} />;
         default:
             return null;
     }
