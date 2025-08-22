@@ -123,6 +123,7 @@
   "Bạn xác nhận muốn xóa lô": "You confirm that you want to delete the lot",
   "Xóa lô": "Delete lot",
   "Sửa thông tin lô": "Update lot",
-    "Cập nhập thành công": "Update successful",
-  "Vui lòng nhập đầy đủ thông tin.": "Please enter complete information."
+  "Cập nhập thành công": "Update successful",
+  "Vui lòng nhập đầy đủ thông tin.": "Please enter complete information.",
+  "Hãy nhập thông tin cần chỉnh sửa cho lô": "Please enter the information to be edited for the batch"
 }
