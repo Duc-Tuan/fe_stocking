@@ -7,7 +7,7 @@ import NotFoundPage from '../pages/NotFoundPage';
 import SettingTransaction from '../pages/Settings/SettingTransaction';
 import TransactionPage from '../pages/Transaction/TransactionPage';
 import LoginPage from '../pages/auth/LoginPage';
-import { ChartWithATR } from '../pages/orther/Orther';
+import ChartWithHorizontalLines from '../pages/orther/Orther';
 import { PathName } from './path';
 import ProtectedRoute from './protectedRoute';
 
@@ -42,7 +42,7 @@ const router = createBrowserRouter([
       },
       {
         path: PathName.ORTHER,
-        element: <ChartWithATR />,
+        element: <ChartWithHorizontalLines />,
       },
     ],
   },

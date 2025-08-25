@@ -109,7 +109,8 @@
   "Thứ 6": "Friday",
   "Thứ 7": "Saturday",
   "tháng": "month",
-  "Xóa tất cả các bản vẽ": "Delete all drawings",
+  "Xóa": "Delete",
+  "đường nằm ngang": "horizontal line",
   "Chỉ báo hội tụ RSI": "RSI convergence indicator",
   "Chỉ báo hội tụ RSI 14": "RSI 14 convergence indicator",
   "Khoảng giao động trung bình thực tế ATR 14": "ATR 14 average true range",
@@ -125,5 +126,14 @@
   "Sửa thông tin lô": "Update lot",
   "Cập nhập thành công": "Update successful",
   "Vui lòng nhập đầy đủ thông tin.": "Please enter complete information.",
-  "Hãy nhập thông tin cần chỉnh sửa cho lô": "Please enter the information to be edited for the batch"
+  "Hãy nhập thông tin cần chỉnh sửa cho lô": "Please enter the information to be edited for the batch",
+  "Đường chỉ báo ngang RSI": "RSI horizontal indicator line",
+  "Đường nằm ngang": "Horizontal line",
+  "Xóa đường nằm ngang": "Delete horizontal line",
+  "Đường ngang": "Horizontal line",
+  "và": "and",
+  "Xóa đường xu hướng": "Delete trendline",
+  "chỉ báo": "indicator",
+  "Đường xu hướng": "Trend Lines",
+  "Các chỉ báo": "Indicators"
 }

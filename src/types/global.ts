@@ -32,6 +32,7 @@ export interface ICurrentPnl {
     }[],
     time: string,
     total_pnl: number
+    id_symbol: string
 }
 
 export interface IServerTransaction {

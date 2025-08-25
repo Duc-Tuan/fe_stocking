@@ -1,5 +1,5 @@
 import IconCandle from './icons/IconChartCandle.svg?react';
-import IconLine from './icons/IconChartLine.svg?react';
+import IconChartLine from './icons/IconChartLine.svg?react';
 import IconExport from './icons/IconExport.svg?react';
 import IconEye from './icons/IconEye.svg?react';
 import IconEyeNo from './icons/IconEyeNo.svg?react';
@@ -24,13 +24,16 @@ import IconFibonacci from './icons/IconFibonacci.svg?react';
 import IconDelete from './icons/IconDelete.svg?react';
 import IconRsi from './icons/IconRsi.svg?react';
 import IconEditLot from './icons/IconEditLot.svg?react';
+import IconBoundaryLine from './icons/IconBoundaryLine.svg?react';
+import IconLine from './icons/IconLine.svg?react';
+import IconTrendLine from './icons/IconTrendLine.svg?react';
 
 export default function Icon(props: any) {
     switch (props?.name?.toLowerCase()) {
         case 'icon-candle':
             return <IconCandle {...props} />;
         case 'icon-line':
-            return <IconLine {...props} />;
+            return <IconChartLine {...props} />;
         case 'icon-export':
             return <IconExport {...props} />;
         case 'icon-eye':
@@ -79,6 +82,12 @@ export default function Icon(props: any) {
             return <IconRsi {...props} />;
         case 'icon-edit-lot':
             return <IconEditLot {...props} />;
+        case 'icon-boundary-line':
+            return <IconBoundaryLine {...props} />;
+        case 'icon-line-v2':
+            return <IconLine {...props} />;
+        case 'icon-trend-line':
+            return <IconTrendLine {...props} />;
         default:
             return null;
     }

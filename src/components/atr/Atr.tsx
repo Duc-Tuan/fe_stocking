@@ -20,7 +20,7 @@ export default function Atr({
     const chartAtr = useRef<any>(null);
 
     const seriesRef = useRef<any>(null);
-    const allData = useRef<BarData[]>([]);
+    const allData = useRef<BarData[] | null>(null);
 
     const currentData = useRef<any>(null);
 
@@ -89,50 +89,64 @@ export default function Atr({
             window.removeEventListener('resize', handleResize);
             atrChart.remove();
             chartAtr.current = null;
+            seriesRef.current = null;
         };
     }, []);
 
     useEffect(() => {
-        if (!chartRefCandl.current && !chartAtr.current) return;
-        chartRefCandl.current.timeScale().subscribeVisibleLogicalRangeChange((range: any) => {
+        const candleChart = chartRefCandl.current;
+        const atrChart = chartAtr.current;
+
+        if (!candleChart || !atrChart) return;
+
+        // Sync zoom/pan giữa 2 chart
+        const unsubCandle = candleChart.timeScale().subscribeVisibleLogicalRangeChange((range: any) => {
             if (range) {
-                chartAtr.current?.timeScale().setVisibleLogicalRange(range);
-            }
-        });
-        chartAtr.current.timeScale().subscribeVisibleLogicalRangeChange((range: any) => {
-            if (range) {
-                chartRefCandl.current?.timeScale().setVisibleLogicalRange(range);
+                atrChart.timeScale().setVisibleLogicalRange(range);
             }
         });
 
-        chartRefCandl.current?.subscribeCrosshairMove((param: any) => {
-            if (param.time && chartAtr.current) {
+        const unsubAtr = atrChart.timeScale().subscribeVisibleLogicalRangeChange((range: any) => {
+            if (range) {
+                candleChart.timeScale().setVisibleLogicalRange(range);
+            }
+        });
 
-                // Lấy RSI value tại đúng time
+        // Sync crosshair
+        const unsubCrosshair = candleChart.subscribeCrosshairMove((param: any) => {
+            if (param.time) {
                 const rsiPoint = currentData.current.find((p: any) => p.time === param.time);
-                
                 const data = currentDataAtr.current.find((p: any) => p.time === param.time);
                 setCurrentAtr(data);
 
                 if (rsiPoint) {
-                    chartAtr.current.setCrosshairPosition(
-                        rsiPoint.value,   // Y position
-                        param.time,       // X (time)
-                        seriesRef.current // RSI series
+                    atrChart.setCrosshairPosition(
+                        rsiPoint.value,
+                        param.time,
+                        seriesRef.current
                     );
                 }
             } else {
-                chartAtr.current && chartAtr.current?.clearCrosshairPosition();
-                currentDataAtr.current && setCurrentAtr(currentDataAtr.current[currentDataAtr.current.length - 1])
+                atrChart.clearCrosshairPosition();
+                setCurrentAtr(currentDataAtr.current[currentDataAtr.current.length - 1]);
             }
         });
-    }, [chartRefCandl.current, chartAtr.current])
 
-    useEffect(() => {
-        if (!chartRefCandl.current._private__chartWidget._private__width && !chartRefCandl.current && !chartAtr.current) return;
-        chartAtr.current.applyOptions({ width: chartRefCandl.current._private__chartWidget._private__width });
-        chartAtr.current.priceScale("right").applyOptions({ minimumWidth: 58 });
-    }, [chartRefCandl.current?._private__chartWidget?._private__width])
+        // Đồng bộ chiều rộng
+        const width = candleChart?.getWidth?.(); // Nếu chart có hàm getWidth, không dùng _private__
+        if (width) {
+            atrChart.applyOptions({ width });
+        }
+
+        atrChart.priceScale("right").applyOptions({ minimumWidth: 58 });
+
+        // Cleanup
+        return () => {
+            unsubCandle?.();
+            unsubAtr?.();
+            unsubCrosshair?.();
+        };
+    }, []); // Chỉ chạy 1 lần sau mount
 
     const renderData = (data: any) => {
         let time = undefined
@@ -145,6 +159,7 @@ export default function Atr({
     useEffect(() => {
         if (!seriesRef.current || !candleData?.length) return;
 
+        allData.current = []
         const fixed = normalizeChartData(candleData).sort((a: any, b: any) => a.time - b.time);
         const existing = allData.current;
 

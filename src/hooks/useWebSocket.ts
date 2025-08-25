@@ -32,47 +32,44 @@ export function useSocket(
         console.log("❌ Socket disconnected");
       });
 
-      if (listen === "chat_message") {
-        socket.on('chat_message', (data) => {
+      const handleChat = (data: any) => {
+        try {
           let parsed = JSON.parse(data.by_symbol);
-
-          // Nếu parse ra mảng ký tự → nghĩa là bị double-encode → parse thêm lần nữa
           if (typeof parsed === "string") {
             parsed = JSON.parse(parsed);
           }
-
           const result = Object.entries(parsed).map(([key, value]: any[]) => ({
             symbol: key,
-            ...value
+            ...value,
           }));
+          setDataCurrent({ ...data, by_symbol: result });
+        } catch (e) {
+          console.error("Parse error", e);
+        }
+      };
 
-          setDataCurrent({
-            ...data,
-            by_symbol: result
-          })
-        });
-      }
+      const handlePosition = (data: any) => setDataCurrentPosition(data);
+      const handleAccTransaction = (data: any) => setDataCurrentAccTransaction(data);
 
-      if (listen === "position_message") {
-        socket.on('position_message', (data) => {
-          setDataCurrentPosition(data);
-        });
-      }
-
-      if (listen === "acc_transaction_message") {
-        socket.on('acc_transaction_message', (data) => {
-          setDataCurrentAccTransaction(data);
-        });
-      }
+      // Đăng ký listener theo "listen"
+      if (listen === "chat_message") socket.on("chat_message", handleChat);
+      if (listen === "position_message") socket.on("position_message", handlePosition);
+      if (listen === "acc_transaction_message")
+        socket.on("acc_transaction_message", handleAccTransaction);
 
       return () => {
+        if (listen === "chat_message") socket.off("chat_message", handleChat);
+        if (listen === "position_message") socket.off("position_message", handlePosition);
+        if (listen === "acc_transaction_message")
+          socket.off("acc_transaction_message", handleAccTransaction);
+
         socket.disconnect();
       };
     }
-  }, [url, id_symbol]);
+  }, [url, id_symbol, listen]);
 
   return {
-    dataCurrentPosition, 
+    dataCurrentPosition,
     dataCurrent,
     dataCurrentAccTransaction
   }

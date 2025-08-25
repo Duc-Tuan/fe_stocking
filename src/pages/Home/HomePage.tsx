@@ -2,11 +2,14 @@ import type { BarData, IChartApi, ISeriesApi, UTCTimestamp } from "lightweight-c
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { symbolApi } from "../../api/symbol";
+import Icon from "../../assets/icon";
+import Atr from "../../components/atr/Atr";
 import { Button } from "../../components/button";
 import { CandlestickSeriesComponent } from "../../components/candlestickSeries";
 import { normalizeChartData, type IDataSymbols } from "../../components/candlestickSeries/options";
 import { ChartComponent } from "../../components/line";
 import { Loading } from "../../components/loading";
+import Rsi from "../../components/rsi/Rsi";
 import TooltipCustom from "../../components/tooltip";
 import { useAppInfo } from "../../hooks/useAppInfo";
 import { useClickOutside } from "../../hooks/useClickOutside";
@@ -17,7 +20,7 @@ import type {
     IOptionsTabsCharts,
     IPagination,
 } from "../../types/global";
-import { handleTimeRangeChange } from "../../utils/timeRange";
+import { getColorChart, handleTimeRangeChange } from "../../utils/timeRange";
 import {
     convertDataCandline,
     convertDataLine,
@@ -26,11 +29,7 @@ import {
     type IinitialData,
     type IinitialDataCand,
 } from "./options";
-import { dataIndicator, drawLabelWithBackground, FIB_TOLERANCE, fibBaseColors, fibLevels, formatDateLabel, getCssVar, type FibBlock, type Iindicator } from "./type";
-import Icon from "../../assets/icon";
-import Rsi from "../../components/rsi/Rsi";
-import Atr from "../../components/atr/Atr";
-import type { Option } from "../History/type";
+import { dataBoundaryLine, dataIndicator, drawLabelWithBackground, FIB_TOLERANCE, fibBaseColors, fibLevels, formatDateLabel, getCssVar, isPointNearLine, type FibBlock, type IboundaryLine, type Iindicator, type Trendline } from "./type";
 
 // Khoảng thời gian 1 nến (M5 = 300 giây)
 const BAR_INTERVAL = 300;
@@ -72,11 +71,11 @@ export default function HomePage() {
     });
     const [loading, setLoading] = useState<boolean>(false);
 
-    const isFetchingRef = useRef(false);
+    const isFetchingRef = useRef<any>(false);
 
     const serverId: number = useMemo(() => { return Number(serverMonitorActive?.value) }, [serverMonitorActive?.value])
 
-    const canvasRef = useRef<HTMLCanvasElement | null>(null);
+    const canvasRef = useRef<any>(null);
     const dragStart = useRef<{ x: number; y: number; a: any; b: any } | null>(null);
 
     const [fibMode, setFibMode] = useState(false);
@@ -84,13 +83,39 @@ export default function HomePage() {
 
     const [isCheckFibonacci, setIsCheckFibonacci] = useState(false);
 
-    const allData = useRef<BarData[]>([]);
     const widthCharRef = useRef<any>(0);
 
     const [fibBlocks, setFibBlocks] = useState<FibBlock[]>([]);
     const [activeFibId, setActiveFibId] = useState<string | null>(null);
 
     const [indicator, setIndicator] = useState<Iindicator[]>(dataIndicator)
+
+    const [boundaryLine, setboundaryLine] = useState<IboundaryLine>(dataBoundaryLine)
+
+    const overlayRef = useRef<any>(null);
+    const isDraggingRef = useRef(false);
+    const dragLineIndexRef = useRef<number | null>(null);
+    const [hoverPrice, setHoverPrice] = useState<number | null>(null);
+    const [isDrawingMode, setIsDrawingMode] = useState(false);
+    const [linesRef, setlinesRef] = useState<{ price: number; id: number }[]>([]);
+    const wasDraggingRef = useRef(false);
+    const needsRedrawRef = useRef(false);
+
+    const [drawing, setDrawing] = useState(false);
+    const canvasTrendLine = useRef<any>(null);
+    // const trendlinesRef = useRef<Trendline[]>([]);
+    const [trendlines, setTrendlines] = useState<Trendline[]>([]);
+    const tempStartRef = useRef<{ time: number; price: number } | null>(null);
+    const tempEndRef = useRef<{ time: number; price: number } | null>(null);
+    const draggingLineIndex = useRef<number | null>(null);
+    const draggingHandle = useRef<{ lineIndex: number; point: "start" | "end" } | null>(null);
+    const dragStartTrandLine = useRef<{
+        mouseX: number;
+        mouseY: number;
+        start: Trendline;
+    } | null>(null);
+
+    const needRedraw = useRef(false);
 
     // Gọi api khi page thay đổi
     const getSymbolApi = async (idServer: number) => {
@@ -144,7 +169,7 @@ export default function HomePage() {
     }
 
     useEffect(() => {
-        if (currentPnl) {
+        if (currentPnl && Number(currentPnl.id_symbol) === serverId) {
             setSymbolsSocket(convertDataLine([currentPnl]))
             setSymbolsCandSocket(convertDataCandline([currentPnl]))
         }
@@ -175,6 +200,44 @@ export default function HomePage() {
             setSymbols([]);
             setSymbolsCand([]);
             getSymbolApiServerId(serverId);
+            setSymbolsSocket([])
+            setSymbolsCandSocket([])
+
+            setlinesRef([])
+            setFibBlocks([])
+            dragStart.current = null
+            isFetchingRef.current = null
+            setFibMode(false)
+            setDragging(false)
+            setActiveFibId(null)
+            setIsDrawingMode(false)
+            setIsCheckFibonacci(false)
+            setIndicator(dataIndicator)
+            if (canvasRef.current) {
+                canvasRef.current.style.pointerEvents = "none";
+            }
+
+            if (canvasRef.current) {
+                const ctx = canvasRef.current.getContext("2d");
+                ctx?.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+            }
+            if (overlayRef.current) {
+                const ctx = overlayRef.current.getContext("2d");
+                ctx?.clearRect(0, 0, overlayRef.current.width, overlayRef.current.height);
+            }
+
+            setDrawing(false)
+            setTrendlines([])
+            tempStartRef.current = null
+            tempEndRef.current = null
+            draggingLineIndex.current = null
+            draggingHandle.current = null
+            dragStartTrandLine.current = null
+            needRedraw.current = false
+            if (canvasTrendLine.current) {
+                const ctx = canvasTrendLine.current.getContext("2d");
+                ctx?.clearRect(0, 0, canvasTrendLine.current.width, canvasTrendLine.current.height);
+            }
         }
     }, [serverId]);
 
@@ -185,7 +248,9 @@ export default function HomePage() {
         }));
 
         if (canvasRef.current && selected.tabsName === "Biểu đồ đường") {
-            canvasRef.current.style.pointerEvents = "none"
+            canvasRef.current.style.pointerEvents = "none";
+            setFibBlocks([]);
+            setlinesRef([]);
         }
         setIsCheckFibonacci((selected.tabsName === "Biểu đồ đường"))
         setActiveTab(updated);
@@ -199,6 +264,67 @@ export default function HomePage() {
             handleTimeRangeChange(chartRef2, symbolsCand, seconds);
         }
         setCurrentRange(label);
+    };
+
+    const drawAllTrendlines = () => {
+        const canvas = canvasTrendLine.current;
+        if (!canvas || !chartRef.current || !candleSeriesRef.current) return;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const timeScale = chartRef.current.timeScale();
+
+        trendlines.forEach((line) => {
+            const x1 = timeScale.timeToCoordinate(line.start.time as any);
+            const y1 = candleSeriesRef.current.priceToCoordinate(line.start.price);
+            const x2 = timeScale.timeToCoordinate(line.end.time as any);
+            const y2 = candleSeriesRef.current.priceToCoordinate(line.end.price);
+            if (x1 && x2 && y1 && y2) {
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.strokeStyle = "blue";
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                if (drawing) {
+                    [[x1, y1], [x2, y2]].forEach(([xx, yy]) => {
+                        ctx.beginPath();
+                        ctx.arc(xx, yy, 4, 0, 2 * Math.PI);
+                        ctx.fillStyle = "white";
+                        ctx.fill();
+                        ctx.strokeStyle = getCssVar("--color-background");
+                        ctx.stroke();
+                    });
+                }
+            }
+        });
+
+        // vẽ tạm line mới
+        if (tempStartRef.current && tempEndRef.current) {
+            const x1 = timeScale.timeToCoordinate(tempStartRef.current.time as any);
+            const y1 = candleSeriesRef.current.priceToCoordinate(tempStartRef.current.price);
+            const x2 = timeScale.timeToCoordinate(tempEndRef.current.time as any);
+            const y2 = candleSeriesRef.current.priceToCoordinate(tempEndRef.current.price);
+            if (x1 && x2 && y1 && y2) {
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.strokeStyle = getCssVar("--color-background");
+                ctx.setLineDash([5, 5]);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+
+            if (x1 && y1) {
+                ctx.beginPath();
+                ctx.arc(x1, y1, 4, 0, 2 * Math.PI);
+                ctx.fillStyle = "white";
+                ctx.fill();
+                ctx.lineWidth = 1;
+                ctx.strokeStyle = getCssVar("--color-background");
+                ctx.stroke();
+            }
+        }
     };
 
     useEffect(() => {
@@ -216,46 +342,60 @@ export default function HomePage() {
             canvasRef.current = canvas;
         }
 
+        if (!overlayRef.current) {
+            const overlay = document.createElement("canvas");
+            overlay.style.position = "absolute";
+            overlay.style.left = "0";
+            overlay.style.top = "0";
+            overlay.style.zIndex = "10";
+            overlay.style.pointerEvents = "none";
+            chartContainerRef.current.appendChild(overlay);
+            overlayRef.current = overlay;
+        }
+        if (!canvasTrendLine.current) {
+            const overlay = document.createElement("canvas");
+            overlay.style.position = "absolute";
+            overlay.style.left = "0";
+            overlay.style.top = "0";
+            overlay.style.zIndex = "10";
+            overlay.style.pointerEvents = "none";
+            chartContainerRef.current.appendChild(overlay);
+            canvasTrendLine.current = overlay;
+        }
+
         const resize = () => {
             if (!canvasRef.current || !chartContainerRef.current) return;
-            canvasRef.current.width = chartContainerRef.current!.clientWidth;
-            canvasRef.current.height = indicator.filter((a) => a.active).length > 1 ? chartContainerRef.current!.clientHeight + 240 :  chartContainerRef.current!.clientHeight;
-            drawFib()
+            const widthChart = chartContainerRef.current!.clientWidth;
+            const height = indicator.filter((a) => a.active).length > 1 ? chartContainerRef.current!.clientHeight + 240 : chartContainerRef.current!.clientHeight;
+            canvasRef.current.width = widthChart
+            canvasRef.current.height = height
+            overlayRef.current.width = widthChart
+            overlayRef.current.height = height
+            canvasTrendLine.current.width = widthChart
+            canvasTrendLine.current.height = height
+            triggerDrawFib();
+            requestRedraw();
+            drawAllTrendlines();
         };
         resize();
         window.addEventListener("resize", resize);
 
         return () => {
             window.removeEventListener("resize", resize);
-        };
-    }, [chartContainerRef.current, candleSeriesRef.current]);
-
-    useEffect(() => {
-        if (!chartContainerRef.current || !symbolsCand?.length) return;
-
-        const fixed = normalizeChartData(symbolsCand).sort((a: any, b: any) => a.time - b.time);
-        const existing = allData.current;
-
-        const unique = fixed.filter(d => !existing.some(e => e.time === d.time));
-        if (!unique.length) return;
-
-        const merged = [...existing];
-        for (const d of unique) {
-            const index = merged.findIndex(item => item.time === d.time);
-            if (index !== -1) {
-                merged[index] = d;
-            } else {
-                merged.push(d);
+            if (overlayRef.current && chartContainerRef.current?.contains(overlayRef.current)) {
+                chartContainerRef.current.removeChild(overlayRef.current);
+                overlayRef.current = null;
             }
-        }
-
-        allData.current = merged.sort((a: any, b: any) => a.time - b.time);
-
-        // const data = renderData(allData.current)
-        if (candleSeriesRef.current) {
-            drawFib()
-        }
-    }, [symbolsCand]);
+            if (canvasRef.current && chartContainerRef.current?.contains(canvasRef.current)) {
+                chartContainerRef.current.removeChild(canvasRef.current);
+                canvasRef.current = null;
+            }
+            if (canvasTrendLine.current && chartContainerRef.current?.contains(canvasTrendLine.current)) {
+                chartContainerRef.current.removeChild(canvasTrendLine.current);
+                canvasTrendLine.current = null;
+            }
+        };
+    }, [chartContainerRef.current]);
 
     useEffect(() => {
         if (!chartRef.current) return
@@ -321,43 +461,45 @@ export default function HomePage() {
                         );
                     }
 
-                    // 🎯 Chỉ bôi màu Y-axis cho 5 vạch đầu
-                    if (idx < 6) {
-                        const axisWidth = 60;
-                        // const chartWidth = chartRef.current.timeScale().width();
-                        const priceScaleLeft = widthCharRef.current - 58;   // mép trái của trục Y
+                    if (isCheckFibonacci) {
+                        // 🎯 Chỉ bôi màu Y-axis cho 5 vạch đầu
+                        if (idx < 6) {
+                            const axisWidth = 60;
+                            // const chartWidth = chartRef.current.timeScale().width();
+                            const priceScaleLeft = widthCharRef.current - 58;   // mép trái của trục Y
 
-                        const top = Math.min(y, y2);
-                        const height = Math.abs(y2 - y);
+                            const top = Math.min(y, y2);
+                            const height = Math.abs(y2 - y);
 
-                        // 👉 Tô đậm hơn
-                        ctx.fillStyle = getCssVar("--color-background-opacity-2");
-                        ctx.fillRect(priceScaleLeft, top, axisWidth, height);
+                            // 👉 Tô đậm hơn
+                            ctx.fillStyle = getCssVar("--color-background-opacity-2");
+                            ctx.fillRect(priceScaleLeft, top, axisWidth, height);
 
-                        // 👉 Chỉ hiển thị label ở dòng 1 (idx === 0) và dòng cuối (idx === 5)
-                        ctx.fillStyle = "white";
-                        ctx.font = "12px Arial";
-                        ctx.textAlign = "center";
-                        ctx.textBaseline = "middle";   // canh giữa theo chiều dọc
+                            // 👉 Chỉ hiển thị label ở dòng 1 (idx === 0) và dòng cuối (idx === 5)
+                            ctx.fillStyle = "white";
+                            ctx.font = "12px Arial";
+                            ctx.textAlign = "center";
+                            ctx.textBaseline = "middle";   // canh giữa theo chiều dọc
 
-                        if (idx === 0) {
-                            // Label nằm giữa vạch trên
-                            drawLabelWithBackground(
-                                ctx,
-                                price.toFixed(2),
-                                priceScaleLeft + axisWidth / 2,
-                                y // vạch trên
-                            );
-                        }
+                            if (idx === 0) {
+                                // Label nằm giữa vạch trên
+                                drawLabelWithBackground(
+                                    ctx,
+                                    price.toFixed(2),
+                                    priceScaleLeft + axisWidth / 2,
+                                    y // vạch trên
+                                );
+                            }
 
-                        if (idx === 5) {
-                            // Label nằm giữa vạch dưới
-                            drawLabelWithBackground(
-                                ctx,
-                                nextPrice.toFixed(2),
-                                priceScaleLeft + axisWidth / 2,
-                                y2 // vạch dưới
-                            );
+                            if (idx === 5) {
+                                // Label nằm giữa vạch dưới
+                                drawLabelWithBackground(
+                                    ctx,
+                                    nextPrice.toFixed(2),
+                                    priceScaleLeft + axisWidth / 2,
+                                    y2 // vạch dưới
+                                );
+                            }
                         }
                     }
                 }
@@ -373,98 +515,200 @@ export default function HomePage() {
                 );
             });
 
-            // === Vẽ đường đứt nối anchorA ↔ anchorB ===
-            ctx.beginPath();
-            ctx.setLineDash([6, 6]);
-            ctx.moveTo(x1, priceScale.priceToCoordinate(anchorA.price)!);
-            ctx.lineTo(x2, priceScale.priceToCoordinate(anchorB.price)!);
-            ctx.strokeStyle = "rgba(0,0,0,0.6)";
-            ctx.lineWidth = 1;
-            ctx.stroke();
-            ctx.setLineDash([]); // reset dash
-
-            // handle tròn
-            const drawHandle = (anchor: { time: number; price: number }) => {
-                const xx = timeScale.timeToCoordinate(anchor.time);
-                const yy = priceScale.priceToCoordinate(anchor.price);
-                if (xx == null || yy == null) return;
+            if (isCheckFibonacci) {
+                // === Vẽ đường đứt nối anchorA ↔ anchorB ===
                 ctx.beginPath();
-                ctx.arc(xx, yy, 6, 0, 2 * Math.PI);
-                ctx.fillStyle = "white";
-                ctx.fill();
+                ctx.setLineDash([6, 6]);
+                ctx.moveTo(x1, priceScale.priceToCoordinate(anchorA.price)!);
+                ctx.lineTo(x2, priceScale.priceToCoordinate(anchorB.price)!);
+                ctx.strokeStyle = "rgba(0,0,0,0.6)";
                 ctx.lineWidth = 1;
-                ctx.strokeStyle = getCssVar("--color-background");
                 ctx.stroke();
-            };
+                ctx.setLineDash([]); // reset dash
 
-            const ts = chartRef.current.timeScale();
-            const width = Math.abs(x2 - x1);
-            const left = Math.min(x1, x2);
+                // handle tròn
+                const drawHandle = (anchor: { time: number; price: number }) => {
+                    const xx = timeScale.timeToCoordinate(anchor.time);
+                    const yy = priceScale.priceToCoordinate(anchor.price);
+                    if (xx == null || yy == null) return;
+                    ctx.beginPath();
+                    ctx.arc(xx, yy, 6, 0, 2 * Math.PI);
+                    ctx.fillStyle = "white";
+                    ctx.fill();
+                    ctx.lineWidth = 1;
+                    ctx.strokeStyle = getCssVar("--color-background");
+                    ctx.stroke();
+                };
 
-            // Lấy chiều cao canvas
-            const h = canvasRef.current!.height;
+                const ts = chartRef.current.timeScale();
+                const width = Math.abs(x2 - x1);
+                const left = Math.min(x1, x2);
 
-            // Vẽ 1 dải màu ở cuối (gần trục X)
-            ctx.fillStyle = getCssVar("--color-background-opacity-2"); // xanh nhạt
-            ctx.fillRect(left, h - 27, width, 20);   // cao 20px ở sát đáy chart
+                // Lấy chiều cao canvas
+                const h = canvasRef.current!.height;
 
-            // === Vẽ label thời gian A và B ===
-            const timeA = ts.coordinateToTime(x1); // lấy time gốc từ chart
-            const timeB = ts.coordinateToTime(x2);
+                // Vẽ 1 dải màu ở cuối (gần trục X)
+                ctx.fillStyle = getCssVar("--color-background-opacity-2"); // xanh nhạt
+                ctx.fillRect(left, h - 27, width, 20);   // cao 20px ở sát đáy chart
 
-            ctx.fillStyle = "black";
-            ctx.font = "12px Arial";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "top";
+                // === Vẽ label thời gian A và B ===
+                const timeA = ts.coordinateToTime(x1); // lấy time gốc từ chart
+                const timeB = ts.coordinateToTime(x2);
 
-            if (timeA) {
-                const text = formatDateLabel(timeA);
+                ctx.fillStyle = "black";
                 ctx.font = "12px Arial";
-                const metrics = ctx.measureText(text);
-                const paddingX = 4;
-                const paddingY = 6;
-                const textWidth = metrics.width + paddingX * 4;
-                const textHeight = 20; // fix height (12px font + padding)
-                const rectX = x1 - textWidth / 2;
-                const rectY = h - 27; // đặt cao hơn chút so với fillRect dưới trục
-
-                // Vẽ nền đậm
-                ctx.fillStyle = getCssVar("--color-background");
-                ctx.fillRect(rectX, rectY, textWidth, textHeight);
-
-                // Vẽ chữ trắng
-                ctx.fillStyle = "white";
                 ctx.textAlign = "center";
                 ctx.textBaseline = "top";
-                ctx.fillText(text, x1, rectY + paddingY);
+
+                if (timeA) {
+                    const text = formatDateLabel(timeA);
+                    ctx.font = "12px Arial";
+                    const metrics = ctx.measureText(text);
+                    const paddingX = 4;
+                    const paddingY = 6;
+                    const textWidth = metrics.width + paddingX * 4;
+                    const textHeight = 20; // fix height (12px font + padding)
+                    const rectX = x1 - textWidth / 2;
+                    const rectY = h - 27; // đặt cao hơn chút so với fillRect dưới trục
+
+                    // Vẽ nền đậm
+                    ctx.fillStyle = getCssVar("--color-background");
+                    ctx.fillRect(rectX, rectY, textWidth, textHeight);
+
+                    // Vẽ chữ trắng
+                    ctx.fillStyle = "white";
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "top";
+                    ctx.fillText(text, x1, rectY + paddingY);
+                }
+                if (timeB) {
+                    const text = formatDateLabel(timeB);
+                    ctx.font = "12px Arial";
+                    const metrics = ctx.measureText(text);
+                    const paddingX = 4;
+                    const paddingY = 6;
+                    const textWidth = metrics.width + paddingX * 2;
+                    const textHeight = 20;
+                    const rectX = x2 - textWidth / 2;
+                    const rectY = h - 27;
+
+                    ctx.fillStyle = getCssVar("--color-background");
+                    ctx.fillRect(rectX, rectY, textWidth, textHeight);
+
+                    ctx.fillStyle = "white";
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "top";
+                    ctx.fillText(text, x2, rectY + paddingY);
+                }
+
+                drawHandle(anchorA);
+                drawHandle(anchorB);
             }
-            if (timeB) {
-                const text = formatDateLabel(timeB);
-                ctx.font = "12px Arial";
-                const metrics = ctx.measureText(text);
-                const paddingX = 4;
-                const paddingY = 6;
-                const textWidth = metrics.width + paddingX * 2;
-                const textHeight = 20;
-                const rectX = x2 - textWidth / 2;
-                const rectY = h - 27;
 
-                ctx.fillStyle = getCssVar("--color-background");
-                ctx.fillRect(rectX, rectY, textWidth, textHeight);
-
-                ctx.fillStyle = "white";
-                ctx.textAlign = "center";
-                ctx.textBaseline = "top";
-                ctx.fillText(text, x2, rectY + paddingY);
-            }
-
-            drawHandle(anchorA);
-            drawHandle(anchorB);
         });
+    };
+
+    const rafRefFib = useRef<number>(null);
+
+    const triggerDrawFib = () => {
+        if (rafRefFib.current) cancelAnimationFrame(rafRefFib.current);
+        rafRefFib.current = requestAnimationFrame(() => {
+            drawFib();
+        });
+    };
+
+    const drawLines = () => {
+        const canvas = overlayRef.current;
+        const ctx = overlayRef.current.getContext("2d");
+        if (!ctx) return;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        linesRef.forEach((line) => {
+            const y = candleSeriesRef.current.priceToCoordinate(line.price); // ✅ series
+            if (y !== null) {
+                ctx.lineWidth = 0.5;
+                ctx.beginPath();
+                ctx.moveTo(0, y + 0.5);
+                ctx.lineTo(canvas.width - 58, y + 0.5);
+                ctx.strokeStyle = "blue";
+                ctx.stroke();
+
+                // Nội dung text
+                const text = line.price.toFixed(2);
+                ctx.font = "12px Arial";
+                ctx.textBaseline = "middle";  // căn giữa theo chiều dọc
+                const textWidth = ctx.measureText(text).width;
+                const textHeight = 16; // tạm ước lượng chiều cao font ~14px
+
+                // Toạ độ text (ở cuối vạch)
+                const textX = canvas.width - 58;
+                const textY = y;
+
+                // Vẽ background (ô chữ nhật bo nhỏ)
+                ctx.fillStyle = "blue"; // nền tối mờ
+                ctx.fillRect(textX, textY - textHeight / 2, textWidth + 28, textHeight);
+
+                // Vẽ text đè lên background
+                ctx.fillStyle = "white";
+                ctx.fillText(text, textX + 28, textY + 2);
+
+                // === Label thêm ở giữa line ===
+                const midX = canvas.width - 105; // giữa chart (không tính phần trục Y)
+
+                ctx.fillStyle = "blue"
+                ctx.textAlign = "center";
+                ctx.fillText(`${t("Đường ngang")} ${line.id}`, midX, y + 2);
+            }
+        });
+
+        // vẽ preview
+        if (hoverPrice !== null) {
+            const y = candleSeriesRef.current.priceToCoordinate(hoverPrice);
+            if (y !== null) {
+                ctx.beginPath();
+                ctx.moveTo(0, y + 0.5);
+                ctx.lineTo(canvas.width - 58, y + 0.5);
+                ctx.strokeStyle = "rgba(0,0,0,1)";
+                ctx.lineWidth = 0.2;
+                ctx.setLineDash([10, 10]);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // Nội dung text
+                const text = hoverPrice.toFixed(2);
+                ctx.font = "12px Arial";
+                ctx.textBaseline = "middle";  // căn giữa theo chiều dọc
+                const textWidth = ctx.measureText(text).width;
+                const textHeight = 16; // tạm ước lượng chiều cao font ~14px
+
+                // Toạ độ text (ở cuối vạch)
+                const textX = canvas.width - 54;
+                const textY = y;
+
+                // Vẽ background (ô chữ nhật bo nhỏ)
+                ctx.fillStyle = getColorChart(); // nền tối mờ
+                ctx.fillRect(textX - 4, textY - textHeight / 2, textWidth + 20, textHeight);
+
+                // Vẽ text đè lên background
+                ctx.fillStyle = "white";
+                ctx.fillText(text, textX + 6, textY + 2);
+            }
+        }
+    };
+
+    const rafRef = useRef<any>(null);
+
+    const requestRedraw = () => {
+        needsRedrawRef.current = true;
     };
 
     useEffect(() => {
         if (!fibMode) return;
+
+        if (canvasRef.current) {
+            canvasRef.current.style.pointerEvents = isCheckFibonacci ? "auto" : "none"
+        }
 
         const canvas = canvasRef.current;
         const container = chartContainerRef.current;
@@ -682,16 +926,18 @@ export default function HomePage() {
         if (!fibMode || !chartRef.current) return;
 
         const handleVisibleRangeChange = () => {
-            drawFib(); // vẽ lại fib khi chart pan/zoom
+            triggerDrawFib(); // vẽ lại fib khi chart pan/zoom
         };
         timeScale.subscribeVisibleLogicalRangeChange(handleVisibleRangeChange);
 
-        let raf: number;
-        const loop = () => {
-            drawFib();
-            raf = requestAnimationFrame(loop);
+        if (fibMode) {
+            triggerDrawFib();
+        }
+
+        const resize = () => {
+            triggerDrawFib();
         };
-        raf = requestAnimationFrame(loop);
+        window.addEventListener("resize", resize);
 
         // Quan trọng: lắng nghe trên CANVAS với capture để chặn chart
         canvas.addEventListener("mousedown", handleDown, { capture: true });
@@ -700,24 +946,45 @@ export default function HomePage() {
 
         return () => {
             timeScale.unsubscribeVisibleLogicalRangeChange(handleVisibleRangeChange);
-            cancelAnimationFrame(raf)
-            canvas.removeEventListener("mousedown", handleDown, { capture: true } as any);
+            if (rafRefFib.current) cancelAnimationFrame(rafRefFib.current);
+            rafRefFib.current = null;
+
+            if (canvas) canvas.removeEventListener("mousedown", handleDown, { capture: true } as any);
+
+            window.removeEventListener("resize", resize);
             window.removeEventListener("mousemove", handleMove);
             window.removeEventListener("mouseup", handleUp);
         };
-    }, [fibMode, dragging, activeFibId, fibBlocks]);
+    }, [fibMode, dragging, activeFibId, fibBlocks, isCheckFibonacci]);
 
-    const handleDelete = (idx: number) => {
-        if (idx >= 0) {
-            const dataNew = fibBlocks.filter((_, id) => id !== idx)
-            setFibBlocks(dataNew)
-        } else if (idx < 0) {
+    const handleDelete = (title: "fibonacci" | "line" | "trendLine", idx: number) => {
+        if (title === 'fibonacci') {
+            if (idx >= 0) {
+                const dataNew = fibBlocks.filter((_, id) => id !== idx)
+                setFibBlocks(dataNew)
+            }
+        }
+        if ((title === 'line' || title === 'fibonacci' || title === "trendLine") && idx < 0) {
             setFibBlocks([])
+            setlinesRef([])
+            setTrendlines([])
+        }
+        if (title === 'line') {
+            if (idx >= 0) {
+                const dataNew = linesRef.filter((_) => _.id !== idx)
+                setlinesRef(dataNew)
+            }
+        }
+        if (title === 'trendLine') {
+            if (idx >= 0) {
+                const dataNew = trendlines.filter((_, id) => id !== idx)
+                setTrendlines(dataNew)
+            }
         }
     }
 
     useEffect(() => {
-        if (!chartRefCurent.current) return
+        if (!chartRefCurent.current && !chartRefCurentRSI.current) return
 
         if (activeTab.find((a) => a.active && a.tabsName === "Biểu đồ đường")) {
             chartRefCurent.current.applyOptions({
@@ -746,7 +1013,317 @@ export default function HomePage() {
                 })
             }
         }
-    }, [indicator, chartRefCurent.current, chartRefCurentRSI.current, activeTab])
+    }, [indicator, activeTab])
+
+    useEffect(() => {
+        if (!overlayRef.current && !chartContainerRef.current && !candleSeriesRef.current) return;
+
+        const setCursor = (cursor: string) => { overlayRef.current && (overlayRef.current.style.cursor = cursor) }
+
+        const subrequestRedraw = () => {
+            requestRedraw()
+        }
+
+        // redraw khi chart thay đổi
+        chartRef.current?.subscribeCrosshairMove(subrequestRedraw);
+
+        if (overlayRef.current) {
+            overlayRef.current.style.pointerEvents = isDrawingMode ? "auto" : "none";
+        }
+
+        const click = (e: any) => {
+            if (!isDrawingMode || wasDraggingRef.current) {
+                wasDraggingRef.current = false; // reset sau khi bỏ qua
+                return;
+            }
+
+            const rect = overlayRef.current.getBoundingClientRect();
+            const mouseY = e.clientY - rect.top;
+            const price = candleSeriesRef.current.coordinateToPrice(mouseY);
+            if (price !== null) {
+                setlinesRef((prev) => {
+                    // Thêm phần tử mới vào cuối
+                    let updated = [...prev, { price: Number(price.toFixed(2)), id: 0 }];
+
+                    // Nếu dài hơn 4, xóa phần tử đầu tiên
+                    if (updated.length > 4) {
+                        updated.shift();
+                    }
+
+                    // Đánh lại id từ 1 → n
+                    updated = updated.map((item, index) => ({
+                        ...item,
+                        id: index + 1
+                    }));
+                    return updated;
+                });
+                setHoverPrice(null);
+                requestRedraw();
+            }
+        };
+
+        const mousedown = (e: any) => {
+            if (!overlayRef.current) return;
+            const rect = overlayRef.current.getBoundingClientRect();
+            const mouseY = e.clientY - rect.top;
+
+            // check click gần line nào
+            linesRef.forEach((line) => {
+                const y = candleSeriesRef.current.priceToCoordinate(line.price);
+                if (y && Math.abs(mouseY - y) < 12) { // phạm vi ±6px
+                    isDraggingRef.current = true;
+                    dragLineIndexRef.current = line.id;
+                    wasDraggingRef.current = false; // reset
+                    setCursor("grabbing");
+                }
+            });
+        }
+
+        const mouseleave = () => {
+            setHoverPrice(null);
+            requestRedraw();
+        }
+
+        const mousemove = (e: any) => {
+            const rect = overlayRef.current.getBoundingClientRect();
+            const mouseY = e.clientY - rect.top;
+            const price = candleSeriesRef.current.coordinateToPrice(mouseY);
+
+            if (isDraggingRef.current && dragLineIndexRef.current !== null) {
+                if (price !== null) {
+                    setlinesRef((prev) => {
+                        const dataNew = prev.map((i) => {
+                            if (i.id === dragLineIndexRef.current) {
+                                return i.price = Number(price.toFixed(2))
+                            }
+                            return i
+                        })
+                        return [...prev]
+                    })
+                    wasDraggingRef.current = true; // có kéo thật sự
+                }
+            } else if (isDrawingMode) {
+                setHoverPrice(price !== null ? Number(price) : null);
+            }
+            requestRedraw();
+        }
+
+        const handleUp = () => {
+            isDraggingRef.current = false;
+            dragLineIndexRef.current = null;
+            setCursor("default");
+        }
+
+        overlayRef.current.addEventListener("click", click);
+        overlayRef.current.addEventListener("mousedown", mousedown);
+        overlayRef.current.addEventListener("mouseleave", mouseleave);
+        overlayRef.current.addEventListener("mousemove", mousemove);
+        overlayRef.current.addEventListener("mouseup", handleUp);
+
+        requestRedraw()
+
+        const renderLoop = () => {
+            if (needsRedrawRef.current) {
+                drawLines();
+                needsRedrawRef.current = false;
+            }
+            rafRef.current = requestAnimationFrame(renderLoop);
+        };
+        rafRef.current = requestAnimationFrame(renderLoop);
+
+        return () => {
+            if (chartRef.current) chartRef.current.unsubscribeCrosshairMove(subrequestRedraw);
+            if (rafRef.current) cancelAnimationFrame(rafRef.current);
+            rafRef.current = null;
+
+            if (overlayRef.current) {
+                overlayRef.current.removeEventListener("mouseleave", mouseleave);
+                overlayRef.current.removeEventListener("mousedown", mousedown);
+                overlayRef.current.removeEventListener("mousemove", mousemove);
+                overlayRef.current.removeEventListener("mouseup", handleUp);
+                overlayRef.current.removeEventListener("click", click);
+            }
+        }
+    }, [isDrawingMode, hoverPrice, linesRef])
+
+    // events
+    useEffect(() => {
+        if (!canvasTrendLine.current || !chartRef.current || !candleSeriesRef.current) return;
+
+        if (canvasTrendLine.current) {
+            canvasTrendLine.current.style.pointerEvents = drawing ? "auto" : "none";
+        }
+
+        const subrequestRedraw = () => {
+            drawAllTrendlines()
+        }
+
+        // redraw khi chart thay đổi
+        chartRef.current?.subscribeCrosshairMove(subrequestRedraw);
+
+        // sau khi khởi tạo chart
+        chartRef.current.subscribeCrosshairMove(() => {
+            drawAllTrendlines();
+        });
+
+        chartRef.current.timeScale().subscribeVisibleTimeRangeChange(() => {
+            drawAllTrendlines();
+        });
+
+        const handleDown = (e: MouseEvent) => {
+            const rect = canvasTrendLine.current!.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const timeScale = chartRef.current!.timeScale();
+
+            // check trúng line
+            for (let i = 0; i < trendlines.length; i++) {
+                const line = trendlines[i];
+                const x1 = timeScale.timeToCoordinate(line.start.time as any);
+                const y1 = candleSeriesRef.current.priceToCoordinate(line.start.price);
+                const x2 = timeScale.timeToCoordinate(line.end.time as any);
+                const y2 = candleSeriesRef.current.priceToCoordinate(line.end.price);
+
+                if (x1 && y1 && Math.hypot(x - x1, y - y1) < 7) {
+                    draggingHandle.current = { lineIndex: i, point: "start" };
+                    return;
+                }
+                if (x2 && y2 && Math.hypot(x - x2, y - y2) < 7) {
+                    draggingHandle.current = { lineIndex: i, point: "end" };
+                    return;
+                }
+                if (x1 && x2 && y1 && y2 && isPointNearLine(x, y, x1, y1, x2, y2, 5)) {
+                    draggingLineIndex.current = i;
+                    dragStartTrandLine.current = { mouseX: x, mouseY: y, start: line };
+                    return;
+                }
+            }
+
+            // vẽ line mới
+            const time = timeScale.coordinateToTime(x);
+            const price = candleSeriesRef.current.coordinateToPrice(y);
+            if (!time || !price) return;
+            if (!tempStartRef.current) {
+                tempStartRef.current = { time, price };
+            } else {
+                const newLine: Trendline = { start: tempStartRef.current, end: { time, price } };
+                setTrendlines((prev) => ([...prev, newLine]))
+                tempStartRef.current = null;
+                tempEndRef.current = null;
+            }
+            needRedraw.current = true;
+        };
+
+        const handleMove = (e: MouseEvent) => {
+            const rect = canvasTrendLine.current!.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const timeScale = chartRef.current!.timeScale();
+
+            if (draggingLineIndex.current !== null && dragStartTrandLine.current) {
+                const dx = x - dragStartTrandLine.current.mouseX;
+                const dy = y - dragStartTrandLine.current.mouseY;
+
+                const start = dragStartTrandLine.current.start;
+
+                const x1 = timeScale.timeToCoordinate(start.start.time as any)! + dx;
+                const x2 = timeScale.timeToCoordinate(start.end.time as any)! + dx;
+
+                const newStartTime = timeScale.coordinateToTime(x1) as UTCTimestamp;
+                const newEndTime = timeScale.coordinateToTime(x2) as UTCTimestamp;
+
+                const y1 = candleSeriesRef.current.priceToCoordinate(start.start.price)! + dy;
+                const y2 = candleSeriesRef.current.priceToCoordinate(start.end.price)! + dy;
+
+                const newStartPrice = candleSeriesRef.current.coordinateToPrice(y1)!;
+                const newEndPrice = candleSeriesRef.current.coordinateToPrice(y2)!;
+
+                if (newStartTime && newEndTime && newStartPrice && newEndPrice) {
+                    const dataNew = trendlines.map((i, id) => {
+                        if (id === draggingLineIndex.current) {
+                            return {
+                                start: { time: newStartTime, price: newStartPrice },
+                                end: { time: newEndTime, price: newEndPrice },
+                            }
+                        }
+                        return i
+                    })
+                    setTrendlines(dataNew)
+                    needRedraw.current = true;
+                }
+                return;
+            }
+
+            if (draggingHandle.current) {
+                const { lineIndex, point } = draggingHandle.current; // copy ra biến cục bộ
+                const time = timeScale.coordinateToTime(x);
+                const price = candleSeriesRef.current.coordinateToPrice(y);
+                if (!time || !price) return;
+
+                setTrendlines(prev => {
+                    const newArr = [...prev];
+                    if (!newArr[lineIndex]) return prev; // tránh out-of-bound
+                    newArr[lineIndex] = {
+                        ...newArr[lineIndex],
+                        [point]: { time, price }
+                    };
+                    return newArr;
+                });
+
+                needRedraw.current = true;
+                return;
+            }
+
+            if (tempStartRef.current) {
+                const time = timeScale.coordinateToTime(x);
+                const price = candleSeriesRef.current.coordinateToPrice(y);
+                if (time && price) {
+                    tempEndRef.current = { time, price };
+                    needRedraw.current = true;
+                }
+            }
+        };
+
+        const handleUp = () => {
+            draggingLineIndex.current = null;
+            draggingHandle.current = null;
+            dragStartTrandLine.current = null;
+        };
+
+        canvasTrendLine.current.addEventListener("mousedown", handleDown, { capture: true });
+        window.addEventListener("mousemove", handleMove);
+        window.addEventListener("mouseup", handleUp);
+
+        drawAllTrendlines();
+
+        let raf: number;
+
+        const renderLoop = () => {
+            if (needRedraw.current) {
+                drawAllTrendlines();
+                needRedraw.current = false;
+            }
+            raf = requestAnimationFrame(renderLoop);
+        };
+        raf = requestAnimationFrame(renderLoop);
+
+        const timeScale = chartRef.current.timeScale();
+
+        const handleVisibleRangeChange = () => {
+            drawAllTrendlines(); // gọi lại hàm vẽ mỗi khi pan/zoom
+        };
+
+        // Đăng ký event
+        timeScale.subscribeVisibleLogicalRangeChange(handleVisibleRangeChange);
+        return () => {
+            cancelAnimationFrame(raf)
+            chartRef.current && chartRef.current.unsubscribeCrosshairMove(subrequestRedraw);
+            timeScale.unsubscribeVisibleLogicalRangeChange(handleVisibleRangeChange);
+            canvasTrendLine.current && canvasTrendLine.current?.removeEventListener("mousedown", handleDown, { capture: true } as any);
+            window.removeEventListener("mousemove", handleMove);
+            window.removeEventListener("mouseup", handleUp);
+        };
+    }, [drawing, trendlines]);
 
     return (
         <div className="text-center">
@@ -781,17 +1358,36 @@ export default function HomePage() {
                                 <TooltipCustom handleClick={() => {
                                     setIsCheckFibonacci((prev) => !prev)
                                     setFibMode(true);
-                                    drawFib();
-                                    if (canvasRef.current) {
-                                        canvasRef.current.style.pointerEvents = !isCheckFibonacci ? "auto" : "none"
-                                    }
+                                    setIsDrawingMode(false)
+                                    setDrawing(false)
+
                                 }} w="w-[40px]" h="h-[40px]" titleTooltip={"fibonacci thoái lui"} classNameButton={`${isCheckFibonacci ? "bg-[var(--color-background)] text-white" : "text-black bg-gray-200"}`}>
                                     <Icon name="icon-fibonacci" width={18} height={18} />
                                 </TooltipCustom>
 
-                                <DeleteFibonacci data={fibBlocks} onClick={handleDelete} />
+                                <TooltipCustom handleClick={() => {
+                                    setIsDrawingMode(!isDrawingMode)
+                                    setIsCheckFibonacci(false)
+                                    setDrawing(false)
+                                }} w="w-[40px]" h="h-[40px]" titleTooltip={"Đường nằm ngang"} classNameButton={`${isDrawingMode ? "bg-[var(--color-background)] text-white" : "text-black bg-gray-200"}`}>
+                                    <Icon name="icon-line-v2" width={24} height={24} />
+                                </TooltipCustom>
+
+                                <TooltipCustom handleClick={() => {
+                                    setDrawing(!drawing)
+                                    setIsCheckFibonacci(false)
+                                    setIsDrawingMode(false)
+                                }} w="w-[40px]" h="h-[40px]" titleTooltip={"Đường xu hướng"} classNameButton={`${drawing ? "bg-[var(--color-background)] text-white" : "text-black bg-gray-200"}`}>
+                                    <Icon name="icon-trend-line" width={20} height={20} />
+                                </TooltipCustom>
+
+                                <DeleteFibonacci trendlinesRef={trendlines} linesRef={linesRef} data={fibBlocks} onClick={handleDelete} />
 
                                 <CompIndicator indicator={indicator} setIndicator={setIndicator} />
+
+                                {indicator.find((i) => i?.active && i?.value === "rsi") &&
+                                    <CompBoundaryLine indicator={boundaryLine} setIndicator={setboundaryLine} />
+                                }
 
                                 <button className="flex items-center ml-4 cursor-pointer" onClick={toggleOpen}>
                                     <input checked={isOpen} readOnly type="checkbox" value="" className="custom-checkbox cursor-pointer appearance-none bg-gray-100 checked:bg-[var(--color-background)] w-4 h-4 rounded-sm dark:bg-white border border-[var(--color-background)] ring-offset-[var(--color-background)]" />
@@ -838,7 +1434,7 @@ export default function HomePage() {
                 </div>
                 {
                     (activeTab.find((a) => a.active && a.tabsName === "Biểu đồ nến")) ? <>
-                        {indicator.find((a) => a.active && a.value === "rsi") && <Rsi candleData={symbolsCand} chartRefCandl={chartRef} currentRange={currentRange} chartRefCurentRSI={chartRefCurentRSI} />}
+                        {indicator.find((a) => a.active && a.value === "rsi") && <Rsi candleData={symbolsCand} chartRefCandl={chartRef} currentRange={currentRange} chartRefCurentRSI={chartRefCurentRSI} boundaryLine={boundaryLine} />}
                         {indicator.find((a) => a.active && a.value === "atr") && <Atr candleData={symbolsCand} chartRefCandl={chartRef} currentRange={currentRange} />}
                     </> : <></>
                 }
@@ -898,7 +1494,12 @@ const Filter = ({ handleClick, currentRange }: any) => {
     )
 }
 
-const DeleteFibonacci = ({ data, onClick }: { data: any, onClick: any }) => {
+const DeleteFibonacci = ({ trendlinesRef, data, onClick, linesRef }: {
+    data: any, onClick: (title: "fibonacci" | "line" | "trendLine", idx: number) => void, linesRef: {
+        price: number;
+        id: number;
+    }[], trendlinesRef: Trendline[]
+}) => {
     const { t } = useTranslation()
     const popupRef: any = useRef(null);
     const [open, setOpen] = useState(false);
@@ -921,22 +1522,27 @@ const DeleteFibonacci = ({ data, onClick }: { data: any, onClick: any }) => {
     }, visible);
 
     return <div ref={popupRef} className="relative z-20">
-        {data.length !== 0 &&
+        {(data.length !== 0 || linesRef.length !== 0 || trendlinesRef.length !== 0) &&
             <div className="absolute top-1 right-1 z-10 bg-white rounded-2xl text-[12px] font-bold w-[14px] h-[14px] flex justify-center items-center text-[var(--color-background)]">
-                {data.length}
+                {data.length + linesRef.length + trendlinesRef.length}
             </div>
         }
-        <TooltipCustom handleClick={handleToggle} w="w-[40px]" h="h-[40px]" titleTooltip={"Xóa fibonacci thoái lui"} classNameButton={`${data.length !== 0 ? "bg-[var(--color-background)] text-white" : "text-black bg-gray-200"}`}>
+        <TooltipCustom handleClick={handleToggle} w="w-[40px]" h="h-[40px]" titleTooltip={"Xóa fibonacci thoái lui"} classNameButton={`${(data.length !== 0 || linesRef.length !== 0 || trendlinesRef.length !== 0) ? "bg-[var(--color-background)] text-white" : "text-black bg-gray-200"}`}>
             <Icon name="icon-delete" width={18} height={18} />
         </TooltipCustom>
 
-        {data.length !== 0 && visible && (
-            <div className={`ml-2 transition-all duration-200 absolute -top-2 left-full mt-2 bg-white shadow-sm shadow-gray-300 rounded-lg border border-gray-300 p-2 ${open ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-2'}`}>
+        {(data.length !== 0 || linesRef.length !== 0 || trendlinesRef.length !== 0) && visible && (
+            <div className={`ml-2 transition-all duration-200 absolute w-[460px] -top-2 left-full mt-2 bg-white shadow-sm shadow-gray-300 rounded-lg border border-gray-300 p-2 ${open ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-2'}`}>
                 {data?.map((_: any, idx: number) => {
-                    return <Button key={idx} className="shadow-none text-black cursor-pointer font-semibold w-[200px] text-left px-4 hover:bg-[var(--color-background-opacity-2)] hover:text-[var(--color-background)] py-2" onClick={() => onClick(idx)}>{t("Xóa bản vẽ")} {idx + 1}</Button>
+                    return <Button key={idx} className="w-full shadow-none text-black cursor-pointer font-semibold text-left px-4 hover:bg-[var(--color-background-opacity-2)] hover:text-[var(--color-background)] py-2" onClick={() => onClick("fibonacci", idx)}>{t("Xóa bản vẽ")} {idx + 1}</Button>
                 })}
-
-                <Button className="shadow-none text-black cursor-pointer font-semibold w-[200px] text-left px-4 hover:bg-[var(--color-background-opacity-2)] hover:text-[var(--color-background)] py-2" onClick={() => onClick(-1)}>{t("Xóa tất cả các bản vẽ")}</Button>
+                {linesRef.map((i, idx) => {
+                    return <Button key={idx} className="w-full shadow-none text-black cursor-pointer font-semibold text-left px-4 hover:bg-[var(--color-background-opacity-2)] hover:text-[var(--color-background)] py-2" onClick={() => onClick("line", i.id)}>{t("Xóa đường nằm ngang")} {i.id}</Button>
+                })}
+                {trendlinesRef.map((i, idx) => {
+                    return <Button key={idx} className="w-full shadow-none text-black cursor-pointer font-semibold text-left px-4 hover:bg-[var(--color-background-opacity-2)] hover:text-[var(--color-background)] py-2" onClick={() => onClick("trendLine", idx)}>{t("Xóa đường xu hướng")} {idx + 1}</Button>
+                })}
+                <Button className="w-full shadow-none text-black cursor-pointer font-semibold text-left px-4 hover:bg-[var(--color-background-opacity-2)] hover:text-[var(--color-background)] py-2" onClick={() => onClick("fibonacci", -1)}>{`${t("Xóa")} ${data.length} ${t("bản vẽ")} ${t('và')} ${linesRef.length + trendlinesRef.length} ${t("chỉ báo")}`}</Button>
             </div>
         )}
     </div>
@@ -988,6 +1594,61 @@ const CompIndicator = ({ indicator, setIndicator }: {
                 {indicator?.map((d: Iindicator, idx: number) => {
                     return <Button onClick={() => onClick(idx)} key={idx} className={`${d.active ? "bg-[var(--color-background)] text-white" : "text-black hover:bg-[var(--color-background-opacity-2)] hover:text-[var(--color-background)]"} shadow-none text-sm cursor-pointer font-semibold w-[320px] text-left px-4 py-2`} >{t(d.label)}</Button>
                 })}
+            </div>
+        )}
+    </div>
+}
+
+const CompBoundaryLine = ({ indicator, setIndicator }: {
+    indicator: IboundaryLine
+    , setIndicator: React.Dispatch<React.SetStateAction<IboundaryLine>>
+}) => {
+    const { t } = useTranslation()
+    const popupRef: any = useRef(null);
+    const [open, setOpen] = useState(false);
+    const [visible, setVisible] = useState(false); // để delay unmount
+
+    const handleToggle = () => {
+        if (open) {
+            // Đóng có delay để chạy animation
+            setOpen(false);
+            setTimeout(() => setVisible(false), 200); // khớp với duration
+        } else {
+            setVisible(true);
+            setTimeout(() => setOpen(true), 10); // delay nhẹ để Tailwind áp transition
+        }
+    };
+
+    useClickOutside(popupRef, () => {
+        setOpen(false);
+        setTimeout(() => setVisible(false), 200);
+    }, visible);
+
+    return <div ref={popupRef} className="relative z-[12]">
+        <TooltipCustom handleClick={handleToggle} w="w-[40px]" h="h-[40px]" titleTooltip={"Đường chỉ báo ngang RSI"} classNameButton={`${indicator.is50 || indicator.is70_30 || indicator.is80_20 ? "bg-[var(--color-background)] text-white" : "text-black bg-gray-200"}`}>
+            <Icon name="icon-boundary-line" width={24} height={24} />
+        </TooltipCustom>
+
+        {visible && (
+            <div className={`w-[320px] ml-2 transition-all duration-200 absolute -top-2 left-full mt-2 bg-white shadow-sm shadow-gray-300 rounded-lg border border-gray-300 p-2 ${open ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-2'} flex flex-col justify-center items-center gap-1`}>
+                <Button
+                    className={` shadow-none text-sm cursor-pointer font-semibold w-full text-left px-4 py-2 ${indicator.is80_20 ? "bg-[var(--color-background)] text-white" : "text-black hover:bg-[var(--color-background-opacity-2)] hover:text-[var(--color-background)]"}`}
+                    onClick={() => setIndicator(prev => ({ ...prev, is80_20: !(prev.is80_20) }))}
+                >
+                    {t("Đường chỉ báo ngang RSI")} 80-20
+                </Button>
+                <Button
+                    className={` shadow-none text-sm cursor-pointer font-semibold w-full text-left px-4 py-2 ${indicator.is70_30 ? "bg-[var(--color-background)] text-white" : "text-black hover:bg-[var(--color-background-opacity-2)] hover:text-[var(--color-background)]"}`}
+                    onClick={() => setIndicator(prev => ({ ...prev, is70_30: !(prev.is70_30) }))}
+                >
+                    {t("Đường chỉ báo ngang RSI")} 70-30
+                </Button>
+                <Button
+                    className={` shadow-none text-sm cursor-pointer font-semibold w-full text-left px-4 py-2 ${indicator.is50 ? "bg-[var(--color-background)] text-white" : "text-black hover:bg-[var(--color-background-opacity-2)] hover:text-[var(--color-background)]"}`}
+                    onClick={() => setIndicator(prev => ({ ...prev, is50: !(prev.is50) }))}
+                >
+                    {t("Đường chỉ báo ngang RSI")} 50
+                </Button>
             </div>
         )}
     </div>

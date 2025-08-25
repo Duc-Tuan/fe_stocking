@@ -239,6 +239,9 @@ export const ChartComponent = (props: any) => {
             window.removeEventListener('resize', handleResize);
             chart.remove();
             chartRef.current = null;
+            chartRefCurent.current = null;
+            seriesRef.current = null;
+            tooltipRef.current = null;
         };
     }, []);
 
@@ -278,6 +281,10 @@ export const ChartComponent = (props: any) => {
                 from: currentRange.from + shift,
                 to: currentRange.to + shift,
             });
+        }
+
+        return () => {
+            dataRef.current = []
         }
     }, [dataOld]);
 

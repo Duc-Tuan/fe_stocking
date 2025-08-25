@@ -143,7 +143,7 @@ export const CandlestickSeriesComponent = (props: any) => {
             borderDownColor,
             wickUpColor,
             wickDownColor,
-            wickColor: "red"
+            // wickColor: "red"
         });
         candleSeriesRef.current = candleSeries;
 
@@ -264,6 +264,9 @@ export const CandlestickSeriesComponent = (props: any) => {
             window.removeEventListener('resize', handleResize);
             chart.remove();
             chartRef.current = null;
+            chartRefCurent.current = null;
+            candleSeriesRef.current = null;
+            pLineSeriesRef.current = null;
         };
     }, []);
 
@@ -320,7 +323,6 @@ export const CandlestickSeriesComponent = (props: any) => {
         candleSeriesRef.current.setData(data);
 
         pLineSeriesRe(data);
-        // updateSeparators(data);
     }, [dataOld]);
 
     useEffect(() => {
@@ -328,7 +330,6 @@ export const CandlestickSeriesComponent = (props: any) => {
         const data = renderData(allData.current);
         candleSeriesRef.current.setData(data);
         pLineSeriesRe(data);
-        // updateSeparators(data);
     }, [currentRange])
 
     useEffect(() => {
@@ -357,7 +358,6 @@ export const CandlestickSeriesComponent = (props: any) => {
 
         candleSeriesRef.current.setData(data);
         pLineSeriesRe(data);
-        // updateSeparators(data);
     }, [latestData]);
 
     useEffect(() => {

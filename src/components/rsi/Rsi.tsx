@@ -6,23 +6,31 @@ import { formatVietnamTimeSmart, gridColor } from '../line/formatTime';
 import { aggregateCandlesByInterval, getColorChart } from '../../utils/timeRange';
 import { normalizeChartData } from '../candlestickSeries/options';
 import { useTranslation } from 'react-i18next';
+import type { IboundaryLine } from '../../pages/Home/type';
 
-export default function Rsi({ chartRefCurentRSI, candleData, chartRefCandl, currentRange, colors: {
+export default function Rsi({ chartRefCurentRSI, candleData, chartRefCandl, currentRange, boundaryLine, colors: {
     backgroundColor = 'transparent',
     lineColor = getColorChart('--color-background'),
     textColor = 'black',
-} = {} }: { candleData: IinitialDataCand[], currentRange: any, chartRefCandl: any, colors?: any, chartRefCurentRSI: any }) {
+} = {} }: { candleData: IinitialDataCand[], currentRange: any, chartRefCandl: any, colors?: any, chartRefCurentRSI: any, boundaryLine: IboundaryLine }) {
     const { t } = useTranslation()
     const chartRef = useRef<any>(null);
     const rsiChartRef = useRef<HTMLDivElement>(null);
     const seriesRef = useRef<any>(null);
 
-    const allData = useRef<BarData[]>([]);
+    const allData = useRef<BarData[] | null>(null);
 
     const currentData = useRef<any>(null);
 
     const currentDataRsi = useRef<any>(null);
     const [currentRsi, setCurrentRsi] = useState<any>(null)
+
+    // refs để lưu priceLine instances
+    const priceLinesRef = useRef<{ [key: string]: any[] }>({
+        "80_20": [],
+        "70_30": [],
+        "50": [],
+    });
 
     useEffect(() => {
         if (!rsiChartRef.current) return;
@@ -81,49 +89,123 @@ export default function Rsi({ chartRefCurentRSI, candleData, chartRefCandl, curr
         return () => {
             rsiChart.remove();
             chartRef.current = null
+            seriesRef.current = null
+            chartRefCurentRSI.current = null
         };
     }, []);
 
     useEffect(() => {
-        if (!chartRefCandl.current && !chartRef.current) return;
-        chartRefCandl.current.timeScale().subscribeVisibleLogicalRangeChange((range: any) => {
-            if (range) {
-                chartRef.current.timeScale().setVisibleLogicalRange(range);
-            }
+        if (!seriesRef.current) return;
+
+        // Clear trước mỗi lần render lại
+        Object.values(priceLinesRef.current).flat().forEach(line => {
+            seriesRef.current.removePriceLine(line);
         });
-        chartRef.current.timeScale().subscribeVisibleLogicalRangeChange((range: any) => {
+        priceLinesRef.current = { "80_20": [], "70_30": [], "50": [] };
+
+        // 80-20 đỏ
+        if (boundaryLine.is80_20) {
+            const line80 = seriesRef.current.createPriceLine({
+                price: 80,
+                color: 'red',
+                lineWidth: 1,
+                lineStyle: 1,
+                axisLabelVisible: true,
+            });
+            const line20 = seriesRef.current.createPriceLine({
+                price: 20,
+                color: 'red',
+                lineWidth: 1,
+                lineStyle: 1,
+                axisLabelVisible: true,
+            });
+            priceLinesRef.current["80_20"].push(line80, line20);
+        }
+
+        // 70-30 xanh
+        if (boundaryLine.is70_30) {
+            const line70 = seriesRef.current.createPriceLine({
+                price: 70,
+                color: 'green',
+                lineWidth: 1,
+                lineStyle: 1,
+                axisLabelVisible: true,
+            });
+            const line30 = seriesRef.current.createPriceLine({
+                price: 30,
+                color: 'green',
+                lineWidth: 1,
+                lineStyle: 1,
+                axisLabelVisible: true,
+            });
+            priceLinesRef.current["70_30"].push(line70, line30);
+        }
+
+        // 50 vàng
+        if (boundaryLine.is50) {
+            const line50 = seriesRef.current.createPriceLine({
+                price: 50,
+                color: 'gold',
+                lineWidth: 1,
+                lineStyle: 1,
+                axisLabelVisible: true,
+            });
+            priceLinesRef.current["50"].push(line50);
+        }
+    }, [boundaryLine])
+
+    useEffect(() => {
+        const candleChart = chartRefCandl.current;
+        const rsiChart = chartRef.current;
+
+        if (!candleChart || !rsiChart) return; // tránh null
+
+        const unsubCandle = candleChart.timeScale().subscribeVisibleLogicalRangeChange((range: any) => {
             if (range) {
-                chartRefCandl.current.timeScale().setVisibleLogicalRange(range);
+                rsiChart.timeScale().setVisibleLogicalRange(range);
             }
         });
 
-        chartRefCandl.current.subscribeCrosshairMove((param: any) => {
-            if (param.time && chartRef.current) {
-                // Lấy RSI value tại đúng time
+        const unsubRsi = rsiChart.timeScale().subscribeVisibleLogicalRangeChange((range: any) => {
+            if (range) {
+                candleChart.timeScale().setVisibleLogicalRange(range);
+            }
+        });
+
+        const unsubCrosshair = candleChart.subscribeCrosshairMove((param: any) => {
+            if (param.time) {
                 const rsiPoint = currentData.current.find((p: any) => p.time === param.time);
-
                 const data = currentDataRsi.current.find((p: any) => p.time === param.time);
                 setCurrentRsi(data);
 
                 if (rsiPoint) {
-                    chartRef.current.setCrosshairPosition(
-                        rsiPoint.value,   // Y position
-                        param.time,       // X (time)
-                        seriesRef.current // RSI series
+                    rsiChart.setCrosshairPosition(
+                        rsiPoint.value,
+                        param.time,
+                        seriesRef.current
                     );
                 }
             } else {
-                chartRef.current && chartRef.current?.clearCrosshairPosition();
-                currentDataRsi.current && setCurrentRsi(currentDataRsi.current[currentDataRsi.current.length - 1])
+                rsiChart.clearCrosshairPosition();
+                setCurrentRsi(currentDataRsi.current[currentDataRsi.current.length - 1])
             }
         });
-    }, [chartRefCandl.current, chartRef.current])
 
-    useEffect(() => {
-        if (!chartRefCandl.current._private__chartWidget._private__width && !chartRefCandl.current && !chartRef.current) return;
-        chartRef.current.applyOptions({ width: chartRefCandl.current._private__chartWidget._private__width });
-        chartRef.current.priceScale("right").applyOptions({ minimumWidth: 58 });
-    }, [chartRefCandl.current?._private__chartWidget?._private__width])
+        // Đồng bộ chiều rộng
+        const width = candleChart?.getWidth?.(); // Nếu chart có hàm getWidth, không dùng _private__
+        if (width) {
+            rsiChart.applyOptions({ width });
+        }
+
+        rsiChart.priceScale("right").applyOptions({ minimumWidth: 58 });
+
+        // Cleanup khi component unmount
+        return () => {
+            unsubCandle?.();
+            unsubRsi?.();
+            unsubCrosshair?.();
+        };
+    }, []); // chỉ chạy 1 lần sau mount
 
     const renderData = (data: any) => {
         let time = undefined
@@ -136,6 +218,7 @@ export default function Rsi({ chartRefCurentRSI, candleData, chartRefCandl, curr
     useEffect(() => {
         if (!seriesRef.current || !candleData?.length) return;
 
+        allData.current = []
         const fixed = normalizeChartData(candleData).sort((a: any, b: any) => a.time - b.time);
         const existing = allData.current;
 

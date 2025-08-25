@@ -108,7 +108,8 @@
   "Thứ 6": "Thứ 6",
   "Thứ 7": "Thứ 7",
   "tháng": "tháng",
-  "Xóa tất cả các bản vẽ": "Xóa tất cả các bản vẽ",
+  "Xóa": "Xóa",
+  "đường nằm ngang": "đường nằm ngang",
   "Chỉ báo hội tụ RSI": "Chỉ báo hội tụ RSI",
   "Chỉ báo hội tụ RSI 14": "Chỉ báo hội tụ RSI 14",
   "Khoảng giao động trung bình thực tế ATR 14": "Khoảng giao động trung bình thực tế ATR 14",
@@ -124,5 +125,14 @@
   "Sửa thông tin lô": "Sửa thông tin lô",
   "Cập nhập thành công": "Cập nhập thành công",
   "Vui lòng nhập đầy đủ thông tin.": "Vui lòng nhập đầy đủ thông tin.",
-  "Hãy nhập thông tin cần chỉnh sửa cho lô": "Hãy nhập thông tin cần chỉnh sửa cho lô"
+  "Hãy nhập thông tin cần chỉnh sửa cho lô": "Hãy nhập thông tin cần chỉnh sửa cho lô",
+  "Đường chỉ báo ngang RSI": "Đường chỉ báo ngang RSI",
+  "Đường nằm ngang": "Đường nằm ngang",
+  "Xóa đường nằm ngang": "Xóa đường nằm ngang",
+  "Đường ngang": "Đường ngang",
+  "và": "và",
+  "Xóa đường xu hướng": "Xóa đường xu hướng",
+  "chỉ báo": "chỉ báo",
+  "Đường xu hướng": "Đường xu hướng",
+  "Các chỉ báo": "Các chỉ báo"
 }
