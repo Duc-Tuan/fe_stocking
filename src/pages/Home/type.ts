@@ -66,14 +66,14 @@ export function drawLabelWithBackground(ctx: CanvasRenderingContext2D, text: str
 
     const paddingX = 4;
     const paddingY = 3;
-    const textWidth = 52;
+    const textWidth = 50;
     const textHeight = 12;
 
     ctx.fillStyle = getCssVar("--color-background");
     ctx.fillRect(x - textWidth / 2 - paddingX, y - textHeight / 2 - paddingY, textWidth + paddingX * 2, textHeight + paddingY);
 
     ctx.fillStyle = "white";
-    ctx.fillText(text, x - 3, y);
+    ctx.fillText(text, x, y);
 }
 
 // helper: label thời gian
@@ -200,8 +200,8 @@ export function redraw(
 
     allStrokes.forEach((stroke) => {
         const pixelPoints = stroke.map(p => {
-            const x = chartRef.current?.timeScale().timeToCoordinate(p.time);
-            const y = candleSeriesRef.current?.priceToCoordinate(p.price);
+            const x = chartRef.current?.timeScale().timeToCoordinate(p?.time);
+            const y = candleSeriesRef.current?.priceToCoordinate(p?.price);
             return (x != null && y != null) ? { x, y } : null;
         }).filter(Boolean) as { x: number; y: number }[];
 

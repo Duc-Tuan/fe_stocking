@@ -5,10 +5,11 @@ import { getPositionTransaction } from '../../../api/historys'
 import Icon from '../../../assets/icon'
 import { Loading } from '../../../components/loading'
 import { useSocket } from '../../../hooks/useWebSocket'
-import type { QueryLots } from '../../../types/global'
+import type { IServerTransaction, QueryLots } from '../../../types/global'
 import { getTime } from '../../../utils/timeRange'
 import Filter from '../components/Filter'
 import { initFilter, type IFilterAllLot, type ISymbolPosition } from '../type'
+import { useAppInfo } from '../../../hooks/useAppInfo'
 
 const initPara: QueryLots = {
     page: 1,
@@ -20,8 +21,16 @@ const initPara: QueryLots = {
     type: undefined
 }
 
+interface IData extends IServerTransaction {
+    open_orders?: any
+    position?: number
+}
+
 export default function Positions() {
     const { t } = useTranslation()
+    const { dataServerTransaction, loadingserverTransaction } = useAppInfo()
+    const [dataAccTransaction, setDataAccTransaction] = useState<IData[]>(dataServerTransaction)
+
     const [filter, setFilter] = useState<IFilterAllLot>(initFilter)
     const [data, setData] = useState<ISymbolPosition[]>([])
     const [loading, setLoading] = useState<boolean>(false)
@@ -60,8 +69,8 @@ export default function Positions() {
 
     useEffect(() => {
         const dataNew: any = [...data].map((i) => {
-            const dataSocket = dataCurrentPosition.find((d: any) => d.id === i.id)
-            if (i.id === dataSocket.id) {
+            const dataSocket = dataCurrentPosition.position.find((d: any) => d.id === i.id)
+            if (i.id === dataSocket?.id) {
                 return {
                     id: i.id,
                     account_id: dataSocket.account_id,
@@ -85,9 +94,33 @@ export default function Positions() {
             }
             return i
         })
-
         setData(dataNew);
-        
+
+        const dataNewAcc: any = [...dataAccTransaction].map((i) => {
+            const dataSocket = dataCurrentPosition?.acc.find((d: any) => d.id === i.id)
+            if (i.id === dataSocket?.id) {
+                const data = dataCurrentPosition.position.filter(
+                    (t: any) => t.account_id === dataSocket?.username
+                )
+                return {
+                    id: dataSocket.id,
+                    username: dataSocket.username,
+                    name: dataSocket.name,
+                    balance: dataSocket.balance,
+                    equity: dataSocket.equity,
+                    margin: dataSocket.margin,
+                    free_margin: dataSocket.free_margin,
+                    leverage: dataSocket.leverage,
+                    server: dataSocket.server,
+                    loginId: dataSocket.loginId,
+                    position: data.length,
+                    swap: data.reduce((sum: number, item: any) => sum + (item.swap || 0), 0)
+                }
+            }
+            return i
+        })
+        setDataAccTransaction(dataNewAcc)
+
     }, [dataCurrentPosition])
 
     return (
@@ -108,23 +141,36 @@ export default function Positions() {
                 }
             </div>
 
-            <div className="sticky bottom-0 bg-white p-2">
-                <div className="flex justify-between items-center">
-                    <div className="font-semibold">{t("Tiền nạp")}</div>
-                    <span className='font-bold'>100000</span>
-                </div>
-                <div className="flex justify-between items-center">
-                    <div className="font-semibold">{t("Lợi nhuận")}</div>
-                    <span className='font-bold'>13940</span>
-                </div>
-                <div className="flex justify-between items-center">
-                    <div className="font-semibold">{t("Phí qua đêm")}</div>
-                    <span className='font-bold'>10.9</span>
-                </div>
-                <div className="flex justify-between items-center">
-                    <div className="font-semibold">{t("Số dư")}</div>
-                    <span className='font-bold'>1200000</span>
-                </div>
+            <div className="sticky bottom-0 bg-white p-2 grid grid-cols-5">
+                {
+                    [
+                        ...dataAccTransaction,
+                        // nếu ít hơn 5 thì thêm phần tử ảo cho đủ
+                        ...Array(Math.max(0, 5 - dataAccTransaction.length)).fill({ isFake: true })
+                    ].map((d, index) => {
+                        if (d.isFake) {
+                            return (
+                                <div className="col-span-1 border border-dashed border-gray-300 p-2 opacity-50" key={`fake-${index}`}>
+                                    <div className="text-sm text-gray-400">{t("Đang chờ tài khoản")}</div>
+                                </div>
+                            )
+                        }
+
+                        return (
+                            <div className="col-span-1 border border-gray-300 p-2" key={d.id}>
+                                <div className="text-sm"><span className='font-bold mr-2'>{t("Tài khoản")}: </span>{d.name}</div>
+                                <div className="text-sm"><span className='font-bold mr-2'>{t("Máy chủ")}: </span>{d.server}</div>
+                                <div className="text-sm"><span className='font-bold mr-2'>{t("Số dư")}: </span>{d.balance}</div>
+                                <div className="text-sm"><span className='font-bold mr-2'>{t("Vốn")}: </span>{d.equity}</div>
+                                <div className="text-sm"><span className='font-bold mr-2'>{t("Ký quỹ")}: </span>{d.margin}</div>
+                                <div className="text-sm"><span className='font-bold mr-2'>{t("Ký quỹ khả dụng")}: </span>{d.free_margin}</div>
+                                <div className="text-sm"><span className='font-bold mr-2'>{t("Đòn bẩy")}: </span>{d.leverage}</div>
+                                <div className="text-sm"><span className='font-bold mr-2'>{t("Phí qua đêm")}: </span>{d.swap}</div>
+                                <div className="text-sm"><span className='font-bold mr-2'>{t("Số lệnh đang mở")}: </span>{d.position}</div>
+                            </div>
+                        )
+                    })
+                }
             </div >
         </div>
     )

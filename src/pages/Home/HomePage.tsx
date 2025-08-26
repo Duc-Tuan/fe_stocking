@@ -358,10 +358,11 @@ export default function HomePage() {
         if (!chartContainerRef.current) return;
         const canvas = document.createElement("canvas");
         canvas.style.position = "absolute";
-        canvas.style.top = "0";
+        canvas.style.top = "8px";
         canvas.style.left = "0";
         canvas.style.pointerEvents = "none";
         canvas.style.zIndex = "10";
+        canvas.style.paddingLeft = "8px";
         chartContainerRef.current.appendChild(canvas);
         return canvas
     }
@@ -393,13 +394,13 @@ export default function HomePage() {
             canvasRef.current.width = widthChart
             canvasRef.current.height = height
 
-            overlayRef.current.width = widthChart
+            overlayRef.current.width = widthChart - 58
             overlayRef.current.height = height
 
-            canvasTrendLine.current.width = widthChart
+            canvasTrendLine.current.width = widthChart - 58
             canvasTrendLine.current.height = height
 
-            canvasStrokes.current.width = widthChart
+            canvasStrokes.current.width = widthChart - 58
             canvasStrokes.current.height = height
             triggerDrawFib();
             requestRedraw();
@@ -439,9 +440,25 @@ export default function HomePage() {
         if (!ctx || !chartRef.current || !candleSeriesRef.current) return;
         ctx.clearRect(0, 0, canvasRef.current!.width, canvasRef.current!.height);
 
+        const canvasW = canvasRef.current.width;
+        const canvasH = canvasRef.current.height;
+
+        // 👉 Chart area thực sự
+        const chartW = canvasW - 58;   // chừa Y-axis bên phải
+        const chartH = canvasH - 28 - ((indicator.filter((a) => a.active).length > 1) ? 215 : ((indicator.filter((a) => a.active).length === 1) ? 94 : 0));   // chừa time-axis bên dưới
+
+        ctx.clearRect(0, 0, canvasW, canvasH);
+
+        // 👉 Giới hạn vùng vẽ chỉ trong chart area
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(0, 0, chartW, chartH);
+        ctx.clip();
+
         fibBlocks.forEach((block, id) => {
             const { anchorA, anchorB } = block;
             if (!anchorA || !anchorB) return;
+
             const priceScale = candleSeriesRef.current;
             const timeScale = chartRef.current.timeScale();
 
@@ -449,30 +466,30 @@ export default function HomePage() {
             const x2 = timeScale.timeToCoordinate(anchorB.time);
             if (x1 == null || x2 == null) return;
 
+            // 👉 Tính các biến chung ở đây
             const high = Math.max(anchorA.price, anchorB.price);
             const low = Math.min(anchorA.price, anchorB.price);
             const diff = high - low;
             const up = anchorA.price < anchorB.price;
 
+            // Giờ mới forEach fibLevels
             fibLevels.forEach((l, idx) => {
                 const price = up ? high - diff * l : low + diff * l;
                 const y = priceScale.priceToCoordinate(price);
                 if (y == null) return;
 
-                // 🎨 Lấy màu cho level này
                 const baseColor = fibBaseColors[idx % fibBaseColors.length];
 
-                // fill giữa 2 levels
                 if (idx < fibLevels.length - 1) {
-                    const nextPrice = up ? high - diff * fibLevels[idx + 1] : low + diff * fibLevels[idx + 1];
+                    const nextPrice = up
+                        ? high - diff * fibLevels[idx + 1]
+                        : low + diff * fibLevels[idx + 1];
+
                     const y2 = priceScale.priceToCoordinate(nextPrice);
                     if (y2 != null) {
-
-                        // Nền (fill nhạt)
                         ctx.fillStyle = `rgba(${baseColor}, 0.2)`;
                         ctx.fillRect(Math.min(x1!, x2!), y, Math.abs(x2! - x1!), y2 - y);
 
-                        // Viền (stroke đậm)
                         ctx.strokeStyle = `rgba(${baseColor}, 1)`;
                         ctx.lineWidth = 0.8;
                         ctx.beginPath();
@@ -480,72 +497,17 @@ export default function HomePage() {
                         ctx.lineTo(x2!, y);
                         ctx.stroke();
                     }
-
-                    if (idx === 0) {
-                        // label
-                        ctx.fillStyle = getCssVar("--color-background");
-                        ctx.textAlign = "center";
-                        ctx.textBaseline = "middle";
-                        ctx.fillText(
-                            `${t("bản vẽ")} ${id + 1}`,
-                            (x1! + x2!) / 2,  // vị trí bên trái
-                            y + 10
-                        );
-                    }
-
-                    if (isCheckFibonacci) {
-                        // 🎯 Chỉ bôi màu Y-axis cho 5 vạch đầu
-                        if (idx < 6) {
-                            const axisWidth = 60;
-                            // const chartWidth = chartRef.current.timeScale().width();
-                            const priceScaleLeft = widthCharRef.current - 58;   // mép trái của trục Y
-
-                            const top = Math.min(y, y2);
-                            const height = Math.abs(y2 - y);
-
-                            // 👉 Tô đậm hơn
-                            ctx.fillStyle = getCssVar("--color-background-opacity-2");
-                            ctx.fillRect(priceScaleLeft, top, axisWidth, height);
-
-                            // 👉 Chỉ hiển thị label ở dòng 1 (idx === 0) và dòng cuối (idx === 5)
-                            ctx.fillStyle = "white";
-                            ctx.font = "12px Arial";
-                            ctx.textAlign = "center";
-                            ctx.textBaseline = "middle";   // canh giữa theo chiều dọc
-
-                            if (idx === 0) {
-                                // Label nằm giữa vạch trên
-                                drawLabelWithBackground(
-                                    ctx,
-                                    price.toFixed(2),
-                                    priceScaleLeft + axisWidth / 2,
-                                    y // vạch trên
-                                );
-                            }
-
-                            if (idx === 5) {
-                                // Label nằm giữa vạch dưới
-                                drawLabelWithBackground(
-                                    ctx,
-                                    nextPrice.toFixed(2),
-                                    priceScaleLeft + axisWidth / 2,
-                                    y2 // vạch dưới
-                                );
-                            }
-                        }
-                    }
                 }
 
-                // label
+
+                // Label bên trái
                 ctx.fillStyle = `rgba(${baseColor}, 1)`;
                 ctx.textAlign = "right";
                 ctx.textBaseline = "middle";
-                ctx.fillText(
-                    `${l} (${price.toFixed(2)})`,
-                    Math.min(x1!, x2!) - 5,  // vị trí bên trái
-                    y
-                );
+                ctx.fillText(`${l} (${price.toFixed(2)})`, Math.min(x1!, x2!) - 5, y);
+
             });
+
 
             if (isCheckFibonacci) {
                 // === Vẽ đường đứt nối anchorA ↔ anchorB ===
@@ -581,7 +543,7 @@ export default function HomePage() {
 
                 // Vẽ 1 dải màu ở cuối (gần trục X)
                 ctx.fillStyle = getCssVar("--color-background-opacity-2"); // xanh nhạt
-                ctx.fillRect(left, h - 27, width, 20);   // cao 20px ở sát đáy chart
+                ctx.fillRect(left, h - 20, width, 20);   // cao 20px ở sát đáy chart
 
                 // === Vẽ label thời gian A và B ===
                 const timeA = ts.coordinateToTime(x1); // lấy time gốc từ chart
@@ -601,7 +563,7 @@ export default function HomePage() {
                     const textWidth = metrics.width + paddingX * 4;
                     const textHeight = 20; // fix height (12px font + padding)
                     const rectX = x1 - textWidth / 2;
-                    const rectY = h - 27; // đặt cao hơn chút so với fillRect dưới trục
+                    const rectY = h - 20; // đặt cao hơn chút so với fillRect dưới trục
 
                     // Vẽ nền đậm
                     ctx.fillStyle = getCssVar("--color-background");
@@ -622,7 +584,7 @@ export default function HomePage() {
                     const textWidth = metrics.width + paddingX * 2;
                     const textHeight = 20;
                     const rectX = x2 - textWidth / 2;
-                    const rectY = h - 27;
+                    const rectY = h - 20;
 
                     ctx.fillStyle = getCssVar("--color-background");
                     ctx.fillRect(rectX, rectY, textWidth, textHeight);
@@ -636,9 +598,123 @@ export default function HomePage() {
                 drawHandle(anchorA);
                 drawHandle(anchorB);
             }
-
         });
-    };
+
+        // 👉 Kết thúc vùng clip
+        ctx.restore();
+
+        // ===========================
+        // Vẽ phần ngoài chart (time axis, y-axis background…)
+        // ===========================
+
+        // Dải màu trục X (20px dưới)
+        if (isCheckFibonacci) {
+            fibBlocks.forEach((block) => {
+                const { anchorA, anchorB } = block;
+                if (!anchorA || !anchorB) return;
+
+                const ts = chartRef.current.timeScale();
+
+                const x1 = ts.timeToCoordinate(anchorA.time);
+                const x2 = ts.timeToCoordinate(anchorB.time);
+                if (x1 == null || x2 == null) return;
+
+                const width = Math.abs(x2 - x1);
+                const left = Math.min(x1, x2);
+
+                // Lấy chiều cao canvas
+                const h = canvasRef.current!.height;
+
+                // Vẽ 1 dải màu ở cuối (gần trục X)
+                ctx.fillStyle = getCssVar("--color-background-opacity-2"); // xanh nhạt
+                ctx.fillRect(left, h - 28, width, 28);   // cao 20px ở sát đáy chart
+
+                // === Vẽ label thời gian A và B ===
+                const timeA = ts.coordinateToTime(x1);
+                const timeB = ts.coordinateToTime(x2);
+
+                ctx.fillStyle = "black";
+                ctx.font = "12px Arial";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "top";
+
+                if (timeA) {
+                    const text = formatDateLabel(timeA);
+                    const metrics = ctx.measureText(text);
+                    const paddingX = 4;
+                    const paddingY = 6;
+                    const textWidth = metrics.width + paddingX * 4;
+                    const textHeight = 28;
+                    const rectX = x1 - textWidth / 2;
+                    const rectY = h - 28;
+
+                    ctx.fillStyle = getCssVar("--color-background");
+                    ctx.fillRect(rectX, rectY, textWidth, textHeight);
+
+                    ctx.fillStyle = "white";
+                    ctx.fillText(text, x1, rectY + paddingY + 4);
+                }
+
+                if (timeB) {
+                    const text = formatDateLabel(timeB);
+                    const metrics = ctx.measureText(text);
+                    const paddingX = 4;
+                    const paddingY = 6;
+                    const textWidth = metrics.width + paddingX * 2;
+                    const textHeight = 28;
+                    const rectX = x2 - textWidth / 2;
+                    const rectY = h - 28;
+
+                    ctx.fillStyle = getCssVar("--color-background");
+                    ctx.fillRect(rectX, rectY, textWidth, textHeight);
+
+                    ctx.fillStyle = "white";
+                    ctx.fillText(text, x2, rectY + paddingY + 4);
+                }
+
+                //Trục Y
+                const priceScale = candleSeriesRef.current;
+
+                const high = Math.max(anchorA.price, anchorB.price);
+                const low = Math.min(anchorA.price, anchorB.price);
+                const diff = high - low;
+                const up = anchorA.price < anchorB.price;
+
+                fibLevels.forEach((l, idx) => {
+                    if (idx < 6) {
+                        const price = up ? high - diff * l : low + diff * l;
+                        const nextPrice = up
+                            ? high - diff * fibLevels[idx + 1]
+                            : low + diff * fibLevels[idx + 1];
+                        const y = priceScale.priceToCoordinate(price);
+                        const y2 = priceScale.priceToCoordinate(nextPrice);
+                        if (y == null || y2 == null) return;
+
+                        const axisWidth = 58;
+                        const priceScaleLeft = chartW;
+
+                        const top = Math.min(y, y2);
+                        const height = Math.abs(y2 - y);
+
+                        ctx.fillStyle = getCssVar("--color-background-opacity-2");
+                        ctx.fillRect(priceScaleLeft, top, axisWidth, height);
+
+                        ctx.fillStyle = "white";
+                        ctx.font = "12px Arial";
+                        ctx.textAlign = "center";
+                        ctx.textBaseline = "middle";
+
+                        if (idx === 0) {
+                            drawLabelWithBackground(ctx, price.toFixed(2), priceScaleLeft + axisWidth / 2, y);
+                        }
+                        if (idx === 5) {
+                            drawLabelWithBackground(ctx, nextPrice.toFixed(2), priceScaleLeft + axisWidth / 2, y2);
+                        }
+                    }
+                });
+            });
+        }
+    }
 
     const rafRefFib = useRef<number>(null);
 
@@ -659,6 +735,8 @@ export default function HomePage() {
         linesRef.forEach((line) => {
             const y = candleSeriesRef.current.priceToCoordinate(line.price); // ✅ series
             if (y !== null) {
+                ctx.save(); // 👈 Lưu trạng thái ban đầu
+
                 ctx.lineWidth = 0.5;
                 ctx.beginPath();
                 ctx.moveTo(0, y + 0.5);
@@ -670,6 +748,7 @@ export default function HomePage() {
                 const text = line.price.toFixed(2);
                 ctx.font = "12px Arial";
                 ctx.textBaseline = "middle";  // căn giữa theo chiều dọc
+                ctx.textAlign = "start";  // 👈 Canh trái cho phần giá
                 const textWidth = ctx.measureText(text).width;
                 const textHeight = 16; // tạm ước lượng chiều cao font ~14px
 
@@ -683,14 +762,16 @@ export default function HomePage() {
 
                 // Vẽ text đè lên background
                 ctx.fillStyle = "white";
-                ctx.fillText(text, textX + 28, textY + 2);
+                ctx.fillText(text, textX + 12, textY + 2);
 
                 // === Label thêm ở giữa line ===
                 const midX = canvas.width - 105; // giữa chart (không tính phần trục Y)
 
                 ctx.fillStyle = "blue"
-                ctx.textAlign = "center";
+                ctx.textAlign = "center"; // 👈 cần set lại
                 ctx.fillText(`${t("Đường ngang")} ${line.id}`, midX, y + 2);
+
+                ctx.restore(); // 👈 Trả trạng thái lại
             }
         });
 
@@ -715,16 +796,17 @@ export default function HomePage() {
                 const textHeight = 16; // tạm ước lượng chiều cao font ~14px
 
                 // Toạ độ text (ở cuối vạch)
-                const textX = canvas.width - 54;
+                const textX = canvas.width - 58;
                 const textY = y;
 
                 // Vẽ background (ô chữ nhật bo nhỏ)
                 ctx.fillStyle = getColorChart(); // nền tối mờ
-                ctx.fillRect(textX - 4, textY - textHeight / 2, textWidth + 20, textHeight);
+                ctx.fillRect(textX, textY - textHeight / 2, textWidth + 40, textHeight);
 
                 // Vẽ text đè lên background
                 ctx.fillStyle = "white";
-                ctx.fillText(text, textX + 8, textY + 2);
+                ctx.textAlign = "start";
+                ctx.fillText(text, textX + 12, textY + 2);
             }
         }
     };
@@ -736,11 +818,13 @@ export default function HomePage() {
     };
 
     useEffect(() => {
-        if (!fibMode) return;
-
         if (canvasRef.current) {
             canvasRef.current.style.pointerEvents = isCheckFibonacci ? "auto" : "none"
         }
+    }, [isCheckFibonacci])
+
+    useEffect(() => {
+        if (!fibMode) return;
 
         const canvas = canvasRef.current;
         const container = chartContainerRef.current;
@@ -964,11 +1048,6 @@ export default function HomePage() {
             triggerDrawFib();
         }
 
-        // const resize = () => {
-        //     triggerDrawFib();
-        // };
-        // window.addEventListener("resize", resize);
-
         // Quan trọng: lắng nghe trên CANVAS với capture để chặn chart
         canvas.addEventListener("mousedown", handleDown, { capture: true });
         window.addEventListener("mousemove", handleMove);
@@ -984,7 +1063,7 @@ export default function HomePage() {
             window.removeEventListener("mousemove", handleMove);
             window.removeEventListener("mouseup", handleUp);
         };
-    }, [fibMode, dragging, activeFibId, fibBlocks, isCheckFibonacci]);
+    }, [fibMode, dragging, activeFibId, fibBlocks, isCheckFibonacci, indicator]);
 
     const handleDelete = (title: "fibonacci" | "line" | "trendLine" | "brush", idx: number) => {
         if (title === 'fibonacci') {
@@ -1038,15 +1117,50 @@ export default function HomePage() {
                 height: indicator.some((a) => a.active) ? 480 : 600
             })
 
-            if (chartRefCurentRSI.current && indicator.filter((a) => a.active).length > 1) {
-                chartRefCurentRSI.current.applyOptions({
-                    timeScale: {
-                        visible: false
-                    },
-                })
-                chartRefCurent.current.applyOptions({
-                    height: 360
-                })
+            const height = chartContainerRef.current!.clientHeight
+
+            switch (indicator.filter((a) => a.active).length) {
+                case 2:
+                    overlayRef.current.height = height - 120;
+                    canvasTrendLine.current.height = height - 120;
+                    canvasStrokes.current.height = height - 120;
+                    chartRefCurent.current.applyOptions({
+                        height: 360
+                    })
+                    break;
+                case 1:
+                    overlayRef.current.height = height
+                    canvasStrokes.current.height = height
+                    canvasTrendLine.current.height = height
+                    break;
+                default:
+                    overlayRef.current.height = height - 28;
+                    canvasStrokes.current.height = height - 28;
+                    canvasTrendLine.current.height = height - 28;
+                    break;
+            }
+
+            if (chartRefCurentRSI.current) {
+                if (indicator.some((a) => a.active && a.value === "rsi") && indicator.some((a) => !(a.active) && a.value === "atr")) {
+                    chartRefCurentRSI.current.applyOptions({
+                        timeScale: {
+                            visible: true
+                        },
+                    })
+                    // triggerDrawFib()
+                } else if (indicator.some((a) => !a.active && a.value === "rsi") && indicator.some((a) => a.active && a.value === "atr")) {
+                    chartRefCurentRSI.current.applyOptions({
+                        timeScale: {
+                            visible: false
+                        },
+                    })
+                } else {
+                    chartRefCurentRSI.current.applyOptions({
+                        timeScale: {
+                            visible: false
+                        },
+                    })
+                }
             }
         }
     }, [indicator, activeTab])
