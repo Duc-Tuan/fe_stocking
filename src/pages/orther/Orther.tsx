@@ -1,346 +1,180 @@
 import React, { useEffect, useRef, useState } from "react";
-import {
-    ColorType,
-    createChart,
-    type IChartApi,
-} from "lightweight-charts";
-import { gridColor } from "../../components/line/formatTime";
+import { createChart } from "lightweight-charts";
 import { getCssVar } from "../Home/type";
 
-interface Trendline {
-    start: { time: number; price: number };
-    end: { time: number; price: number };
-}
-
-const ChartWithTrendlines = ({ colors: {
-    backgroundColor = 'transparent',
-    textColor = 'black',
-    upColor = '#4bffb5',
-    borderUpColor = '#4bffb5',
-    wickUpColor = '#4bffb5',
-    borderDownColor = '#ff4976',
-    downColor = '#ff4976',
-    wickDownColor = '#ff4976',
-} = {}, }) => {
+export default function ChartWithTrendlines() {
     const chartContainerRef = useRef<HTMLDivElement>(null);
-    const chartRef = useRef<IChartApi | null>(null);
-    const seriesRef = useRef<any>(null);
-    const canvasRef = useRef<HTMLCanvasElement | null>(null);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const chartRef = useRef<any>(null);
 
-    const [drawing, setDrawing] = useState(false);
+    const [isDrawing, setIsDrawing] = useState(false);
+    const [strokes, setStrokes] = useState<{ x: number; y: number }[][]>([]);
+    const currentStroke = useRef<{ x: number; y: number }[]>([]);
 
-    // refs giữ dữ liệu runtime
-    const trendlinesRef = useRef<Trendline[]>([]);
-    const tempStartRef = useRef<{ time: number; price: number } | null>(null);
-    const tempEndRef = useRef<{ time: number; price: number } | null>(null);
+    const [draggingStrokeIndex, setDraggingStrokeIndex] = useState<number | null>(null);
+    const dragStart = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
-    const draggingLineIndex = useRef<number | null>(null);
-    const draggingHandle = useRef<{ lineIndex: number; point: "start" | "end" } | null>(null);
-    const dragStart = useRef<{
-        mouseX: number;
-        mouseY: number;
-        start: Trendline;
-    } | null>(null);
+    function drawSmoothLine(ctx: CanvasRenderingContext2D, points: { x: number, y: number }[]) {
+        if (points.length < 2) return;
 
-    const needRedraw = useRef(false);
+        ctx.beginPath();
+        ctx.moveTo(points[0].x, points[0].y);
 
-    // kiểm tra click gần line
-    const isPointNearLine = (x: number, y: number, x1: number, y1: number, x2: number, y2: number, tolerance = 5) => {
-        const A = x - x1, B = y - y1, C = x2 - x1, D = y2 - y1;
-        const dot = A * C + B * D;
-        const lenSq = C * C + D * D;
-        let param = -1;
-        if (lenSq !== 0) param = dot / lenSq;
-        let xx, yy;
-        if (param < 0) { xx = x1; yy = y1; }
-        else if (param > 1) { xx = x2; yy = y2; }
-        else { xx = x1 + param * C; yy = y1 + param * D; }
-        const dx = x - xx, dy = y - yy;
-        return dx * dx + dy * dy <= tolerance * tolerance;
-    };
+        for (let i = 0; i < points.length - 1; i++) {
+            const midX = (points[i].x + points[i + 1].x) / 2;
+            const midY = (points[i].y + points[i + 1].y) / 2;
+            ctx.quadraticCurveTo(points[i].x, points[i].y, midX, midY);
+        }
+        ctx.stroke();
+    }
 
-    // draw
-    const drawAllTrendlines = () => {
-        const canvas = canvasRef.current;
-        if (!canvas || !chartRef.current || !seriesRef.current) return;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return;
+    function redraw(allStrokes: { x: number; y: number }[][]) {
+        const canvas = canvasRef.current!;
+        const ctx = canvas.getContext("2d")!;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        const timeScale = chartRef.current.timeScale();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = "red";
+        ctx.lineJoin = "round";
+        ctx.lineCap = "round";
 
-        trendlinesRef.current.forEach(line => {
-            const x1 = timeScale.logicalToCoordinate(line.start.time as any);
-            const y1 = seriesRef.current.priceToCoordinate(line.start.price);
-            const x2 = timeScale.logicalToCoordinate(line.end.time as any);
-            const y2 = seriesRef.current.priceToCoordinate(line.end.price);
-            if (x1 && x2 && y1 && y2) {
+        allStrokes.forEach((stroke) => {
+            drawSmoothLine(ctx, stroke);
+
+            // vẽ chấm tròn ở đầu & cuối stroke
+            if (stroke.length > 1) {
+                // điểm đầu
                 ctx.beginPath();
-                ctx.moveTo(x1, y1);
-                ctx.lineTo(x2, y2);
-                ctx.strokeStyle = "blue";
-                ctx.lineWidth = 1;
+                ctx.arc(stroke[0].x, stroke[0].y, 4, 0, Math.PI * 2);
+                ctx.fillStyle = "white";       // màu trong
+                ctx.fill();
+                ctx.strokeStyle = getCssVar("--color-background");;     // viền dễ thấy
+                ctx.lineWidth = 2;
                 ctx.stroke();
-                if (drawing) {
-                    [[x1, y1], [x2, y2]].forEach(([xx, yy]) => {
-                        ctx.beginPath();
-                        ctx.arc(xx, yy, 4, 0, 2 * Math.PI);
-                        ctx.fillStyle = "white";
-                        ctx.fill();
-                        ctx.strokeStyle = getCssVar("--color-background");
-                        ctx.stroke();
-                    });
-                }
-            }
-        });
 
-        // vẽ tạm line mới
-        if (tempStartRef.current && tempEndRef.current) {
-            const x1 = timeScale.logicalToCoordinate(tempStartRef.current.time as any);
-            const y1 = seriesRef.current.priceToCoordinate(tempStartRef.current.price);
-            const x2 = timeScale.logicalToCoordinate(tempEndRef.current.time as any);
-            const y2 = seriesRef.current.priceToCoordinate(tempEndRef.current.price);
-            if (x1 && x2 && y1 && y2) {
+                // điểm cuối
                 ctx.beginPath();
-                ctx.moveTo(x1, y1);
-                ctx.lineTo(x2, y2);
-                ctx.strokeStyle = getCssVar("--color-background");
-                ctx.setLineDash([5, 5]);
-                ctx.stroke();
-                ctx.setLineDash([]);
-            }
-
-            if (x1 && y1) {
-                ctx.beginPath();
-                ctx.arc(x1, y1, 4, 0, 2 * Math.PI);
+                ctx.arc(stroke[stroke.length - 1].x, stroke[stroke.length - 1].y, 4, 0, Math.PI * 2);
                 ctx.fillStyle = "white";
                 ctx.fill();
-                ctx.lineWidth = 1;
-                ctx.strokeStyle = getCssVar("--color-background");
+                ctx.strokeStyle = getCssVar("--color-background");;
                 ctx.stroke();
             }
         }
-    };
+        );
+    }
 
-    // init chart
     useEffect(() => {
         if (!chartContainerRef.current) return;
-        const chart: IChartApi = createChart(chartContainerRef.current, {
-            layout: {
-                background: { type: ColorType.Solid, color: backgroundColor },
-                textColor,
-            },
-            grid: gridColor,
-            width: chartContainerRef.current.clientWidth,
-            height: 600,
-            rightPriceScale: { borderColor: '#00000030' },
-            timeScale: { timeVisible: true, secondsVisible: true, borderColor: '#00000030' }
-        });
-        chartRef.current = chart;
-        const candleSeries = chart.addCandlestickSeries({
-            upColor, downColor, borderUpColor, borderDownColor, wickUpColor, wickDownColor,
-        });
-        seriesRef.current = candleSeries;
 
-        // sample data
-        const data: any[] = [];
-        let time = 1, price = 100;
-        for (let i = 0; i < 100; i++) {
-            const open = price;
-            const high = open + Math.round(Math.random() * 10);
-            const low = open - Math.round(Math.random() * 10);
-            const close = low + Math.round(Math.random() * (high - low));
-            data.push({ time, open, high, low, close });
-            price = close; time++;
-        }
+        const chart = createChart(chartContainerRef.current, { width: 600, height: 400 });
+        const candleSeries = chart.addCandlestickSeries();
+
+        const data: any = [
+            { time: 1, open: 100, high: 110, low: 95, close: 105 },
+            { time: 2, open: 105, high: 120, low: 100, close: 115 },
+            { time: 3, open: 115, high: 125, low: 110, close: 120 },
+            { time: 4, open: 120, high: 130, low: 115, close: 125 },
+            { time: 5, open: 125, high: 135, low: 120, close: 130 },
+        ];
         candleSeries.setData(data);
 
-        const canvas = document.createElement("canvas");
-        canvas.style.position = "absolute";
-        canvas.style.top = "0";
-        canvas.style.left = "0";
-        canvas.style.pointerEvents = "none";
+        chartRef.current = chart;
+
+        const canvas = canvasRef.current!;
         canvas.style.zIndex = "10";
-        chartContainerRef.current.appendChild(canvas);
-        canvasRef.current = canvas;
+        canvas.style.pointerEvents = "auto";
+        canvas.width = chartContainerRef.current!.clientWidth;
+        canvas.height = chartContainerRef.current!.clientHeight;
 
-        const resize = () => {
-            if (!canvasRef.current || !chartContainerRef.current) return;
-            canvasRef.current.width = chartContainerRef.current.clientWidth;
-            canvasRef.current.height = chartContainerRef.current.clientHeight;
-        };
-        resize();
-        window.addEventListener("resize", resize);
-
-        const timeScale = chartRef.current.timeScale();
-
-        const handleVisibleRangeChange = () => {
-            drawAllTrendlines(); // gọi lại hàm vẽ mỗi khi pan/zoom
-        };
-
-        // Đăng ký event
-        timeScale.subscribeVisibleLogicalRangeChange(handleVisibleRangeChange);
-        return () => {
-            chart.remove();
-            window.removeEventListener("resize", resize);
-            timeScale.unsubscribeVisibleLogicalRangeChange(handleVisibleRangeChange);
-            canvasRef.current = null;
-            seriesRef.current = null;
-            chartRef.current = null;
-            chartContainerRef.current = null;
-        };
+        redraw(strokes);
     }, []);
 
-    // loop vẽ
-    useEffect(() => {
-        drawAllTrendlines();
-        if (drawing) {
-            let raf: number;
-            const loop = () => {
-                if (needRedraw.current) {
-                    drawAllTrendlines();
-                    needRedraw.current = false;
+    // Kiểm tra click gần stroke nào
+    function findStrokeAt(x: number, y: number): number | null {
+        const tolerance = 5;
+        for (let i = 0; i < strokes.length; i++) {
+            const stroke = strokes[i];
+            for (let j = 0; j < stroke.length; j++) {
+                if (Math.hypot(stroke[j].x - x, stroke[j].y - y) < tolerance) {
+                    return i;
                 }
-                raf = requestAnimationFrame(loop);
-            };
-            raf = requestAnimationFrame(loop);
-            return () => cancelAnimationFrame(raf);
+            }
         }
-    }, [drawing]);
+        return null;
+    }
 
-    // events
-    useEffect(() => {
-        if (!drawing || !canvasRef.current || !chartRef.current || !seriesRef.current) return;
+    const handleMouseDown = (e: React.MouseEvent) => {
+        const x = e.nativeEvent.offsetX;
+        const y = e.nativeEvent.offsetY;
 
-        const handleDown = (e: MouseEvent) => {
-            const rect = canvasRef.current!.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            const timeScale = chartRef.current!.timeScale();
+        // thử chọn stroke cũ
+        const hitIndex = findStrokeAt(x, y);
+        if (hitIndex !== null) {
+            setDraggingStrokeIndex(hitIndex);
+            dragStart.current = { x, y };
+            return;
+        }
 
-            // check trúng line
-            for (let i = 0; i < trendlinesRef.current.length; i++) {
-                const line = trendlinesRef.current[i];
-                const x1 = timeScale.logicalToCoordinate(line.start.time as any);
-                const y1 = seriesRef.current.priceToCoordinate(line.start.price);
-                const x2 = timeScale.logicalToCoordinate(line.end.time as any);
-                const y2 = seriesRef.current.priceToCoordinate(line.end.price);
+        // nếu không chọn trúng stroke nào thì bắt đầu vẽ mới
+        setIsDrawing(true);
+        currentStroke.current = [{ x, y }];
+    };
 
-                if (x1 && y1 && Math.hypot(x - x1, y - y1) < 7) {
-                    draggingHandle.current = { lineIndex: i, point: "start" };
-                    return;
-                }
-                if (x2 && y2 && Math.hypot(x - x2, y - y2) < 7) {
-                    draggingHandle.current = { lineIndex: i, point: "end" };
-                    return;
-                }
-                if (x1 && x2 && y1 && y2 && isPointNearLine(x, y, x1, y1, x2, y2, 5)) {
-                    draggingLineIndex.current = i;
-                    dragStart.current = { mouseX: x, mouseY: y, start: line };
-                    return;
-                }
-            }
+    const handleMouseMove = (e: React.MouseEvent) => {
+        const x = e.nativeEvent.offsetX;
+        const y = e.nativeEvent.offsetY;
 
-            // vẽ line mới
-            const time = timeScale.coordinateToLogical(x);
-            const price = seriesRef.current.coordinateToPrice(y);
-            if (!time || !price) return;
-            if (!tempStartRef.current) {
-                tempStartRef.current = { time, price };
-            } else {
-                const newLine: Trendline = { start: tempStartRef.current, end: { time, price } };
-                trendlinesRef.current.push(newLine);
-                tempStartRef.current = null;
-                tempEndRef.current = null;
-            }
-            needRedraw.current = true;
-        };
+        if (draggingStrokeIndex !== null) {
+            // đang kéo stroke
+            const dx = x - dragStart.current.x;
+            const dy = y - dragStart.current.y;
 
-        const handleMove = (e: MouseEvent) => {
-            const rect = canvasRef.current!.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            const timeScale = chartRef.current!.timeScale();
+            const newStrokes = [...strokes];
+            newStrokes[draggingStrokeIndex] = newStrokes[draggingStrokeIndex].map((p) => ({
+                x: p.x + dx,
+                y: p.y + dy,
+            }));
+            setStrokes(newStrokes);
+            dragStart.current = { x, y };
+            redraw(newStrokes);
+            return;
+        }
 
-            if (draggingLineIndex.current !== null && dragStart.current) {
-                const dx = x - dragStart.current.mouseX;
-                const dy = y - dragStart.current.mouseY;
-                const deltaTime =
-                    timeScale.coordinateToLogical(
-                        timeScale.logicalToCoordinate(dragStart.current.start.start.time as any)! + dx
-                    )! - dragStart.current.start.start.time;
-                const deltaPrice =
-                    seriesRef.current.coordinateToPrice(
-                        seriesRef.current.priceToCoordinate(dragStart.current.start.start.price)! + dy
-                    )! - dragStart.current.start.start.price;
-                const movedLine: Trendline = {
-                    start: {
-                        time: dragStart.current.start.start.time + deltaTime,
-                        price: dragStart.current.start.start.price + deltaPrice,
-                    },
-                    end: {
-                        time: dragStart.current.start.end.time + deltaTime,
-                        price: dragStart.current.start.end.price + deltaPrice,
-                    },
-                };
-                trendlinesRef.current[draggingLineIndex.current] = movedLine;
-                needRedraw.current = true;
-                return;
-            }
+        if (!isDrawing) return;
 
-            if (draggingHandle.current) {
-                const time = timeScale.coordinateToLogical(x);
-                const price = seriesRef.current.coordinateToPrice(y);
-                if (!time || !price) return;
-                trendlinesRef.current[draggingHandle.current.lineIndex] = {
-                    ...trendlinesRef.current[draggingHandle.current.lineIndex],
-                    [draggingHandle.current.point]: { time, price }
-                };
-                needRedraw.current = true;
-                return;
-            }
+        const last = currentStroke.current[currentStroke.current.length - 1];
+        if (!last || Math.hypot(last.x - x, last.y - y) > 2) {
+            currentStroke.current.push({ x, y });
+        }
 
-            if (tempStartRef.current) {
-                const time = timeScale.coordinateToLogical(x);
-                const price = seriesRef.current.coordinateToPrice(y);
-                if (time && price) {
-                    tempEndRef.current = { time, price };
-                    needRedraw.current = true;
-                }
-            }
-        };
+        const ctx = canvasRef.current!.getContext("2d")!;
+        ctx.clearRect(0, 0, canvasRef.current!.width, canvasRef.current!.height);
 
-        const handleUp = () => {
-            draggingLineIndex.current = null;
-            draggingHandle.current = null;
-            dragStart.current = null;
-        };
+        redraw(strokes);
+        drawSmoothLine(ctx, currentStroke.current);
+    };
 
-        canvasRef.current.addEventListener("mousedown", handleDown, { capture: true });
-        window.addEventListener("mousemove", handleMove);
-        window.addEventListener("mouseup", handleUp);
+    const handleMouseUp = () => {
+        if (draggingStrokeIndex !== null) {
+            setDraggingStrokeIndex(null);
+            return;
+        }
 
-        return () => {
-            canvasRef.current?.removeEventListener("mousedown", handleDown, { capture: true } as any);
-            window.removeEventListener("mousemove", handleMove);
-            window.removeEventListener("mouseup", handleUp);
-        };
-    }, [drawing]);
+        if (isDrawing) {
+            setIsDrawing(false);
+            setStrokes((prev) => [...prev, [...currentStroke.current]]);
+        }
+    };
 
     return (
-        <div style={{ position: "relative" }}>
-            <div ref={chartContainerRef} />
-            <button
-                onClick={() => {
-                    setDrawing(!drawing);
-                    if (canvasRef.current) {
-                        canvasRef.current.style.pointerEvents = !drawing ? "auto" : "none";
-                    }
-                }}
-            >
-                {drawing ? "Kết thúc vẽ" : "Bật chế độ vẽ"}
-            </button>
+        <div ref={chartContainerRef} style={{ position: "relative", width: 600, height: 400 }}>
+            <canvas
+                ref={canvasRef}
+                style={{ position: "absolute", top: 0, left: 0 }}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+            />
         </div>
     );
-};
-
-export default ChartWithTrendlines;
+}

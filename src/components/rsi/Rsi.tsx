@@ -80,6 +80,7 @@ export default function Rsi({ chartRefCurentRSI, candleData, chartRefCandl, curr
         const rsiSeries = rsiChart.addLineSeries({
             color: lineColor,
             lineWidth: 1,
+            priceLineVisible: false,
         });
 
         seriesRef.current = rsiSeries;

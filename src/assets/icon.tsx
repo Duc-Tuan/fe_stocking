@@ -27,6 +27,7 @@ import IconEditLot from './icons/IconEditLot.svg?react';
 import IconBoundaryLine from './icons/IconBoundaryLine.svg?react';
 import IconLine from './icons/IconLine.svg?react';
 import IconTrendLine from './icons/IconTrendLine.svg?react';
+import IconPaintBrush from './icons/IconPaintBrush.svg?react';
 
 export default function Icon(props: any) {
     switch (props?.name?.toLowerCase()) {
@@ -88,6 +89,8 @@ export default function Icon(props: any) {
             return <IconLine {...props} />;
         case 'icon-trend-line':
             return <IconTrendLine {...props} />;
+        case 'icon-paint-brush':
+            return <IconPaintBrush {...props} />;
         default:
             return null;
     }

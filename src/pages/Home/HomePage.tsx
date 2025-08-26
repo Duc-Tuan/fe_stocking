@@ -29,7 +29,7 @@ import {
     type IinitialData,
     type IinitialDataCand,
 } from "./options";
-import { dataBoundaryLine, dataIndicator, drawLabelWithBackground, FIB_TOLERANCE, fibBaseColors, fibLevels, formatDateLabel, getCssVar, isPointNearLine, type FibBlock, type IboundaryLine, type Iindicator, type Trendline } from "./type";
+import { dataBoundaryLine, dataIndicator, drawLabelWithBackground, drawSmoothLine, FIB_TOLERANCE, fibBaseColors, fibLevels, findStrokeAt, formatDateLabel, getCssVar, isPointNearLine, redraw, type FibBlock, type IboundaryLine, type Iindicator, type Trendline } from "./type";
 
 // Khoảng thời gian 1 nến (M5 = 300 giây)
 const BAR_INTERVAL = 300;
@@ -103,7 +103,6 @@ export default function HomePage() {
 
     const [drawing, setDrawing] = useState(false);
     const canvasTrendLine = useRef<any>(null);
-    // const trendlinesRef = useRef<Trendline[]>([]);
     const [trendlines, setTrendlines] = useState<Trendline[]>([]);
     const tempStartRef = useRef<{ time: number; price: number } | null>(null);
     const tempEndRef = useRef<{ time: number; price: number } | null>(null);
@@ -116,6 +115,17 @@ export default function HomePage() {
     } | null>(null);
 
     const needRedraw = useRef(false);
+
+    //strokes
+    const canvasStrokes = useRef<any>(null);
+    const [strokes, setStrokes] = useState<{ time: number; price: number }[][]>([]);
+    const [isDrawing, setIsDrawing] = useState(false);
+    const [isDrawingBrush, setIsDrawingBrush] = useState(false);
+    const [draggingStrokeIndex, setDraggingStrokeIndex] = useState<number | null>(null);
+    const dragStartStrokes = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+    const currentStrokePixels = useRef<{ x: number; y: number }[]>([]);
+    const needRedrawRef = useRef(false);
+    const rafRefStrokes = useRef<any>(null);
 
     // Gọi api khi page thay đổi
     const getSymbolApi = async (idServer: number) => {
@@ -238,6 +248,18 @@ export default function HomePage() {
                 const ctx = canvasTrendLine.current.getContext("2d");
                 ctx?.clearRect(0, 0, canvasTrendLine.current.width, canvasTrendLine.current.height);
             }
+
+            setStrokes([])
+            setIsDrawing(false)
+            setIsDrawingBrush(false)
+            setDraggingStrokeIndex(null)
+            needRedrawRef.current = false
+            currentStrokePixels.current = []
+            rafRefStrokes.current = null
+            if (canvasStrokes.current) {
+                const ctx = canvasStrokes.current.getContext("2d");
+                ctx?.clearRect(0, 0, canvasStrokes.current.width, canvasStrokes.current.height);
+            }
         }
     }, [serverId]);
 
@@ -327,40 +349,36 @@ export default function HomePage() {
         }
     };
 
+    const canvasAdd = () => {
+        if (!chartContainerRef.current) return;
+        const canvas = document.createElement("canvas");
+        canvas.style.position = "absolute";
+        canvas.style.top = "0";
+        canvas.style.left = "0";
+        canvas.style.pointerEvents = "none";
+        canvas.style.zIndex = "10";
+        chartContainerRef.current.appendChild(canvas);
+        return canvas
+    }
+
     useEffect(() => {
         if (!chartContainerRef.current) return;
 
         // Nếu đã có rồi thì không tạo thêm
         if (!canvasRef.current) {
-            const canvas = document.createElement("canvas");
-            canvas.style.position = "absolute";
-            canvas.style.top = "0";
-            canvas.style.left = "0";
-            canvas.style.pointerEvents = "none";
-            canvas.style.zIndex = "10";
-            chartContainerRef.current.appendChild(canvas);
-            canvasRef.current = canvas;
+            canvasRef.current = canvasAdd();
         }
 
         if (!overlayRef.current) {
-            const overlay = document.createElement("canvas");
-            overlay.style.position = "absolute";
-            overlay.style.left = "0";
-            overlay.style.top = "0";
-            overlay.style.zIndex = "10";
-            overlay.style.pointerEvents = "none";
-            chartContainerRef.current.appendChild(overlay);
-            overlayRef.current = overlay;
+            overlayRef.current = canvasAdd();
         }
+
         if (!canvasTrendLine.current) {
-            const overlay = document.createElement("canvas");
-            overlay.style.position = "absolute";
-            overlay.style.left = "0";
-            overlay.style.top = "0";
-            overlay.style.zIndex = "10";
-            overlay.style.pointerEvents = "none";
-            chartContainerRef.current.appendChild(overlay);
-            canvasTrendLine.current = overlay;
+            canvasTrendLine.current = canvasAdd();
+        }
+
+        if (!canvasStrokes.current) {
+            canvasStrokes.current = canvasAdd();
         }
 
         const resize = () => {
@@ -369,10 +387,15 @@ export default function HomePage() {
             const height = indicator.filter((a) => a.active).length > 1 ? chartContainerRef.current!.clientHeight + 240 : chartContainerRef.current!.clientHeight;
             canvasRef.current.width = widthChart
             canvasRef.current.height = height
+
             overlayRef.current.width = widthChart
             overlayRef.current.height = height
+
             canvasTrendLine.current.width = widthChart
             canvasTrendLine.current.height = height
+
+            canvasStrokes.current.width = widthChart
+            canvasStrokes.current.height = height
             triggerDrawFib();
             requestRedraw();
             drawAllTrendlines();
@@ -393,6 +416,10 @@ export default function HomePage() {
             if (canvasTrendLine.current && chartContainerRef.current?.contains(canvasTrendLine.current)) {
                 chartContainerRef.current.removeChild(canvasTrendLine.current);
                 canvasTrendLine.current = null;
+            }
+            if (canvasStrokes.current && chartContainerRef.current?.contains(canvasStrokes.current)) {
+                chartContainerRef.current.removeChild(canvasStrokes.current);
+                canvasStrokes.current = null;
             }
         };
     }, [chartContainerRef.current]);
@@ -925,19 +952,17 @@ export default function HomePage() {
 
         if (!fibMode || !chartRef.current) return;
 
-        const handleVisibleRangeChange = () => {
-            triggerDrawFib(); // vẽ lại fib khi chart pan/zoom
-        };
-        timeScale.subscribeVisibleLogicalRangeChange(handleVisibleRangeChange);
+        timeScale && timeScale.subscribeVisibleLogicalRangeChange(triggerDrawFib);
+        timeScale && timeScale.subscribeVisibleTimeRangeChange(triggerDrawFib);
 
         if (fibMode) {
             triggerDrawFib();
         }
 
-        const resize = () => {
-            triggerDrawFib();
-        };
-        window.addEventListener("resize", resize);
+        // const resize = () => {
+        //     triggerDrawFib();
+        // };
+        // window.addEventListener("resize", resize);
 
         // Quan trọng: lắng nghe trên CANVAS với capture để chặn chart
         canvas.addEventListener("mousedown", handleDown, { capture: true });
@@ -945,29 +970,29 @@ export default function HomePage() {
         window.addEventListener("mouseup", handleUp);
 
         return () => {
-            timeScale.unsubscribeVisibleLogicalRangeChange(handleVisibleRangeChange);
+            timeScale && timeScale.unsubscribeVisibleTimeRangeChange(triggerDrawFib);
+            timeScale && timeScale.unsubscribeVisibleLogicalRangeChange(triggerDrawFib);
             if (rafRefFib.current) cancelAnimationFrame(rafRefFib.current);
             rafRefFib.current = null;
-
             if (canvas) canvas.removeEventListener("mousedown", handleDown, { capture: true } as any);
-
-            window.removeEventListener("resize", resize);
+            // window.removeEventListener("resize", resize);
             window.removeEventListener("mousemove", handleMove);
             window.removeEventListener("mouseup", handleUp);
         };
     }, [fibMode, dragging, activeFibId, fibBlocks, isCheckFibonacci]);
 
-    const handleDelete = (title: "fibonacci" | "line" | "trendLine", idx: number) => {
+    const handleDelete = (title: "fibonacci" | "line" | "trendLine" | "brush", idx: number) => {
         if (title === 'fibonacci') {
             if (idx >= 0) {
                 const dataNew = fibBlocks.filter((_, id) => id !== idx)
                 setFibBlocks(dataNew)
             }
         }
-        if ((title === 'line' || title === 'fibonacci' || title === "trendLine") && idx < 0) {
+        if ((title === 'line' || title === 'fibonacci' || title === "trendLine" || title === 'brush') && idx < 0) {
             setFibBlocks([])
             setlinesRef([])
             setTrendlines([])
+            setStrokes([])
         }
         if (title === 'line') {
             if (idx >= 0) {
@@ -979,6 +1004,12 @@ export default function HomePage() {
             if (idx >= 0) {
                 const dataNew = trendlines.filter((_, id) => id !== idx)
                 setTrendlines(dataNew)
+            }
+        }
+        if (title === 'brush') {
+            if (idx >= 0) {
+                const dataNew = strokes.filter((_, id) => id !== idx)
+                setStrokes(dataNew)
             }
         }
     }
@@ -1016,7 +1047,7 @@ export default function HomePage() {
     }, [indicator, activeTab])
 
     useEffect(() => {
-        if (!overlayRef.current && !chartContainerRef.current && !candleSeriesRef.current) return;
+        if (!overlayRef.current && !chartContainerRef.current && !candleSeriesRef.current && !chartRef.current) return;
 
         const setCursor = (cursor: string) => { overlayRef.current && (overlayRef.current.style.cursor = cursor) }
 
@@ -1148,7 +1179,8 @@ export default function HomePage() {
 
     // events
     useEffect(() => {
-        if (!canvasTrendLine.current || !chartRef.current || !candleSeriesRef.current) return;
+        if (!canvasTrendLine.current && !chartRef.current && !candleSeriesRef.current) return;
+        const setCursor = (cursor: string) => { canvasTrendLine.current && (canvasTrendLine.current.style.cursor = cursor) }
 
         if (canvasTrendLine.current) {
             canvasTrendLine.current.style.pointerEvents = drawing ? "auto" : "none";
@@ -1160,15 +1192,6 @@ export default function HomePage() {
 
         // redraw khi chart thay đổi
         chartRef.current?.subscribeCrosshairMove(subrequestRedraw);
-
-        // sau khi khởi tạo chart
-        chartRef.current.subscribeCrosshairMove(() => {
-            drawAllTrendlines();
-        });
-
-        chartRef.current.timeScale().subscribeVisibleTimeRangeChange(() => {
-            drawAllTrendlines();
-        });
 
         const handleDown = (e: MouseEvent) => {
             const rect = canvasTrendLine.current!.getBoundingClientRect();
@@ -1197,6 +1220,7 @@ export default function HomePage() {
                     dragStartTrandLine.current = { mouseX: x, mouseY: y, start: line };
                     return;
                 }
+                setCursor("grabbing")
             }
 
             // vẽ line mới
@@ -1251,6 +1275,7 @@ export default function HomePage() {
                     setTrendlines(dataNew)
                     needRedraw.current = true;
                 }
+                setCursor("grabbing")
                 return;
             }
 
@@ -1271,6 +1296,7 @@ export default function HomePage() {
                 });
 
                 needRedraw.current = true;
+                setCursor("grabbing")
                 return;
             }
 
@@ -1281,6 +1307,7 @@ export default function HomePage() {
                     tempEndRef.current = { time, price };
                     needRedraw.current = true;
                 }
+                setCursor("grabbing")
             }
         };
 
@@ -1288,6 +1315,7 @@ export default function HomePage() {
             draggingLineIndex.current = null;
             draggingHandle.current = null;
             dragStartTrandLine.current = null;
+            setCursor("default");
         };
 
         canvasTrendLine.current.addEventListener("mousedown", handleDown, { capture: true });
@@ -1307,23 +1335,200 @@ export default function HomePage() {
         };
         raf = requestAnimationFrame(renderLoop);
 
-        const timeScale = chartRef.current.timeScale();
+        const timeScale = chartRef.current?.timeScale()!;
 
-        const handleVisibleRangeChange = () => {
-            drawAllTrendlines(); // gọi lại hàm vẽ mỗi khi pan/zoom
-        };
-
-        // Đăng ký event
-        timeScale.subscribeVisibleLogicalRangeChange(handleVisibleRangeChange);
+        timeScale && timeScale?.subscribeVisibleTimeRangeChange(drawAllTrendlines);
+        timeScale && timeScale?.subscribeVisibleLogicalRangeChange(drawAllTrendlines);
         return () => {
+            timeScale && timeScale.unsubscribeVisibleTimeRangeChange(drawAllTrendlines);
             cancelAnimationFrame(raf)
             chartRef.current && chartRef.current.unsubscribeCrosshairMove(subrequestRedraw);
-            timeScale.unsubscribeVisibleLogicalRangeChange(handleVisibleRangeChange);
+            timeScale && timeScale.unsubscribeVisibleLogicalRangeChange(drawAllTrendlines);
             canvasTrendLine.current && canvasTrendLine.current?.removeEventListener("mousedown", handleDown, { capture: true } as any);
             window.removeEventListener("mousemove", handleMove);
             window.removeEventListener("mouseup", handleUp);
         };
     }, [drawing, trendlines]);
+
+    const requestRedrawStrokes = () => {
+        needRedrawRef.current = true;
+    };
+
+    useEffect(() => {
+        if (!canvasStrokes.current && !chartRef.current) return;
+
+        const setCursor = (cursor: string) => {
+            canvasStrokes.current && (canvasStrokes.current.style.cursor = cursor);
+        };
+
+        canvasStrokes.current.style.pointerEvents = isDrawingBrush ? "auto" : "none";
+
+        const subrequestRedraw = () => {
+            requestRedrawStrokes()
+        }
+
+        // redraw khi chart thay đổi
+        chartRef.current?.subscribeCrosshairMove(subrequestRedraw);
+
+        const handleMouseDown = (e: MouseEvent) => {
+            const x = e.offsetX;
+            const y = e.offsetY;
+
+            const time = chartRef.current.timeScale().coordinateToTime(x);
+            const price = candleSeriesRef.current.coordinateToPrice(y);
+
+            if (!time || price == null) return;
+
+            // kiểm tra có hit stroke không
+            const hitIndex = findStrokeAt(strokes, x, y, chartRef, candleSeriesRef);
+            if (hitIndex !== null) {
+                setDraggingStrokeIndex(hitIndex);
+                dragStartStrokes.current = { x, y };
+                return;
+            }
+
+            // bắt đầu vẽ mới
+            setIsDrawing(true);
+            currentStrokePixels.current = [{ x, y }];
+            setCursor("default");
+        };
+
+        const handleMouseMove = (e: MouseEvent) => {
+            if (!isDrawing && draggingStrokeIndex === null) return;
+
+            const x = e.offsetX;
+            const y = e.offsetY;
+
+            // kéo stroke
+            if (draggingStrokeIndex !== null) {
+                const dx = x - dragStartStrokes.current.x;
+                const dy = y - dragStartStrokes.current.y;
+
+                const baseStroke = strokes[draggingStrokeIndex];
+
+                const draggedPixels = baseStroke.map(p => {
+                    const xx = chartRef.current.timeScale().timeToCoordinate(p.time)! + dx;
+                    const yy = candleSeriesRef.current.priceToCoordinate(p.price)! + dy;
+                    return { x: xx, y: yy };
+                });
+
+                // Vẽ lại toàn bộ strokes NHƯNG bỏ stroke cũ ra
+                const ctx = canvasStrokes.current!.getContext("2d")!;
+                ctx.clearRect(0, 0, canvasStrokes.current!.width, canvasStrokes.current!.height);
+
+                redraw(
+                    canvasStrokes,
+                    strokes.filter((_, i) => i !== draggingStrokeIndex), // ❌ bỏ stroke cũ
+                    chartRef,
+                    candleSeriesRef,
+                    isDrawingBrush
+                );
+
+                // ✅ vẽ stroke đang kéo
+                drawSmoothLine(ctx, draggedPixels);
+                setCursor("grabbing");
+                return;
+            }
+
+            const ctx = canvasStrokes.current!.getContext("2d")!;
+
+            // vẽ stroke mới (chỉ lưu pixel)
+            const last = currentStrokePixels.current[currentStrokePixels.current.length - 1];
+            if (!last || Math.hypot(last.x - x, last.y - y) > 3) { // lọc điểm gần nhau
+                currentStrokePixels.current.push({ x, y });
+            }
+
+            ctx.clearRect(0, 0, canvasStrokes.current!.width, canvasStrokes.current!.height);
+            // vẽ lại các stroke đã có
+            redraw(canvasStrokes, strokes, chartRef, candleSeriesRef, isDrawingBrush);
+            // requestRedrawStrokes()
+
+            drawSmoothLine(ctx, currentStrokePixels.current); // vẽ stroke tạm thời
+            setCursor("default");
+        };
+
+        const handleMouseUp = (e: MouseEvent) => {
+            setCursor("default");
+
+            if (draggingStrokeIndex !== null) {
+                const x = e.offsetX;
+                const y = e.offsetY;
+                const dx = x - dragStartStrokes.current.x;
+                const dy = y - dragStartStrokes.current.y;
+
+                const baseStroke = strokes[draggingStrokeIndex];
+
+                const updatedStroke = baseStroke.map(p => {
+                    const newX = chartRef.current.timeScale().timeToCoordinate(p.time)! + dx;
+                    const newY = candleSeriesRef.current.priceToCoordinate(p.price)! + dy;
+                    return {
+                        time: chartRef.current.timeScale().coordinateToTime(newX) as number,
+                        price: candleSeriesRef.current.coordinateToPrice(newY) as number,
+                    };
+                });
+
+                setStrokes(prev => {
+                    const newStrokes = [...prev];
+                    newStrokes[draggingStrokeIndex] = updatedStroke;
+                    return newStrokes;
+                });
+
+                setDraggingStrokeIndex(null);
+                return;
+            }
+
+            if (isDrawing) {
+                const finalStroke = currentStrokePixels.current.map(p => {
+                    const time = chartRef.current.timeScale().coordinateToTime(p.x);
+                    const price = candleSeriesRef.current.coordinateToPrice(p.y);
+                    return {
+                        time: time as number,
+                        price: price as number,
+                    };
+                });
+
+                setStrokes(prev => [...prev, finalStroke]);
+
+                currentStrokePixels.current = [];
+                setIsDrawing(false);
+            }
+        };
+
+        canvasStrokes.current.addEventListener("mousedown", handleMouseDown);
+        canvasStrokes.current.addEventListener("mousemove", handleMouseMove);
+        window.addEventListener("mouseup", handleMouseUp);
+
+        const timeScale = chartRef.current?.timeScale()!;
+
+        // đăng ký khi pan/zoom chart
+        timeScale && timeScale?.subscribeVisibleLogicalRangeChange(requestRedrawStrokes);
+        timeScale && timeScale.subscribeVisibleTimeRangeChange(requestRedrawStrokes);
+
+        const renderLoop = () => {
+            if (needRedrawRef.current) {
+                redraw(canvasStrokes, strokes, chartRef, candleSeriesRef, isDrawingBrush);
+                needRedrawRef.current = false;
+            }
+            rafRefStrokes.current = requestAnimationFrame(renderLoop);
+        };
+        rafRefStrokes.current = requestAnimationFrame(renderLoop);
+
+        return () => {
+            timeScale && timeScale.unsubscribeVisibleTimeRangeChange(requestRedrawStrokes);
+            timeScale && timeScale.unsubscribeVisibleLogicalRangeChange(requestRedrawStrokes);
+            chartRef.current && chartRef.current.unsubscribeCrosshairMove(subrequestRedraw);
+            if (!canvasStrokes.current) return;
+            if (rafRefStrokes.current) cancelAnimationFrame(rafRefStrokes.current);
+            rafRefStrokes.current = null;
+            canvasStrokes.current.removeEventListener("mousedown", handleMouseDown);
+            canvasStrokes.current.removeEventListener("mousemove", handleMouseMove);
+            window.removeEventListener("mouseup", handleMouseUp);
+        };
+    }, [isDrawingBrush, isDrawing, draggingStrokeIndex, dragStartStrokes]);
+
+    useEffect(() => {
+        requestRedrawStrokes();
+    }, [strokes]);
 
     return (
         <div className="text-center">
@@ -1360,7 +1565,7 @@ export default function HomePage() {
                                     setFibMode(true);
                                     setIsDrawingMode(false)
                                     setDrawing(false)
-
+                                    setIsDrawingBrush(false)
                                 }} w="w-[40px]" h="h-[40px]" titleTooltip={"fibonacci thoái lui"} classNameButton={`${isCheckFibonacci ? "bg-[var(--color-background)] text-white" : "text-black bg-gray-200"}`}>
                                     <Icon name="icon-fibonacci" width={18} height={18} />
                                 </TooltipCustom>
@@ -1369,6 +1574,7 @@ export default function HomePage() {
                                     setIsDrawingMode(!isDrawingMode)
                                     setIsCheckFibonacci(false)
                                     setDrawing(false)
+                                    setIsDrawingBrush(false)
                                 }} w="w-[40px]" h="h-[40px]" titleTooltip={"Đường nằm ngang"} classNameButton={`${isDrawingMode ? "bg-[var(--color-background)] text-white" : "text-black bg-gray-200"}`}>
                                     <Icon name="icon-line-v2" width={24} height={24} />
                                 </TooltipCustom>
@@ -1377,11 +1583,21 @@ export default function HomePage() {
                                     setDrawing(!drawing)
                                     setIsCheckFibonacci(false)
                                     setIsDrawingMode(false)
+                                    setIsDrawingBrush(false)
                                 }} w="w-[40px]" h="h-[40px]" titleTooltip={"Đường xu hướng"} classNameButton={`${drawing ? "bg-[var(--color-background)] text-white" : "text-black bg-gray-200"}`}>
                                     <Icon name="icon-trend-line" width={20} height={20} />
                                 </TooltipCustom>
 
-                                <DeleteFibonacci trendlinesRef={trendlines} linesRef={linesRef} data={fibBlocks} onClick={handleDelete} />
+                                <TooltipCustom handleClick={() => {
+                                    setIsDrawingBrush(!isDrawingBrush)
+                                    setIsCheckFibonacci(false)
+                                    setDrawing(false)
+                                    setIsDrawingMode(false)
+                                }} w="w-[40px]" h="h-[40px]" titleTooltip={"Cọ vẽ"} classNameButton={`${isDrawingBrush ? "bg-[var(--color-background)] text-white" : "text-black bg-gray-200"}`}>
+                                    <Icon name="icon-paint-brush" width={20} height={20} />
+                                </TooltipCustom>
+
+                                <DeleteFibonacci strokes={strokes} trendlinesRef={trendlines} linesRef={linesRef} data={fibBlocks} onClick={handleDelete} />
 
                                 <CompIndicator indicator={indicator} setIndicator={setIndicator} />
 
@@ -1494,8 +1710,12 @@ const Filter = ({ handleClick, currentRange }: any) => {
     )
 }
 
-const DeleteFibonacci = ({ trendlinesRef, data, onClick, linesRef }: {
-    data: any, onClick: (title: "fibonacci" | "line" | "trendLine", idx: number) => void, linesRef: {
+const DeleteFibonacci = ({ strokes, trendlinesRef, data, onClick, linesRef }: {
+    strokes: {
+        time: number;
+        price: number;
+    }[][],
+    data: any, onClick: (title: "fibonacci" | "line" | "trendLine" | "brush", idx: number) => void, linesRef: {
         price: number;
         id: number;
     }[], trendlinesRef: Trendline[]
@@ -1522,16 +1742,16 @@ const DeleteFibonacci = ({ trendlinesRef, data, onClick, linesRef }: {
     }, visible);
 
     return <div ref={popupRef} className="relative z-20">
-        {(data.length !== 0 || linesRef.length !== 0 || trendlinesRef.length !== 0) &&
+        {(data.length !== 0 || linesRef.length !== 0 || trendlinesRef.length !== 0 || strokes.length !== 0) &&
             <div className="absolute top-1 right-1 z-10 bg-white rounded-2xl text-[12px] font-bold w-[14px] h-[14px] flex justify-center items-center text-[var(--color-background)]">
-                {data.length + linesRef.length + trendlinesRef.length}
+                {data.length + linesRef.length + trendlinesRef.length + strokes.length}
             </div>
         }
-        <TooltipCustom handleClick={handleToggle} w="w-[40px]" h="h-[40px]" titleTooltip={"Xóa fibonacci thoái lui"} classNameButton={`${(data.length !== 0 || linesRef.length !== 0 || trendlinesRef.length !== 0) ? "bg-[var(--color-background)] text-white" : "text-black bg-gray-200"}`}>
+        <TooltipCustom handleClick={handleToggle} w="w-[40px]" h="h-[40px]" titleTooltip={"Xóa fibonacci thoái lui"} classNameButton={`${(data.length !== 0 || linesRef.length !== 0 || trendlinesRef.length !== 0 || strokes.length !== 0) ? "bg-[var(--color-background)] text-white" : "text-black bg-gray-200"}`}>
             <Icon name="icon-delete" width={18} height={18} />
         </TooltipCustom>
 
-        {(data.length !== 0 || linesRef.length !== 0 || trendlinesRef.length !== 0) && visible && (
+        {(data.length !== 0 || linesRef.length !== 0 || trendlinesRef.length !== 0 || strokes.length !== 0) && visible && (
             <div className={`ml-2 transition-all duration-200 absolute w-[460px] -top-2 left-full mt-2 bg-white shadow-sm shadow-gray-300 rounded-lg border border-gray-300 p-2 ${open ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-2'}`}>
                 {data?.map((_: any, idx: number) => {
                     return <Button key={idx} className="w-full shadow-none text-black cursor-pointer font-semibold text-left px-4 hover:bg-[var(--color-background-opacity-2)] hover:text-[var(--color-background)] py-2" onClick={() => onClick("fibonacci", idx)}>{t("Xóa bản vẽ")} {idx + 1}</Button>
@@ -1542,7 +1762,10 @@ const DeleteFibonacci = ({ trendlinesRef, data, onClick, linesRef }: {
                 {trendlinesRef.map((i, idx) => {
                     return <Button key={idx} className="w-full shadow-none text-black cursor-pointer font-semibold text-left px-4 hover:bg-[var(--color-background-opacity-2)] hover:text-[var(--color-background)] py-2" onClick={() => onClick("trendLine", idx)}>{t("Xóa đường xu hướng")} {idx + 1}</Button>
                 })}
-                <Button className="w-full shadow-none text-black cursor-pointer font-semibold text-left px-4 hover:bg-[var(--color-background-opacity-2)] hover:text-[var(--color-background)] py-2" onClick={() => onClick("fibonacci", -1)}>{`${t("Xóa")} ${data.length} ${t("bản vẽ")} ${t('và')} ${linesRef.length + trendlinesRef.length} ${t("chỉ báo")}`}</Button>
+                {strokes.map((i, idx) => {
+                    return <Button key={idx} className="w-full shadow-none text-black cursor-pointer font-semibold text-left px-4 hover:bg-[var(--color-background-opacity-2)] hover:text-[var(--color-background)] py-2" onClick={() => onClick("brush", idx)}>{t("Xóa cọ vẽ")} {idx + 1}</Button>
+                })}
+                <Button className="w-full shadow-none text-black cursor-pointer font-semibold text-left px-4 hover:bg-[var(--color-background-opacity-2)] hover:text-[var(--color-background)] py-2" onClick={() => onClick("fibonacci", -1)}>{`${t("Xóa")} ${data.length} ${t("bản vẽ")}, ${linesRef.length + trendlinesRef.length} ${t("chỉ báo")} ${t('và')} ${strokes.length} ${t('cọ vẽ')}`}</Button>
             </div>
         )}
     </div>

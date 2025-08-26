@@ -1,10 +1,10 @@
-import { ColorType, createChart, type BarData, type IChartApi } from 'lightweight-charts';
-import React, { useEffect, useRef, useState } from 'react'
-import { calculateATR } from './type';
+import { ColorType, createChart, type BarData } from 'lightweight-charts';
+import { useEffect, useRef, useState } from 'react';
 import { timeOptions, type IinitialDataCand } from '../../pages/Home/options';
 import { aggregateCandlesByInterval, getColorChart } from '../../utils/timeRange';
-import { formatVietnamTimeSmart, gridColor } from '../line/formatTime';
 import { normalizeChartData } from '../candlestickSeries/options';
+import { formatVietnamTimeSmart, gridColor } from '../line/formatTime';
+import { calculateATR } from './type';
 
 export default function Atr({
     candleData,

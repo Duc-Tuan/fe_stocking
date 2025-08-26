@@ -142,3 +142,84 @@ export const isPointNearLine = (x: number, y: number, x1: number, y1: number, x2
     const dx = x - xx, dy = y - yy;
     return dx * dx + dy * dy <= tolerance * tolerance;
 };
+
+export function findStrokeAt(
+    strokes: { time: number; price: number }[][],
+    x: number,
+    y: number,
+    chartRef: any,
+    candleSeriesRef: any
+): number | null {
+    const tolerance = 5;
+
+    for (let i = 0; i < strokes.length; i++) {
+        const stroke = strokes[i];
+
+        for (let j = 0; j < stroke.length; j++) {
+            const xx = chartRef.current.timeScale().timeToCoordinate(stroke[j].time);
+            const yy = candleSeriesRef.current.priceToCoordinate(stroke[j].price);
+
+            if (xx != null && yy != null) {
+                if (Math.hypot(xx - x, yy - y) < tolerance) {
+                    return i;
+                }
+            }
+        }
+    }
+    return null;
+}
+
+
+export function drawSmoothLine(ctx: CanvasRenderingContext2D, points: { x: number, y: number }[]) {
+    if (points.length < 2) return;
+
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for (let i = 0; i < points.length - 1; i++) {
+        const midX = (points[i].x + points[i + 1].x) / 2;
+        const midY = (points[i].y + points[i + 1].y) / 2;
+        ctx.quadraticCurveTo(points[i].x, points[i].y, midX, midY);
+    }
+    ctx.stroke();
+}
+
+export function redraw(
+    canvasRef: any,
+    allStrokes: { time: number; price: number; x?: number; y?: number }[][],
+    chartRef: any,
+    candleSeriesRef: any,
+    isDrawingBrush: boolean
+) {
+    const canvas = canvasRef.current!;
+    const ctx = canvas.getContext("2d")!;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = "blue";
+    ctx.lineJoin = "round";
+    ctx.lineCap = "round";
+
+    allStrokes.forEach((stroke) => {
+        const pixelPoints = stroke.map(p => {
+            const x = chartRef.current?.timeScale().timeToCoordinate(p.time);
+            const y = candleSeriesRef.current?.priceToCoordinate(p.price);
+            return (x != null && y != null) ? { x, y } : null;
+        }).filter(Boolean) as { x: number; y: number }[];
+
+
+        drawSmoothLine(ctx, pixelPoints);
+
+        if (pixelPoints.length > 1 && isDrawingBrush) {
+            ctx.beginPath();
+            ctx.arc(pixelPoints[0].x, pixelPoints[0].y, 4, 0, Math.PI * 2);
+            ctx.fillStyle = "white";
+            ctx.fill();
+            ctx.strokeStyle = getCssVar("--color-background-atr");
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(pixelPoints[pixelPoints.length - 1].x, pixelPoints[pixelPoints.length - 1].y, 4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+        }
+    });
+}
