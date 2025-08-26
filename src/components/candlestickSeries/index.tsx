@@ -78,9 +78,9 @@ export const CandlestickSeriesComponent = (props: any) => {
             line.style.cssText = `
                 position: absolute;
                 top: 0;
-                left: ${x}px;
+                left: ${x + 8}px;
                 width: 0;
-                height: 95%;
+                height: 94%;
                 border-left: 1px dashed rgba(0, 0, 0, 0.2);
                 pointer-events: none;
                 z-index: 2;

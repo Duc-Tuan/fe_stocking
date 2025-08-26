@@ -1,4 +1,4 @@
-import type { BarData, IChartApi, ISeriesApi, UTCTimestamp } from "lightweight-charts";
+import type { IChartApi, ISeriesApi, UTCTimestamp } from "lightweight-charts";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { symbolApi } from "../../api/symbol";
@@ -6,7 +6,7 @@ import Icon from "../../assets/icon";
 import Atr from "../../components/atr/Atr";
 import { Button } from "../../components/button";
 import { CandlestickSeriesComponent } from "../../components/candlestickSeries";
-import { normalizeChartData, type IDataSymbols } from "../../components/candlestickSeries/options";
+import { type IDataSymbols } from "../../components/candlestickSeries/options";
 import { ChartComponent } from "../../components/line";
 import { Loading } from "../../components/loading";
 import Rsi from "../../components/rsi/Rsi";
@@ -124,7 +124,6 @@ export default function HomePage() {
     const [draggingStrokeIndex, setDraggingStrokeIndex] = useState<number | null>(null);
     const dragStartStrokes = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
     const currentStrokePixels = useRef<{ x: number; y: number }[]>([]);
-    const needRedrawRef = useRef(false);
     const rafRefStrokes = useRef<any>(null);
 
     // Gọi api khi page thay đổi
@@ -253,7 +252,6 @@ export default function HomePage() {
             setIsDrawing(false)
             setIsDrawingBrush(false)
             setDraggingStrokeIndex(null)
-            needRedrawRef.current = false
             currentStrokePixels.current = []
             rafRefStrokes.current = null
             if (canvasStrokes.current) {
@@ -719,7 +717,7 @@ export default function HomePage() {
 
                 // Vẽ text đè lên background
                 ctx.fillStyle = "white";
-                ctx.fillText(text, textX + 6, textY + 2);
+                ctx.fillText(text, textX + 8, textY + 2);
             }
         }
     };
@@ -1125,11 +1123,11 @@ export default function HomePage() {
                     setlinesRef((prev) => {
                         const dataNew = prev.map((i) => {
                             if (i.id === dragLineIndexRef.current) {
-                                return i.price = Number(price.toFixed(2))
+                                return { ...i, price: Number(price.toFixed(2)) }
                             }
                             return i
                         })
-                        return [...prev]
+                        return dataNew
                     })
                     wasDraggingRef.current = true; // có kéo thật sự
                 }
@@ -1351,7 +1349,9 @@ export default function HomePage() {
     }, [drawing, trendlines]);
 
     const requestRedrawStrokes = () => {
-        needRedrawRef.current = true;
+        if (canvasStrokes.current && chartRef.current) {
+            redraw(canvasStrokes, strokes, chartRef, candleSeriesRef, isDrawingBrush);
+        }
     };
 
     useEffect(() => {
@@ -1488,6 +1488,7 @@ export default function HomePage() {
                 });
 
                 setStrokes(prev => [...prev, finalStroke]);
+                requestRedrawStrokes(); // ✅ ép redraw ngay
 
                 currentStrokePixels.current = [];
                 setIsDrawing(false);
@@ -1504,15 +1505,6 @@ export default function HomePage() {
         timeScale && timeScale?.subscribeVisibleLogicalRangeChange(requestRedrawStrokes);
         timeScale && timeScale.subscribeVisibleTimeRangeChange(requestRedrawStrokes);
 
-        const renderLoop = () => {
-            if (needRedrawRef.current) {
-                redraw(canvasStrokes, strokes, chartRef, candleSeriesRef, isDrawingBrush);
-                needRedrawRef.current = false;
-            }
-            rafRefStrokes.current = requestAnimationFrame(renderLoop);
-        };
-        rafRefStrokes.current = requestAnimationFrame(renderLoop);
-
         return () => {
             timeScale && timeScale.unsubscribeVisibleTimeRangeChange(requestRedrawStrokes);
             timeScale && timeScale.unsubscribeVisibleLogicalRangeChange(requestRedrawStrokes);
@@ -1524,8 +1516,9 @@ export default function HomePage() {
             canvasStrokes.current.removeEventListener("mousemove", handleMouseMove);
             window.removeEventListener("mouseup", handleMouseUp);
         };
-    }, [isDrawingBrush, isDrawing, draggingStrokeIndex, dragStartStrokes]);
+    }, [isDrawingBrush, isDrawing, strokes, draggingStrokeIndex, dragStartStrokes]);
 
+    // mỗi khi strokes thay đổi thì redraw ngay
     useEffect(() => {
         requestRedrawStrokes();
     }, [strokes]);
@@ -1615,8 +1608,9 @@ export default function HomePage() {
                 </div>
             </div>
 
-            <div className="mt-5 p-2 border border-gray-200  overflow-hidden rounded-lg shadow-xl">
-                <div ref={chartContainerRef} style={{ position: "relative" }}>
+            <div className="mt-5 p-2 border border-gray-200  overflow-hidden rounded-lg shadow-xl relative">
+                <div ref={chartContainerRef}>
+                    {/* style={{ position: "relative" }} */}
                     {activeTab.map((item) => (
                         <React.Fragment key={item.tabsName}>
                             {item.active && (
@@ -1759,10 +1753,10 @@ const DeleteFibonacci = ({ strokes, trendlinesRef, data, onClick, linesRef }: {
                 {linesRef.map((i, idx) => {
                     return <Button key={idx} className="w-full shadow-none text-black cursor-pointer font-semibold text-left px-4 hover:bg-[var(--color-background-opacity-2)] hover:text-[var(--color-background)] py-2" onClick={() => onClick("line", i.id)}>{t("Xóa đường nằm ngang")} {i.id}</Button>
                 })}
-                {trendlinesRef.map((i, idx) => {
+                {trendlinesRef.map((_i, idx) => {
                     return <Button key={idx} className="w-full shadow-none text-black cursor-pointer font-semibold text-left px-4 hover:bg-[var(--color-background-opacity-2)] hover:text-[var(--color-background)] py-2" onClick={() => onClick("trendLine", idx)}>{t("Xóa đường xu hướng")} {idx + 1}</Button>
                 })}
-                {strokes.map((i, idx) => {
+                {strokes.map((_i, idx) => {
                     return <Button key={idx} className="w-full shadow-none text-black cursor-pointer font-semibold text-left px-4 hover:bg-[var(--color-background-opacity-2)] hover:text-[var(--color-background)] py-2" onClick={() => onClick("brush", idx)}>{t("Xóa cọ vẽ")} {idx + 1}</Button>
                 })}
                 <Button className="w-full shadow-none text-black cursor-pointer font-semibold text-left px-4 hover:bg-[var(--color-background-opacity-2)] hover:text-[var(--color-background)] py-2" onClick={() => onClick("fibonacci", -1)}>{`${t("Xóa")} ${data.length} ${t("bản vẽ")}, ${linesRef.length + trendlinesRef.length} ${t("chỉ báo")} ${t('và')} ${strokes.length} ${t('cọ vẽ')}`}</Button>
