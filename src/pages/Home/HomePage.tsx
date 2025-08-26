@@ -203,6 +203,55 @@ export default function HomePage() {
         return () => { ignore = true };
     }, [pagination.page]);
 
+    const reset = () => {
+        setlinesRef([])
+        setFibBlocks([])
+        dragStart.current = null
+        isFetchingRef.current = null
+        setFibMode(false)
+        setDragging(false)
+        setActiveFibId(null)
+        setIsDrawingMode(false)
+        setIsCheckFibonacci(false)
+        setIndicator(dataIndicator)
+        if (canvasRef.current) {
+            canvasRef.current.style.pointerEvents = "none";
+        }
+
+        if (canvasRef.current) {
+            const ctx = canvasRef.current.getContext("2d");
+            ctx?.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+        }
+        if (overlayRef.current) {
+            const ctx = overlayRef.current.getContext("2d");
+            ctx?.clearRect(0, 0, overlayRef.current.width, overlayRef.current.height);
+        }
+
+        setDrawing(false)
+        setTrendlines([])
+        tempStartRef.current = null
+        tempEndRef.current = null
+        draggingLineIndex.current = null
+        draggingHandle.current = null
+        dragStartTrandLine.current = null
+        needRedraw.current = false
+        if (canvasTrendLine.current) {
+            const ctx = canvasTrendLine.current.getContext("2d");
+            ctx?.clearRect(0, 0, canvasTrendLine.current.width, canvasTrendLine.current.height);
+        }
+
+        setStrokes([])
+        setIsDrawing(false)
+        setIsDrawingBrush(false)
+        setDraggingStrokeIndex(null)
+        currentStrokePixels.current = []
+        rafRefStrokes.current = null
+        if (canvasStrokes.current) {
+            const ctx = canvasStrokes.current.getContext("2d");
+            ctx?.clearRect(0, 0, canvasStrokes.current.width, canvasStrokes.current.height);
+        }
+    }
+
     useEffect(() => {
         if (serverId) {
             setPagination((prev) => ({ ...prev, last_time: undefined }));
@@ -212,52 +261,7 @@ export default function HomePage() {
             setSymbolsSocket([])
             setSymbolsCandSocket([])
 
-            setlinesRef([])
-            setFibBlocks([])
-            dragStart.current = null
-            isFetchingRef.current = null
-            setFibMode(false)
-            setDragging(false)
-            setActiveFibId(null)
-            setIsDrawingMode(false)
-            setIsCheckFibonacci(false)
-            setIndicator(dataIndicator)
-            if (canvasRef.current) {
-                canvasRef.current.style.pointerEvents = "none";
-            }
-
-            if (canvasRef.current) {
-                const ctx = canvasRef.current.getContext("2d");
-                ctx?.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-            }
-            if (overlayRef.current) {
-                const ctx = overlayRef.current.getContext("2d");
-                ctx?.clearRect(0, 0, overlayRef.current.width, overlayRef.current.height);
-            }
-
-            setDrawing(false)
-            setTrendlines([])
-            tempStartRef.current = null
-            tempEndRef.current = null
-            draggingLineIndex.current = null
-            draggingHandle.current = null
-            dragStartTrandLine.current = null
-            needRedraw.current = false
-            if (canvasTrendLine.current) {
-                const ctx = canvasTrendLine.current.getContext("2d");
-                ctx?.clearRect(0, 0, canvasTrendLine.current.width, canvasTrendLine.current.height);
-            }
-
-            setStrokes([])
-            setIsDrawing(false)
-            setIsDrawingBrush(false)
-            setDraggingStrokeIndex(null)
-            currentStrokePixels.current = []
-            rafRefStrokes.current = null
-            if (canvasStrokes.current) {
-                const ctx = canvasStrokes.current.getContext("2d");
-                ctx?.clearRect(0, 0, canvasStrokes.current.width, canvasStrokes.current.height);
-            }
+            reset()
         }
     }, [serverId]);
 
@@ -269,8 +273,11 @@ export default function HomePage() {
 
         if (canvasRef.current && selected.tabsName === "Biểu đồ đường") {
             canvasRef.current.style.pointerEvents = "none";
-            setFibBlocks([]);
-            setlinesRef([]);
+            overlayRef.current.style.pointerEvents = "none";
+            canvasStrokes.current.style.pointerEvents = "none";
+            canvasTrendLine.current.style.pointerEvents = "none";
+
+            reset()
         }
         setIsCheckFibonacci((selected.tabsName === "Biểu đồ đường"))
         setActiveTab(updated);
