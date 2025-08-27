@@ -19,7 +19,9 @@ export function useSocket(
     if (id_symbol) {
       const socket = io(url, {
         query: {
-          symbol_id: id_symbol, token
+          symbol_id: id_symbol, 
+          token,
+          channels: listen
         }
       });
       socketRef.current = socket;
