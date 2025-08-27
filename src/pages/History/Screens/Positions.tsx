@@ -126,18 +126,24 @@ export default function Positions() {
     return (
         <div className='relative'>
             <Filter setFilter={setFilter} filter={filter} isType isStatus query={query} setQuery={setQuery} handleFilter={handleFilter} />
-            <div className="p-2 flex flex-col justify-center items-start gap-2">
+            <div className="p-2 flex flex-col justify-start items-start gap-2 min-h-[410px]">
                 {
-                    !loading ? data.map((a, idx) => <div key={idx} className="flex justify-between items-center w-full shadow-sm shadow-gray-300 p-2 rounded-sm">
-                        <div className="">
-                            <div className='font-bold'>{a.symbol} <span className={`text-sm font-semibold ${a.position_type === "SELL" ? "text-red-500" : "text-blue-500"}`}>{a.position_type} {a.volume}</span></div>
-                            <div className='text-sm flex justify-start items-center gap-1'>{a.open_price} <Icon name="icon-right-v2" width={14} height={14} /> {a.current_price}</div>
-                        </div>
-                        <div className="">
-                            <div className={`text-right ${a.profit > 0 ? "text-blue-700" : (a.profit === 0 ? "text-gray-400" : "text-red-500")} font-semibold`}>{a.profit}</div>
-                            <div className='text-sm'>{a.account_id} | {(dayjs.utc(a.time)).tz("Asia/Ho_Chi_Minh").format("YYYY-MM-DD HH:mm:ss")}</div>
-                        </div>
-                    </div>) : <Loading />
+                    !loading ?
+                        data.length === 0 ?
+                            <div className='text-gray-300 flex justify-center items-center flex-1 w-full'>{t("Hiện không có lệnh nào đang mở")}</div>
+                            :
+                            data.map((a, idx) => <div key={idx} className="flex justify-between items-center w-full shadow-sm shadow-gray-300 p-2 rounded-sm">
+                                <div className="">
+                                    <div className='font-bold'>{a.symbol} <span className={`text-sm font-semibold ${a.position_type === "SELL" ? "text-red-500" : "text-blue-500"}`}>{a.position_type} {a.volume}</span></div>
+                                    <div className='text-sm flex justify-start items-center gap-1'>{a.open_price} <Icon name="icon-right-v2" width={14} height={14} /> {a.current_price}</div>
+                                </div>
+                                <div className="">
+                                    <div className={`text-right ${a.profit > 0 ? "text-blue-700" : (a.profit === 0 ? "text-gray-400" : "text-red-500")} font-semibold`}>{a.profit}</div>
+                                    <div className='text-sm'>{a.account_id} | {(dayjs.utc(a.time)).tz("Asia/Ho_Chi_Minh").format("YYYY-MM-DD HH:mm:ss")}</div>
+                                </div>
+                            </div>)
+                        :
+                        <Loading />
                 }
             </div>
 

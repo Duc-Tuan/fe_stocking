@@ -130,7 +130,7 @@
   "Đường chỉ báo ngang RSI": "RSI horizontal indicator line",
   "Đường nằm ngang": "Horizontal line",
   "Xóa đường nằm ngang": "Delete horizontal line",
-  "Đường ngang": "Horizontal line",
+  "Đường": "Line",
   "và": "and",
   "Xóa đường xu hướng": "Delete trendline",
   "chỉ báo": "indicator",
@@ -140,5 +140,6 @@
   "cọ vẽ": "paint brush",
   "Xóa cọ vẽ": "Delete paint brush",
   "Vốn": "Capital",
-  "Đang chờ tài khoản": "Waiting for account"
+  "Đang chờ tài khoản": "Waiting for account",
+  "Hiện không có lệnh nào đang mở": "There are currently no open orders"
 }

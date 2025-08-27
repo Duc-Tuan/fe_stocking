@@ -251,10 +251,12 @@ export default function HomePage() {
             ctx?.clearRect(0, 0, canvasStrokes.current.width, canvasStrokes.current.height);
         }
 
-        canvasRef.current.style.pointerEvents = "none";
-        overlayRef.current.style.pointerEvents = "none";
-        canvasStrokes.current.style.pointerEvents = "none";
-        canvasTrendLine.current.style.pointerEvents = "none";
+        if (canvasRef.current || overlayRef.current || canvasStrokes.current || canvasTrendLine.current) {
+            canvasRef.current.style.pointerEvents = "none";
+            overlayRef.current.style.pointerEvents = "none";
+            canvasStrokes.current.style.pointerEvents = "none";
+            canvasTrendLine.current.style.pointerEvents = "none";
+        }
     }
 
     useEffect(() => {
@@ -319,7 +321,7 @@ export default function HomePage() {
                         ctx.arc(xx, yy, 4, 0, 2 * Math.PI);
                         ctx.fillStyle = "white";
                         ctx.fill();
-                        ctx.strokeStyle = getCssVar("--color-background");
+                        ctx.strokeStyle = "blue";
                         ctx.stroke();
                     });
                 }
@@ -765,11 +767,11 @@ export default function HomePage() {
                 ctx.fillText(text, textX + 12, textY + 2);
 
                 // === Label thêm ở giữa line ===
-                const midX = canvas.width - 105; // giữa chart (không tính phần trục Y)
+                const midX = canvas.width - 90; // giữa chart (không tính phần trục Y)
 
                 ctx.fillStyle = "blue"
                 ctx.textAlign = "center"; // 👈 cần set lại
-                ctx.fillText(`${t("Đường ngang")} ${line.id}`, midX, y + 2);
+                ctx.fillText(`${t("Đường")} ${line.id}`, midX, y - 5);
 
                 ctx.restore(); // 👈 Trả trạng thái lại
             }
@@ -806,7 +808,7 @@ export default function HomePage() {
                 // Vẽ text đè lên background
                 ctx.fillStyle = "white";
                 ctx.textAlign = "start";
-                ctx.fillText(text, textX + 12, textY + 2);
+                ctx.fillText(text, textX + 12, textY);
             }
         }
     };
@@ -1117,6 +1119,9 @@ export default function HomePage() {
 
             const height = chartContainerRef.current!.clientHeight
 
+            console.log(height, indicator.filter((a) => a.active).length);
+
+
             switch (indicator.filter((a) => a.active).length) {
                 case 2:
                     overlayRef.current.height = height - 120;
@@ -1135,6 +1140,7 @@ export default function HomePage() {
                     overlayRef.current.height = height - 28;
                     canvasStrokes.current.height = height - 28;
                     canvasTrendLine.current.height = height - 28;
+                    canvasRef.current.height = height;
                     break;
             }
 
@@ -1324,15 +1330,15 @@ export default function HomePage() {
                 const x2 = timeScale.timeToCoordinate(line.end.time as any);
                 const y2 = candleSeriesRef.current.priceToCoordinate(line.end.price);
 
-                if (x1 && y1 && Math.hypot(x - x1, y - y1) < 7) {
+                if (x1 && y1 && Math.hypot(x - x1, y - y1) < 10) {
                     draggingHandle.current = { lineIndex: i, point: "start" };
                     return;
                 }
-                if (x2 && y2 && Math.hypot(x - x2, y - y2) < 7) {
+                if (x2 && y2 && Math.hypot(x - x2, y - y2) < 10) {
                     draggingHandle.current = { lineIndex: i, point: "end" };
                     return;
                 }
-                if (x1 && x2 && y1 && y2 && isPointNearLine(x, y, x1, y1, x2, y2, 5)) {
+                if (x1 && x2 && y1 && y2 && isPointNearLine(x, y, x1, y1, x2, y2, 10)) {
                     draggingLineIndex.current = i;
                     dragStartTrandLine.current = { mouseX: x, mouseY: y, start: line };
                     return;
@@ -1862,7 +1868,7 @@ const DeleteFibonacci = ({ strokes, trendlinesRef, data, onClick, linesRef }: {
         </TooltipCustom>
 
         {(data.length !== 0 || linesRef.length !== 0 || trendlinesRef.length !== 0 || strokes.length !== 0) && visible && (
-            <div className={`ml-2 transition-all duration-200 absolute w-[460px] -top-2 left-full mt-2 bg-white shadow-sm shadow-gray-300 rounded-lg border border-gray-300 p-2 ${open ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-2'}`}>
+            <div className={`ml-2 transition-all duration-200 absolute w-[460px] max-h-[50vh] overflow-y-scroll my-scroll -top-2 left-full mt-2 bg-white shadow-sm shadow-gray-300 rounded-lg border border-gray-300 p-2 pb-0 ${open ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-2'}`}>
                 {data?.map((_: any, idx: number) => {
                     return <Button key={idx} className="w-full shadow-none text-black cursor-pointer font-semibold text-left px-4 hover:bg-[var(--color-background-opacity-2)] hover:text-[var(--color-background)] py-2" onClick={() => onClick("fibonacci", idx)}>{t("Xóa bản vẽ")} {idx + 1}</Button>
                 })}
@@ -1875,7 +1881,9 @@ const DeleteFibonacci = ({ strokes, trendlinesRef, data, onClick, linesRef }: {
                 {strokes.map((_i, idx) => {
                     return <Button key={idx} className="w-full shadow-none text-black cursor-pointer font-semibold text-left px-4 hover:bg-[var(--color-background-opacity-2)] hover:text-[var(--color-background)] py-2" onClick={() => onClick("brush", idx)}>{t("Xóa cọ vẽ")} {idx + 1}</Button>
                 })}
-                <Button className="w-full shadow-none text-black cursor-pointer font-semibold text-left px-4 hover:bg-[var(--color-background-opacity-2)] hover:text-[var(--color-background)] py-2" onClick={() => onClick("fibonacci", -1)}>{`${t("Xóa")} ${data.length} ${t("bản vẽ")}, ${linesRef.length + trendlinesRef.length} ${t("chỉ báo")} ${t('và')} ${strokes.length} ${t('cọ vẽ')}`}</Button>
+                <div className="sticky -bottom-2 left-0 right-0 w-full bg-white pb-2">
+                    <Button className="w-full shadow-none text-black cursor-pointer font-semibold text-left px-4 hover:bg-[var(--color-background-opacity-2)] hover:text-[var(--color-background)] py-2" onClick={() => onClick("fibonacci", -1)}>{`${t("Xóa")} ${data.length} ${t("bản vẽ")}, ${linesRef.length + trendlinesRef.length} ${t("chỉ báo")} ${t('và')} ${strokes.length} ${t('cọ vẽ')}`}</Button>
+                </div>
             </div>
         )}
     </div>

@@ -10,7 +10,7 @@ import TooltipCustom from "../../components/tooltip";
 import { useAppInfo } from "../../hooks/useAppInfo";
 import { useCurrentPnl } from "../../hooks/useCurrentPnl";
 import PopupAcc from "./PopupAcc";
-import { dataActivateTypetransaction, type IActivateTypetransaction, type IOrderTransaction } from "./type";
+import { dataActivateTypetransaction, type IActivateTypetransaction, type IOrderTransaction, type IStatus_sl_tp } from "./type";
 import Volume from "./Volume";
 
 const init: IOrderTransaction = {
@@ -45,18 +45,23 @@ export default function TransactionPage() {
             active: a.type === datas,
         }));
 
-        let statuss: "Nguoc" | "Xuoi" = 'Xuoi'
+        let statuss: IStatus_sl_tp = 'Xuoi_Limit'
         switch (updated.find((a) => a.active)?.type) {
             case "Nguoc_Limit":
+                statuss = 'Nguoc_Limit'
+                break;
             case "Nguoc_Stop":
-                statuss = 'Nguoc'
+                statuss = 'Nguoc_Stop'
                 break;
             case "Xuoi_Limit":
+                statuss = 'Xuoi_Limit'
+                break;
             case "Xuoi_Stop":
-                statuss = 'Xuoi'
+                statuss = 'Xuoi_Stop'
                 break;
             default:
-                statuss = 'Xuoi'
+                statuss = 'Xuoi_Limit'
+                break;
         }
 
         setData((prev) => ({ ...prev, status: updated.find((a) => a.active)?.type, status_sl_tp: statuss }))
@@ -75,9 +80,9 @@ export default function TransactionPage() {
         ))
     }, [serverMonitorActive, pnl, stopLoss, takeProfit])
 
-    const handleSendOrder = (type?: "Xuoi" | "Nguoc") => {
+    const handleSendOrder = (type?: IStatus_sl_tp) => {
         let by_symbols: any = currentPnl?.by_symbol?.map((a) => ({ ...a, type: a.type.toUpperCase() }))
-        if (type === "Nguoc" || data?.status_sl_tp === "Nguoc") {
+        if (type === "Nguoc_Limit" || type === "Nguoc_Stop" || data?.status_sl_tp === "Nguoc_Limit" || data?.status_sl_tp === "Nguoc_Stop") {
             by_symbols = currentPnl?.by_symbol?.map((a) => ({ ...a, type: a.type.toUpperCase() === "BUY" ? "SELL" : "BUY" }))
         }
 
@@ -94,10 +99,18 @@ export default function TransactionPage() {
     const isCheckSumbit = useMemo(() => {
         if (data?.status === "Xuoi_Limit" || data?.status === "Nguoc_Stop") {
             const isPrice = pnl <= (currentPnl?.total_pnl ?? 0)
-            return isPrice && (pnl ?? 0) < stopLoss && ((pnl ?? 0) > takeProfit)
+            if (data?.status === "Xuoi_Limit") {
+                return isPrice && (pnl ?? 0) > stopLoss && ((pnl ?? 0) < takeProfit)
+            } else if (data?.status === "Nguoc_Stop") {
+                return isPrice && (pnl ?? 0) < stopLoss && ((pnl ?? 0) > takeProfit)
+            }
         } else if (data?.status === "Nguoc_Limit" || data?.status === "Xuoi_Stop") {
             const isPrice = pnl >= (currentPnl?.total_pnl ?? 0)
-            return isPrice && (pnl ?? 0) > stopLoss && ((pnl ?? 0) < takeProfit)
+            if (data?.status === "Nguoc_Limit") {
+                return isPrice && (pnl ?? 0) < stopLoss && ((pnl ?? 0) > takeProfit)
+            } else if (data?.status === "Xuoi_Stop") {
+                return isPrice && (pnl ?? 0) > stopLoss && ((pnl ?? 0) < takeProfit)
+            }
         }
     }, [data?.status_sl_tp, stopLoss, pnl, takeProfit])
 
@@ -202,7 +215,6 @@ export default function TransactionPage() {
                                         <input
                                             type="number"
                                             step="0.01"
-                                            min={0}
                                             value={takeProfit}
                                             onChange={(e) => setTakeProfit(Number(e.target.value))}
                                             className="w-20 text-center font-bold px-1 py-0.5 appearance-none focus:outline-none focus:ring-0 focus:border-transparent [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [MozAppearance:textfield]"
@@ -263,12 +275,12 @@ export default function TransactionPage() {
                     :
                     <div className="flex gap-2 h-10">
                         <Button onClick={() => {
-                            ((currentPnl?.total_pnl ?? 0) > stopLoss && ((currentPnl?.total_pnl ?? 0) < takeProfit)) && handleSendOrder("Xuoi")
+                            ((currentPnl?.total_pnl ?? 0) > stopLoss && ((currentPnl?.total_pnl ?? 0) < takeProfit)) && handleSendOrder("Xuoi_Limit")
                         }} aria-current="page" className={`${((currentPnl?.total_pnl ?? 0) > stopLoss && ((currentPnl?.total_pnl ?? 0) < takeProfit)) ? "bg-rose-600 hover:bg-red-600" : "bg-gray-300"} p-0 flex-1  text-white rounded-lg shadow-xs shadow-gray-500  cursor-pointer font-bold`}>
                             {t("Xuôi")}
                         </Button>
                         <Button onClick={() => {
-                            ((currentPnl?.total_pnl ?? 0) < stopLoss && ((currentPnl?.total_pnl ?? 0) > takeProfit)) && handleSendOrder("Nguoc")
+                            ((currentPnl?.total_pnl ?? 0) < stopLoss && ((currentPnl?.total_pnl ?? 0) > takeProfit)) && handleSendOrder("Nguoc_Limit")
                         }} aria-current="page" className={`${((currentPnl?.total_pnl ?? 0) < stopLoss && ((currentPnl?.total_pnl ?? 0) > takeProfit)) ? "bg-blue-600 hover:bg-blue-800" : "bg-gray-300"} p-0 flex-1 text-white rounded-lg shadow-xs shadow-gray-500 cursor-pointer font-bold`}>
                             {t("Ngược")}
                         </Button>
@@ -299,6 +311,7 @@ const Modal = ({ open, setOpen, dataCurrent }: { open: boolean, setOpen: Dispatc
             setOpen(false)
             toast.success("Vào lệnh thành công!")
         }).catch(() => setLoading(false))
+
     }
 
     return <Dialog open={open} onClose={setOpen} className="relative z-100">

@@ -129,7 +129,7 @@
   "Đường chỉ báo ngang RSI": "Đường chỉ báo ngang RSI",
   "Đường nằm ngang": "Đường nằm ngang",
   "Xóa đường nằm ngang": "Xóa đường nằm ngang",
-  "Đường ngang": "Đường ngang",
+  "Đường": "Đường",
   "và": "và",
   "Xóa đường xu hướng": "Xóa đường xu hướng",
   "chỉ báo": "chỉ báo",
@@ -139,5 +139,6 @@
   "cọ vẽ": "cọ vẽ",
   "Xóa cọ vẽ": "Xóa cọ vẽ",
   "Vốn": "Vốn",
-  "Đang chờ tài khoản": "Đang chờ tài khoản"
+  "Đang chờ tài khoản": "Đang chờ tài khoản",
+  "Hiện không có lệnh nào đang mở": "Hiện không có lệnh nào đang mở"
 }

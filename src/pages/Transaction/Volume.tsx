@@ -49,6 +49,7 @@ export default function Volume({ setData }: { setData: Dispatch<SetStateAction<I
         if (Number(e.target.value) > 1) return setInputValue("1")
         if (e.target.value === "") return setInputValue("0.01")
         setInputValue(e.target.value);
+        setCenterValue(Number(e.target.value));
     };
 
     useEffect(() => {

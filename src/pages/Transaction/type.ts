@@ -28,8 +28,8 @@ export const dataActivateTypetransaction: IActivateTypetransaction[] = [
         active: false,
         subTitle: `Điều kiện để vào lệnh: 
             Giá(PNL) < PNL, 
-            Cắt lỗ(PNL) > Giá(PNL), 
-            Chốt lời(PNL) < Giá(PNL)
+            Cắt lỗ(PNL) < Giá(PNL), 
+            Chốt lời(PNL) > Giá(PNL)
         `
     },
     {
@@ -39,8 +39,8 @@ export const dataActivateTypetransaction: IActivateTypetransaction[] = [
         active: false,
         subTitle: `Điều kiện để vào lệnh: 
             Giá(PNL) > PNL, 
-            Cắt lỗ(PNL) < Giá(PNL), 
-            Chốt lời(PNL) > Giá(PNL)
+            Cắt lỗ(PNL) > Giá(PNL), 
+            Chốt lời(PNL) < Giá(PNL)
         `
     },
     {
@@ -87,6 +87,8 @@ export const dataAccTransaction: IAccTransaction[] = [
     },
 ]
 
+export type IStatus_sl_tp = "Xuoi_Limit" | "Nguoc_Limit" | "Xuoi_Stop" | "Nguoc_Stop";
+
 export interface IOrderTransaction {
     account_monitor_id?: number,
     account_transaction_id?: number,
@@ -96,7 +98,7 @@ export interface IOrderTransaction {
     take_profit?: number,
     status?: EMO,
     type?: "CLOSE" | "RUNNING",
-    status_sl_tp?: "Nguoc" | "Xuoi",
+    status_sl_tp?: IStatus_sl_tp,
     by_symbol?: {
         current_price: number,
         symbol: string,
