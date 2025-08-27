@@ -10,21 +10,21 @@ export default function Atr({
     candleData,
     chartRefCandl,
     currentRange,
+    latestData,
     colors: {
         backgroundColor = 'transparent',
         lineColor = getColorChart('--color-background-atr'),
         textColor = 'black',
     } = {}
-}: { candleData: IinitialDataCand[], currentRange: any, chartRefCandl: any, colors?: any }) {
+}: { candleData: IinitialDataCand[], currentRange: any, chartRefCandl: any, colors?: any, latestData: IinitialDataCand[] }) {
     const chartAtrRef = useRef<HTMLDivElement>(null);
     const chartAtr = useRef<any>(null);
 
     const seriesRef = useRef<any>(null);
-    const allData = useRef<BarData[] | null>(null);
+    const allData = useRef<BarData[]>([]);
 
     const currentData = useRef<any>(null);
 
-    // const currentAtr = useRef<any>(null);
     const currentDataAtr = useRef<any>(null);
     const [currentAtr, setCurrentAtr] = useState<{ time: any, value: any } | null>(null)
 
@@ -187,6 +187,39 @@ export default function Atr({
 
         seriesRef.current.setData(rsiData);
     }, [candleData, currentRange]);
+
+    useEffect(() => {
+        if (!latestData || !Array.isArray(latestData) || !latestData.length || !seriesRef.current) return;
+
+        const fixed = normalizeChartData(latestData);
+        if (!fixed.length) return;
+
+        let updated = [...allData.current];
+        let hasNew = false;
+
+        for (const point of fixed) {
+            const idx = updated.findIndex(p => Number(p.time) === Number(point.time));
+            if (idx !== -1) {
+                updated[idx] = point;
+            } else {
+                updated.push(point);
+                hasNew = true;
+            }
+        }
+
+        if (hasNew) updated.sort((a: any, b: any) => a.time - b.time);
+        allData.current = updated;
+
+        const data = renderData(allData.current);
+        const rsiData = calculateATR(data, 14);
+
+        currentData.current = data
+        currentDataAtr.current = rsiData
+
+        setCurrentAtr(rsiData[rsiData.length - 1])
+
+        seriesRef.current.setData(rsiData);
+    }, [latestData]);
 
     return <div ref={chartAtrRef} style={{ position: "relative" }}>
         <div className="absolute w-[calc(100%-58px)] h-[92px] bg-[var(--color-background-atr-1)] left-0 right-0 top-0" />

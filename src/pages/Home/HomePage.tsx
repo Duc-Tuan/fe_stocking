@@ -250,6 +250,11 @@ export default function HomePage() {
             const ctx = canvasStrokes.current.getContext("2d");
             ctx?.clearRect(0, 0, canvasStrokes.current.width, canvasStrokes.current.height);
         }
+
+        canvasRef.current.style.pointerEvents = "none";
+        overlayRef.current.style.pointerEvents = "none";
+        canvasStrokes.current.style.pointerEvents = "none";
+        canvasTrendLine.current.style.pointerEvents = "none";
     }
 
     useEffect(() => {
@@ -272,11 +277,6 @@ export default function HomePage() {
         }));
 
         if (canvasRef.current && selected.tabsName === "Biểu đồ đường") {
-            canvasRef.current.style.pointerEvents = "none";
-            overlayRef.current.style.pointerEvents = "none";
-            canvasStrokes.current.style.pointerEvents = "none";
-            canvasTrendLine.current.style.pointerEvents = "none";
-
             reset()
         }
         setIsCheckFibonacci((selected.tabsName === "Biểu đồ đường"))
@@ -394,7 +394,7 @@ export default function HomePage() {
             canvasRef.current.width = widthChart
             canvasRef.current.height = height
 
-            overlayRef.current.width = widthChart - 58
+            overlayRef.current.width = widthChart
             overlayRef.current.height = height
 
             canvasTrendLine.current.width = widthChart - 58
@@ -818,13 +818,11 @@ export default function HomePage() {
     };
 
     useEffect(() => {
+        if (!fibMode) return;
+
         if (canvasRef.current) {
             canvasRef.current.style.pointerEvents = isCheckFibonacci ? "auto" : "none"
         }
-    }, [isCheckFibonacci])
-
-    useEffect(() => {
-        if (!fibMode) return;
 
         const canvas = canvasRef.current;
         const container = chartContainerRef.current;
@@ -1298,7 +1296,7 @@ export default function HomePage() {
 
     // events
     useEffect(() => {
-        if (!canvasTrendLine.current && !chartRef.current && !candleSeriesRef.current) return;
+        if (!canvasTrendLine.current || !chartRef.current || !candleSeriesRef.current) return;
         const setCursor = (cursor: string) => { canvasTrendLine.current && (canvasTrendLine.current.style.cursor = cursor) }
 
         if (canvasTrendLine.current) {
@@ -1626,6 +1624,8 @@ export default function HomePage() {
         timeScale && timeScale?.subscribeVisibleLogicalRangeChange(requestRedrawStrokes);
         timeScale && timeScale.subscribeVisibleTimeRangeChange(requestRedrawStrokes);
 
+        requestRedrawStrokes();
+
         return () => {
             timeScale && timeScale.unsubscribeVisibleTimeRangeChange(requestRedrawStrokes);
             timeScale && timeScale.unsubscribeVisibleLogicalRangeChange(requestRedrawStrokes);
@@ -1638,11 +1638,6 @@ export default function HomePage() {
             window.removeEventListener("mouseup", handleMouseUp);
         };
     }, [isDrawingBrush, isDrawing, strokes, draggingStrokeIndex, dragStartStrokes]);
-
-    // mỗi khi strokes thay đổi thì redraw ngay
-    useEffect(() => {
-        requestRedrawStrokes();
-    }, [strokes]);
 
     return (
         <div className="text-center">
@@ -1765,8 +1760,8 @@ export default function HomePage() {
                 </div>
                 {
                     (activeTab.find((a) => a.active && a.tabsName === "Biểu đồ nến")) ? <>
-                        {indicator.find((a) => a.active && a.value === "rsi") && <Rsi candleData={symbolsCand} chartRefCandl={chartRef} currentRange={currentRange} chartRefCurentRSI={chartRefCurentRSI} boundaryLine={boundaryLine} />}
-                        {indicator.find((a) => a.active && a.value === "atr") && <Atr candleData={symbolsCand} chartRefCandl={chartRef} currentRange={currentRange} />}
+                        {indicator.find((a) => a.active && a.value === "rsi") && <Rsi latestData={symbolsCandSocket} candleData={symbolsCand} chartRefCandl={chartRef} currentRange={currentRange} chartRefCurentRSI={chartRefCurentRSI} boundaryLine={boundaryLine} />}
+                        {indicator.find((a) => a.active && a.value === "atr") && <Atr latestData={symbolsCandSocket} candleData={symbolsCand} chartRefCandl={chartRef} currentRange={currentRange} />}
                     </> : <></>
                 }
             </div>

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { calculateRSI } from './type';
-import { ColorType, createChart, type BarData, type IChartApi, type UTCTimestamp } from 'lightweight-charts';
+import { ColorType, createChart, LineStyle, type BarData, type IChartApi, type UTCTimestamp } from 'lightweight-charts';
 import { timeOptions, type IinitialDataCand } from '../../pages/Home/options';
 import { formatVietnamTimeSmart, gridColor } from '../line/formatTime';
 import { aggregateCandlesByInterval, getColorChart } from '../../utils/timeRange';
@@ -8,17 +8,17 @@ import { normalizeChartData } from '../candlestickSeries/options';
 import { useTranslation } from 'react-i18next';
 import type { IboundaryLine } from '../../pages/Home/type';
 
-export default function Rsi({ chartRefCurentRSI, candleData, chartRefCandl, currentRange, boundaryLine, colors: {
+export default function Rsi({ latestData, chartRefCurentRSI, candleData, chartRefCandl, currentRange, boundaryLine, colors: {
     backgroundColor = 'transparent',
     lineColor = getColorChart('--color-background'),
     textColor = 'black',
-} = {} }: { candleData: IinitialDataCand[], currentRange: any, chartRefCandl: any, colors?: any, chartRefCurentRSI: any, boundaryLine: IboundaryLine }) {
+} = {} }: { latestData: IinitialDataCand[], candleData: IinitialDataCand[], currentRange: any, chartRefCandl: any, colors?: any, chartRefCurentRSI: any, boundaryLine: IboundaryLine }) {
     const { t } = useTranslation()
     const chartRef = useRef<any>(null);
     const rsiChartRef = useRef<HTMLDivElement>(null);
     const seriesRef = useRef<any>(null);
 
-    const allData = useRef<BarData[] | null>(null);
+    const allData = useRef<BarData[]>([]);
 
     const currentData = useRef<any>(null);
 
@@ -110,14 +110,16 @@ export default function Rsi({ chartRefCurentRSI, candleData, chartRefCandl, curr
                 price: 80,
                 color: 'red',
                 lineWidth: 1,
-                lineStyle: 1,
+                // lineStyle: 1,
+                lineStyle: LineStyle.Solid,
                 axisLabelVisible: true,
             });
             const line20 = seriesRef.current.createPriceLine({
                 price: 20,
                 color: 'red',
                 lineWidth: 1,
-                lineStyle: 1,
+                // lineStyle: 1,
+                lineStyle: LineStyle.Solid,
                 axisLabelVisible: true,
             });
             priceLinesRef.current["80_20"].push(line80, line20);
@@ -129,14 +131,16 @@ export default function Rsi({ chartRefCurentRSI, candleData, chartRefCandl, curr
                 price: 70,
                 color: 'green',
                 lineWidth: 1,
-                lineStyle: 1,
+                // lineStyle: 1,
+                lineStyle: LineStyle.Solid,
                 axisLabelVisible: true,
             });
             const line30 = seriesRef.current.createPriceLine({
                 price: 30,
                 color: 'green',
                 lineWidth: 1,
-                lineStyle: 1,
+                // lineStyle: 1,
+                lineStyle: LineStyle.Solid,
                 axisLabelVisible: true,
             });
             priceLinesRef.current["70_30"].push(line70, line30);
@@ -148,7 +152,8 @@ export default function Rsi({ chartRefCurentRSI, candleData, chartRefCandl, curr
                 price: 50,
                 color: 'gold',
                 lineWidth: 1,
-                lineStyle: 1,
+                // lineStyle: 1,
+                lineStyle: LineStyle.Solid,
                 axisLabelVisible: true,
             });
             priceLinesRef.current["50"].push(line50);
@@ -245,6 +250,37 @@ export default function Rsi({ chartRefCurentRSI, candleData, chartRefCandl, curr
 
         seriesRef.current.setData(rsiData);
     }, [candleData, currentRange]);
+
+    useEffect(() => {
+        if (!latestData || !Array.isArray(latestData) || !latestData.length || !seriesRef.current) return;
+
+        const fixed = normalizeChartData(latestData);
+        if (!fixed.length) return;
+
+        let updated = [...allData.current];
+        let hasNew = false;
+
+        for (const point of fixed) {
+            const idx = updated.findIndex(p => Number(p.time) === Number(point.time));
+            if (idx !== -1) {
+                updated[idx] = point;
+            } else {
+                updated.push(point);
+                hasNew = true;
+            }
+        }
+
+        if (hasNew) updated.sort((a: any, b: any) => a.time - b.time);
+        allData.current = updated;
+
+        const data = renderData(allData.current)
+        const rsiData = calculateRSI(data, 14);
+
+        currentData.current = data
+        currentDataRsi.current = rsiData
+
+        seriesRef.current.setData(rsiData);
+    }, [latestData]);
 
     return <div ref={rsiChartRef} style={{ position: "relative" }}>
         <div className="absolute w-[calc(100%-58px)] h-[120px] bg-[var(--color-background-opacity-1)] left-0 right-0 bottom-0" />

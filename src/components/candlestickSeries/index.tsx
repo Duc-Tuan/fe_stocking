@@ -158,6 +158,8 @@ export const CandlestickSeriesComponent = (props: any) => {
         chartRef.current = chart;
         chartRefCurent.current = chart;
 
+        chart.priceScale("right").applyOptions({ minimumWidth: 58 });
+
         const tooltip = document.createElement('div');
         tooltip.style.cssText = `
                     position: absolute;
