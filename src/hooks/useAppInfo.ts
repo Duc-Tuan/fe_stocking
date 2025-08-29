@@ -10,6 +10,7 @@ export function useAppInfo() {
     const loadingserverTransaction = useSelector((state: RootState) => state.transaction.loadingserverTransaction);
     const dataServerTransaction = useSelector((state: RootState) => state.transaction.dataServerTransaction);
     const loadingGetMe = useSelector((state: RootState) => state.auth.loading);
+    const user = useSelector((state: RootState) => state.auth.user);
 
     return {
         loadingServerMonitor,
@@ -17,6 +18,7 @@ export function useAppInfo() {
         serverMonitorActive,
         loadingGetMe,
         loadingserverTransaction,
-        dataServerTransaction
+        dataServerTransaction,
+        user
     };
 }
