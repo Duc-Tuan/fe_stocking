@@ -126,6 +126,8 @@ export default function HomePage() {
     const currentStrokePixels = useRef<{ x: number; y: number }[]>([]);
     const rafRefStrokes = useRef<any>(null);
 
+    const [showIndicator, setShowIndicator] = useState(true);
+
     // Gọi api khi page thay đổi
     const getSymbolApi = async (idServer: number) => {
         try {
@@ -1645,6 +1647,16 @@ export default function HomePage() {
         };
     }, [isDrawingBrush, isDrawing, strokes, draggingStrokeIndex, dragStartStrokes]);
 
+    const handleShowIndicator = () => {
+        if (canvasRef.current || overlayRef.current || canvasStrokes.current || canvasTrendLine.current) {
+            canvasRef.current.style.display = !showIndicator ? "block" : "none";
+            overlayRef.current.style.display = !showIndicator ? "block" : "none";
+            canvasStrokes.current.style.display = !showIndicator ? "block" : "none";
+            canvasTrendLine.current.style.display = !showIndicator ? "block" : "none";
+        }
+        setShowIndicator(!showIndicator)
+    }
+
     return (
         <div className="text-center">
             <div className="flex flex-wrap justify-between">
@@ -1710,6 +1722,10 @@ export default function HomePage() {
                                     setIsDrawingMode(false)
                                 }} w="w-[40px]" h="h-[40px]" titleTooltip={"Cọ vẽ"} classNameButton={`${isDrawingBrush ? "bg-[var(--color-background)] text-white" : "text-black bg-gray-200"}`}>
                                     <Icon name="icon-paint-brush" width={20} height={20} />
+                                </TooltipCustom>
+
+                                <TooltipCustom handleClick={handleShowIndicator} w="w-[40px]" h="h-[40px]" titleTooltip={showIndicator ? "Ẩn bản vẽ & chỉ báo" : "Hiện bản vẽ & chỉ báo"} classNameButton={`${showIndicator ? "bg-[var(--color-background)] text-white" : "text-black bg-gray-200"}`}>
+                                    <Icon name={`${showIndicator ? "icon-eye" : "icon-no-eye"}`} width={20} height={20} />
                                 </TooltipCustom>
 
                                 <DeleteFibonacci strokes={strokes} trendlinesRef={trendlines} linesRef={linesRef} data={fibBlocks} onClick={handleDelete} />
