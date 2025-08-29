@@ -106,10 +106,8 @@ export interface IOrderTransaction {
     }[]
 }
 
-export const titleSatusLot = (data: EMO) => {
+export const titleSatusLot = (data: IStatus_sl_tp) => {
     switch (data) {
-        case "Lenh_thi_truong":
-            return "Lệnh thị trường";
         case "Nguoc_Limit":
             return "Ngược Limit";
         case "Nguoc_Stop":
@@ -118,5 +116,7 @@ export const titleSatusLot = (data: EMO) => {
             return "Xuôi Limit";
         case "Xuoi_Stop":
             return "Xuôi Stop";
+        default:
+            return "Lệnh thị trường"
     }
 }

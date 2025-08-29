@@ -6,7 +6,7 @@ import type { ICurrentPnl } from "../types/global";
 export function useSocket(
   url: string,
   listen: string,
-  id_symbol: number | null
+  id_symbol: number | null,
 ) {
   const socketRef = useRef<Socket | null>(null);
   const token = useMemo(() => localStorage.getItem("token"), []);
@@ -14,12 +14,13 @@ export function useSocket(
 
   const [dataCurrentPosition, setDataCurrentPosition] = useState<any>()
   const [dataCurrentAccTransaction, setDataCurrentAccTransaction] = useState<any>()
+  const [dataOrder, setDataOrder] = useState<any>()
 
   useEffect(() => {
     if (id_symbol) {
       const socket = io(url, {
         query: {
-          symbol_id: id_symbol, 
+          symbol_id: id_symbol,
           token,
           channels: listen
         }
@@ -50,16 +51,19 @@ export function useSocket(
         }
       };
 
+      const handleOrderFilled = (data: any) => setDataOrder(data)
       const handlePosition = (data: any) => setDataCurrentPosition(data);
       const handleAccTransaction = (data: any) => setDataCurrentAccTransaction(data);
 
       // Đăng ký listener theo "listen"
+      if (listen === "order_filled") socket.on("order_filled", handleOrderFilled);
       if (listen === "chat_message") socket.on("chat_message", handleChat);
       if (listen === "position_message") socket.on("position_message", handlePosition);
       if (listen === "acc_transaction_message")
         socket.on("acc_transaction_message", handleAccTransaction);
 
       return () => {
+        if (listen === "order_filled") socket.off("order_filled", handleOrderFilled);
         if (listen === "chat_message") socket.off("chat_message", handleChat);
         if (listen === "position_message") socket.off("position_message", handlePosition);
         if (listen === "acc_transaction_message")
@@ -73,6 +77,7 @@ export function useSocket(
   return {
     dataCurrentPosition,
     dataCurrent,
-    dataCurrentAccTransaction
+    dataCurrentAccTransaction,
+    dataOrder
   }
 }

@@ -1,5 +1,5 @@
 import type { Dayjs } from "dayjs";
-import type { EMO } from "../Transaction/type";
+import type { EMO, IStatus_sl_tp } from "../Transaction/type";
 
 export interface IDatafunction {
     title: string;
@@ -40,7 +40,7 @@ export interface IHistoryLot {
     bySymbol: { price_transaction: number, symbol: string, type: string }[];
     price: number;
     status: EMO;
-    status_sl_tp: string;
+    status_sl_tp: IStatus_sl_tp;
     stop_loss: number;
     take_profit: number;
     time: string;

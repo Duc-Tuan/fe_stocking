@@ -37,7 +37,7 @@ function App() {
   const { dataCurrent } = useSocket(
     import.meta.env.VITE_URL_API,
     "chat_message",
-    Number(serverMonitorActive?.value)
+    Number(serverMonitorActive?.value),
   );
 
   useEffect(() => {
@@ -45,6 +45,7 @@ function App() {
       dispatch(setCurrentPnl(dataCurrent));
     }
   }, [dataCurrent]);
+
 
   useEffect(() => {
     let language = localStorage.getItem('language')

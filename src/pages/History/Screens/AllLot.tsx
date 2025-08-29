@@ -149,7 +149,7 @@ export default function AllLot() {
                                     </div>
                                     <div className="flex justify-start items-center gap-2">
                                         <span>{t("Trạng thái")}: </span>
-                                        <span className='font-semibold'>{titleSatusLot(a.status)}</span>
+                                        <span className='font-semibold'>{titleSatusLot(a.status_sl_tp)}</span>
                                     </div>
                                     <div className="flex justify-start items-center gap-2">
                                         <span>{t("Volume")}: </span>
