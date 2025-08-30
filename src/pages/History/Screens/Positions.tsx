@@ -69,7 +69,7 @@ export default function Positions() {
 
     useEffect(() => {
         const dataNew: any = [...data].map((i) => {
-            const dataSocket = dataCurrentPosition.position.find((d: any) => d.id === i.id)
+            const dataSocket = dataCurrentPosition.position?.find((d: any) => d.id === i.id)!
             if (i.id === dataSocket?.id) {
                 return {
                     id: i.id,
@@ -99,7 +99,8 @@ export default function Positions() {
         const dataNewAcc: any = [...dataAccTransaction].map((i) => {
             const dataSocket = dataCurrentPosition?.acc.find((d: any) => d.id === i.id)
             if (i.id === dataSocket?.id) {
-                const data = dataCurrentPosition.position.filter(
+                
+                const data = dataCurrentPosition.position?.filter(
                     (t: any) => t.account_id === dataSocket?.username
                 )
                 return {
@@ -113,16 +114,16 @@ export default function Positions() {
                     leverage: dataSocket.leverage,
                     server: dataSocket.server,
                     loginId: dataSocket.loginId,
-                    position: data.length,
-                    swap: data.reduce((sum: number, item: any) => sum + (item.swap || 0), 0)
+                    position: dataCurrentPosition.position ? data.length : 0,
+                    swap: dataCurrentPosition.position ? data.reduce((sum: number, item: any) => sum + (item.swap || 0), 0) : 0
                 }
             }
             return i
         })
         setDataAccTransaction(dataNewAcc)
-
+        
     }, [dataCurrentPosition])
-
+    
     return (
         <div className='relative'>
             <Filter setFilter={setFilter} filter={filter} isType isStatus query={query} setQuery={setQuery} handleFilter={handleFilter} />
