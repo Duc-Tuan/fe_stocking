@@ -145,5 +145,9 @@
   "Ẩn bản vẽ & chỉ báo": "Hide drawings & indicators",
   "Hiện bản vẽ & chỉ báo": "Show drawings & indicators",
   "Hệ thống theo dõi": "Tracking system",
-  "Thông tin lô đã vào lệnh thành công": "Information about the lot has been successfully placed"
+  "Lô đã vào lệnh thành công": "Lot has been successfully placed",
+  "Xem chi tiết": "View details",
+  "Theo dõi": "Tracking",
+  "Giao dịch": "Trading",
+  "Lô đã đóng lệnh thành công": "Lot has been successfully closed"
 }

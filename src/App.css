@@ -122,3 +122,12 @@ div.animate {
   ):before {
   background-color: var(--color-background-opacity-2) !important;
 }
+
+.Toastify__toast {
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2), inset 0 0 5px var(--color-background-opacity-5) !important;
+  width: 400px;
+}
+.Toastify__close-button{
+  color: var(--color-background) !important;
+  opacity: 1;
+}
