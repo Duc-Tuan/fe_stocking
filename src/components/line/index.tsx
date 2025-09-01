@@ -1,13 +1,12 @@
 import {
     ColorType,
     createChart,
-    type IChartApi,
-    type UTCTimestamp,
+    type UTCTimestamp
 } from 'lightweight-charts';
 import { useEffect, useRef } from 'react';
-import { formatVietnamTimeSmart, gridColor } from './formatTime';
 import { adjustToUTCPlus_7 } from '../../pages/Home/options';
 import { getColorChart } from '../../utils/timeRange';
+import { formatVietnamTimeSmart, gridColor } from './formatTime';
 
 export const ChartComponent = (props: any) => {
     const {
@@ -273,8 +272,6 @@ export const ChartComponent = (props: any) => {
         seriesRef.current.setData(deduped);
         dataRef.current = deduped;
 
-        updateSeparators(deduped); // ✅ Vẽ vạch phân cách
-
         if (currentRange && currentRange.from !== undefined && currentRange.to !== undefined) {
             const shift = deduped.length - dataRef.current.length;
             timeScale?.setVisibleLogicalRange({
@@ -295,7 +292,6 @@ export const ChartComponent = (props: any) => {
             ...d,
             time: d.time
         }));
-
         const lastPoint = dataRef.current[dataRef.current.length - 1];
 
         if (fixedLatestData.length > 1) {
@@ -304,8 +300,6 @@ export const ChartComponent = (props: any) => {
                 const updated = [...dataRef.current, ...filteredNewPoints];
                 seriesRef.current.setData(updated);
                 dataRef.current = updated;
-
-                updateSeparators(updated); // ✅
             }
         } else if (fixedLatestData.length === 1 && lastPoint) {
             const newPoint = fixedLatestData[0];

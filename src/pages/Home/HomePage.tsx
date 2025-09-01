@@ -180,7 +180,7 @@ export default function HomePage() {
     }
 
     useEffect(() => {
-        if (currentPnl && Number(currentPnl.id_symbol) === serverId) {
+        if (currentPnl) {
             setSymbolsSocket(convertDataLine([currentPnl]))
             setSymbolsCandSocket(convertDataCandline([currentPnl]))
         }
@@ -1120,9 +1120,6 @@ export default function HomePage() {
             })
 
             const height = chartContainerRef.current!.clientHeight
-
-            console.log(height, indicator.filter((a) => a.active).length);
-
 
             switch (indicator.filter((a) => a.active).length) {
                 case 2:

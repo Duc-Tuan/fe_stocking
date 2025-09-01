@@ -234,7 +234,7 @@ const More = ({ data, title }: { data: IBreakEven[], title: string }) => {
                             </div>
 
                             <div className="grid grid-cols-2 gap-2 mt-2">
-                                {data && data?.map((d, idx) =>
+                                {data ? data?.map((d, idx) =>
                                     <div className="col-span-1 text-sm" key={idx}>
                                         <div className="flex">
                                             <div className="">{t("Tài khoản theo dõi")}: </div>
@@ -261,7 +261,7 @@ const More = ({ data, title }: { data: IBreakEven[], title: string }) => {
                                             <div className="font-semibold pl-2">{(d.pnl - d.pnl_break_even).toFixed(5)}</div>
                                         </div>
                                     </div>
-                                )}
+                                ) : <div className="text-sm w-full col-span-2 text-center min-h-40 flex justify-center items-center text-gray-400">{t("Hiện đang không có lệnh nào đang mở.")}</div> }
                             </div>
                         </div>
                     </DialogPanel>
