@@ -149,5 +149,10 @@
   "Xem chi tiết": "View details",
   "Theo dõi": "Tracking",
   "Giao dịch": "Trading",
-  "Lô đã đóng lệnh thành công": "Lot has been successfully closed"
+  "Lô đã đóng lệnh thành công": "Lot has been successfully closed",
+  "Điểm PNL hòa vốn": "Break-even PNL point",
+  "PNL thị trường": "Market PNL",
+  "Tổng lợi nhuận / Volume": "Total profit / Volume",
+  "Tổng lợi nhuận": "Total profit",
+  "Tổng volume": "Total volume"
 }

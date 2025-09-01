@@ -1,5 +1,5 @@
 import dayjs from 'dayjs'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { getPositionTransaction } from '../../../api/historys'
 import Icon from '../../../assets/icon'
@@ -10,6 +10,10 @@ import { getTime } from '../../../utils/timeRange'
 import Filter from '../components/Filter'
 import { initFilter, type IFilterAllLot, type ISymbolPosition } from '../type'
 import { useAppInfo } from '../../../hooks/useAppInfo'
+import { useClickOutside } from '../../../hooks/useClickOutside'
+import { Button } from '../../../components/button'
+import { ExclamationTriangleIcon } from '@heroicons/react/24/outline'
+import { Dialog, DialogBackdrop, DialogPanel } from '@headlessui/react'
 
 const initPara: QueryLots = {
     page: 1,
@@ -21,20 +25,28 @@ const initPara: QueryLots = {
     type: undefined
 }
 
+interface IBreakEven {
+    account_monitor: number,
+    account_transaction: number,
+    pnl: number,
+    pnl_break_even: number,
+    total_profit: number,
+    total_volume: number
+}
+
 interface IData extends IServerTransaction {
-    open_orders?: any
-    position?: number
+    open_orders?: any,
+    position?: number,
+    break_even?: IBreakEven[]
 }
 
 export default function Positions() {
     const { t } = useTranslation()
     const { dataServerTransaction, loadingserverTransaction } = useAppInfo()
     const [dataAccTransaction, setDataAccTransaction] = useState<IData[]>(dataServerTransaction)
-
     const [filter, setFilter] = useState<IFilterAllLot>(initFilter)
     const [data, setData] = useState<ISymbolPosition[]>([])
     const [loading, setLoading] = useState<boolean>(false)
-
     const [query, setQuery] = useState<QueryLots>(initPara)
 
     const { dataCurrentPosition } = useSocket(
@@ -69,8 +81,8 @@ export default function Positions() {
 
     useEffect(() => {
         const dataNew: any = [...data].map((i) => {
-            const dataSocket = dataCurrentPosition.position?.find((d: any) => d.id === i.id)!
-            if (i.id === dataSocket?.id) {
+            const dataSocket = dataCurrentPosition.positions?.find((d: any) => i.id_transaction === d?.id_transaction)!
+            if (i.id_transaction === dataSocket?.id_transaction) {
                 return {
                     id: i.id,
                     account_id: dataSocket.account_id,
@@ -99,10 +111,19 @@ export default function Positions() {
         const dataNewAcc: any = [...dataAccTransaction].map((i) => {
             const dataSocket = dataCurrentPosition?.acc.find((d: any) => d.id === i.id)
             if (i.id === dataSocket?.id) {
-                
-                const data = dataCurrentPosition.position?.filter(
+
+                const data = dataCurrentPosition.positions?.filter(
                     (t: any) => t.account_id === dataSocket?.username
                 )
+
+                if (!data || data.length === 0) {
+                    return i; // hoặc undefined, hoặc skip
+                }
+
+                const break_even = dataCurrentPosition.break_even?.filter(
+                    (t: any) => t.account_transaction === dataSocket?.username
+                )
+
                 return {
                     id: dataSocket.id,
                     username: dataSocket.username,
@@ -114,16 +135,16 @@ export default function Positions() {
                     leverage: dataSocket.leverage,
                     server: dataSocket.server,
                     loginId: dataSocket.loginId,
-                    position: dataCurrentPosition.position ? data.length : 0,
-                    swap: dataCurrentPosition.position ? data.reduce((sum: number, item: any) => sum + (item.swap || 0), 0) : 0
+                    position: dataCurrentPosition.positions ? data.length : 0,
+                    swap: data.reduce((sum: number, item: any) => sum + (item.swap || 0), 0),
+                    break_even: break_even
                 }
             }
             return i
         })
         setDataAccTransaction(dataNewAcc)
-        
     }, [dataCurrentPosition])
-    
+
     return (
         <div className='relative'>
             <Filter setFilter={setFilter} filter={filter} isType isStatus query={query} setQuery={setQuery} handleFilter={handleFilter} />
@@ -165,7 +186,10 @@ export default function Positions() {
 
                         return (
                             <div className="col-span-1 border border-gray-300 p-2" key={d.id}>
-                                <div className="text-sm"><span className='font-bold mr-2'>{t("Tài khoản")}: </span>{d.name}</div>
+                                <div className="flex justify-between items-center">
+                                    <div className="text-sm"><span className='font-bold mr-2'>{t("Tài khoản")}: </span>{d.name}</div>
+                                    <More data={d.break_even} title={d.name} />
+                                </div>
                                 <div className="text-sm"><span className='font-bold mr-2'>{t("Máy chủ")}: </span>{d.server}</div>
                                 <div className="text-sm"><span className='font-bold mr-2'>{t("Số dư")}: </span>{d.balance}</div>
                                 <div className="text-sm"><span className='font-bold mr-2'>{t("Vốn")}: </span>{d.equity}</div>
@@ -181,4 +205,68 @@ export default function Positions() {
             </div >
         </div>
     )
+}
+
+
+const More = ({ data, title }: { data: IBreakEven[], title: string }) => {
+    const { t } = useTranslation();
+    const [open, setOpen] = useState(false);
+
+    return <div className="">
+        <Button onClick={() => setOpen(!open)} className="shadow-none p-0 cursor-pointer hover:text-[var(--color-background)] text-gray-500"><Icon name="icon-more-v2" /></Button>
+        <Dialog open={open} onClose={setOpen} className="relative z-100">
+            <DialogBackdrop
+                transition
+                className="fixed inset-0 bg-gray-500/75 transition-opacity data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in"
+            />
+
+            <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
+                <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                    <DialogPanel
+                        transition
+                        className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in sm:my-8 sm:w-full sm:max-w-lg data-closed:sm:translate-y-0 data-closed:sm:scale-95"
+                    >
+                        <div className="bg-white p-4 shadow-custom">
+                            <h1 className='text-center font-bold'>{t("Điểm PNL hòa vốn")}</h1>
+                            <div className="flex justify-center items-center gap-1 text-sm">
+                                <div className="">{t("Tài khoản giao dịch")}:</div>
+                                <h2 className='text-center font-bold text-[var(--color-background)]'>{title}</h2>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2 mt-2">
+                                {data && data?.map((d, idx) =>
+                                    <div className="col-span-1 text-sm" key={idx}>
+                                        <div className="flex">
+                                            <div className="">{t("Tài khoản theo dõi")}: </div>
+                                            <div className="font-semibold pl-2">{d.account_monitor}</div>
+                                        </div>
+                                        <div className="flex">
+                                            <div className="">{t("PNL thị trường")}: </div>
+                                            <div className="font-semibold pl-2 text-[var(--color-background)]">{d.pnl}</div>
+                                        </div>
+                                        <div className="flex">
+                                            <div className="">{t("Tổng lợi nhuận / Volume")}: </div>
+                                            <div className="font-semibold pl-2">{d.pnl_break_even.toFixed(5)}</div>
+                                        </div>
+                                        <div className="flex">
+                                            <div className="">{t("Tổng lợi nhuận")}: </div>
+                                            <div className="font-semibold pl-2">{d.total_profit.toFixed(5)}</div>
+                                        </div>
+                                        <div className="flex">
+                                            <div className="">{t("Tổng volume")}: </div>
+                                            <div className="font-semibold pl-2">{d.total_volume}</div>
+                                        </div>
+                                        <div className="flex">
+                                            <div className="">{t("Điểm PNL hòa vốn")}: </div>
+                                            <div className="font-semibold pl-2">{(d.pnl - d.pnl_break_even).toFixed(5)}</div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </DialogPanel>
+                </div>
+            </div>
+        </Dialog>
+    </div>
 }

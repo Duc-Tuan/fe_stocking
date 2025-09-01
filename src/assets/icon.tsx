@@ -28,6 +28,7 @@ import IconBoundaryLine from './icons/IconBoundaryLine.svg?react';
 import IconLine from './icons/IconLine.svg?react';
 import IconTrendLine from './icons/IconTrendLine.svg?react';
 import IconPaintBrush from './icons/IconPaintBrush.svg?react';
+import IconMoreV2 from './icons/IconMoreV2.svg?react';
 
 export default function Icon(props: any) {
     switch (props?.name?.toLowerCase()) {
@@ -91,6 +92,8 @@ export default function Icon(props: any) {
             return <IconTrendLine {...props} />;
         case 'icon-paint-brush':
             return <IconPaintBrush {...props} />;
+        case 'icon-more-v2':
+            return <IconMoreV2 {...props} />;
         default:
             return null;
     }
