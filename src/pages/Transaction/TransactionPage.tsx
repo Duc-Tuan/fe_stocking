@@ -259,7 +259,7 @@ export default function TransactionPage() {
                             <span>
                                 PNL:
                             </span>
-                            <span className="text-lg">{currentPnl?.total_pnl}</span>
+                            <span className="text-lg">{currentPnl?.total_pnl.toFixed(3)}</span>
                         </div>
                     </div>
                     <PopupAcc setDataSubmit={setData} />

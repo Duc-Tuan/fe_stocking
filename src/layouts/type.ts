@@ -26,5 +26,10 @@ export const dataHeader: IDataHeader[] = [
         nameIcon: "icon-more",
         path: PathName.SETTING,
         title: "Mở rộng thêm"
+    },
+    {
+        nameIcon: "icon-watch-status",
+        path: PathName.SYMMETRICAL_ORDER,
+        title: "Boot vào lệnh đối xứng"
     }
 ]

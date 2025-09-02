@@ -5,4 +5,5 @@ export const PathName = {
     HISTORY: "historys",
     SETTING: "settings",
     ORTHER: "orther",
+    SYMMETRICAL_ORDER: "symmetrical-order",
 }

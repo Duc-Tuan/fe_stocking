@@ -46,7 +46,6 @@ function App() {
     }
   }, [dataCurrent]);
 
-
   useEffect(() => {
     let language = localStorage.getItem('language')
     if (!language) {

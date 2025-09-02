@@ -10,6 +10,7 @@ import LoginPage from '../pages/auth/LoginPage';
 import ChartWithHorizontalLines from '../pages/orther/Orther';
 import { PathName } from './path';
 import ProtectedRoute from './protectedRoute';
+import SymmetricalOrder from '../pages/BootSymmetricalOrder';
 
 const router = createBrowserRouter([
   {
@@ -43,6 +44,10 @@ const router = createBrowserRouter([
       {
         path: PathName.ORTHER,
         element: <ChartWithHorizontalLines />,
+      },
+      {
+        path: PathName.SYMMETRICAL_ORDER,
+        element: <SymmetricalOrder />,
       },
     ],
   },

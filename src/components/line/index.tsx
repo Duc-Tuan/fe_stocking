@@ -19,9 +19,9 @@ export const ChartComponent = (props: any) => {
         latestData,
         colors: {
             backgroundColor = 'transparent',
-            lineColor = getColorChart('--color-background'),
+            lineColor = getColorChart(),
             textColor = 'black',
-            areaTopColor = getColorChart('--color-background'),
+            areaTopColor = getColorChart(),
         } = {},
     } = props;
 

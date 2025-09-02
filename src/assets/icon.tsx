@@ -29,6 +29,7 @@ import IconLine from './icons/IconLine.svg?react';
 import IconTrendLine from './icons/IconTrendLine.svg?react';
 import IconPaintBrush from './icons/IconPaintBrush.svg?react';
 import IconMoreV2 from './icons/IconMoreV2.svg?react';
+import IconWatchStatus from './icons/IconWatchStatus.svg?react';
 
 export default function Icon(props: any) {
     switch (props?.name?.toLowerCase()) {
@@ -94,6 +95,8 @@ export default function Icon(props: any) {
             return <IconPaintBrush {...props} />;
         case 'icon-more-v2':
             return <IconMoreV2 {...props} />;
+        case 'icon-watch-status':
+            return <IconWatchStatus {...props} />;
         default:
             return null;
     }

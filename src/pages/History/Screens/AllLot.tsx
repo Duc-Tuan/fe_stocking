@@ -365,7 +365,7 @@ const Modal = ({ open, setOpen, dataCurrent, setDataLost }: { setDataLost: Dispa
             setOpen(false)
             setLoading(false)
             setDataLost((prev) => prev.map((a) => {
-                if (a.id === dataCurrent?.id) {
+                if (a.id === dataCurrent?.id && a.status === "Lenh_thi_truong") {
                     return {
                         ...a,
                         type: "CLOSE"
