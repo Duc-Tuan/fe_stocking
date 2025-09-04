@@ -165,6 +165,7 @@ export interface ISymbolAll {
 
 export interface ISymbolPosition {
     account_id: number,
+    username?: string,
     comment: string,
     commission: number,
     current_price: number,
@@ -173,7 +174,7 @@ export interface ISymbolPosition {
     magic_number: number,
     open_price: number,
     open_time: string,
-    position_type: "BUY" | "SELL",
+    position_type: "BUY" | "SELL" | "1" | "0",
     profit: number,
     sl: number,
     swap: number,

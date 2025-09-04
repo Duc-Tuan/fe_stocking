@@ -1,19 +1,17 @@
+import { Dialog, DialogBackdrop, DialogPanel } from '@headlessui/react'
 import dayjs from 'dayjs'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { getPositionTransaction } from '../../../api/historys'
 import Icon from '../../../assets/icon'
+import { Button } from '../../../components/button'
 import { Loading } from '../../../components/loading'
+import { useAppInfo } from '../../../hooks/useAppInfo'
 import { useSocket } from '../../../hooks/useWebSocket'
 import type { IServerTransaction, QueryLots } from '../../../types/global'
 import { getTime } from '../../../utils/timeRange'
 import Filter from '../components/Filter'
 import { initFilter, type IFilterAllLot, type ISymbolPosition } from '../type'
-import { useAppInfo } from '../../../hooks/useAppInfo'
-import { useClickOutside } from '../../../hooks/useClickOutside'
-import { Button } from '../../../components/button'
-import { ExclamationTriangleIcon } from '@heroicons/react/24/outline'
-import { Dialog, DialogBackdrop, DialogPanel } from '@headlessui/react'
 
 const initPara: QueryLots = {
     page: 1,
@@ -197,7 +195,7 @@ export default function Positions() {
                                 <div className="text-sm"><span className='font-bold mr-2'>{t("Ký quỹ khả dụng")}: </span>{d.free_margin}</div>
                                 <div className="text-sm"><span className='font-bold mr-2'>{t("Đòn bẩy")}: </span>{d.leverage}</div>
                                 <div className="text-sm"><span className='font-bold mr-2'>{t("Phí qua đêm")}: </span>{d.swap}</div>
-                                <div className="text-sm"><span className='font-bold mr-2'>{t("Số lệnh đang mở")}: </span>{d.position}</div>
+                                <div className="text-sm"><span className='font-bold mr-2'>{t("Số lệnh đang mở")}: </span>{d.position ?? 0}</div>
                             </div>
                         )
                     })
@@ -242,7 +240,7 @@ const More = ({ data, title }: { data: IBreakEven[], title: string }) => {
                                         </div>
                                         <div className="flex">
                                             <div className="">{t("PNL thị trường")}: </div>
-                                            <div className="font-semibold pl-2 text-[var(--color-background)]">{d.pnl}</div>
+                                            <div className="font-semibold pl-2 text-[var(--color-background)]">{d.pnl.toFixed(5)}</div>
                                         </div>
                                         <div className="flex">
                                             <div className="">{t("Tổng lợi nhuận / Volume")}: </div>

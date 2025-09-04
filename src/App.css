@@ -54,6 +54,7 @@ input[type="checkbox"].custom-checkbox:checked::after {
 .animate-fade-in {
   animation: fade-in 0.3s ease-out;
 }
+
 .my-scroll {
   overflow-y: auto; /* bật scroll dọc */
 }

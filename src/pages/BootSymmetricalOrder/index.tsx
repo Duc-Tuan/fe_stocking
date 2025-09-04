@@ -56,7 +56,7 @@ function SymmetricalOrder() {
     return (
       <div
         key={isCheck?.type}
-        className="animate-fade-in"
+        className="animate-fade-in h-full"
       >
         {content}
       </div>
@@ -76,7 +76,8 @@ function SymmetricalOrder() {
         return <Button id="button-history" onClick={() => handlelick(d, idx)} key={d.type} className={`${d.active ? "text-white" : "text-[var(--color-background)] hover:bg-[var(--color-background-opacity-2)]"} cursor-pointer  w-full text-left block shadow-none p-2 mb-1`}>{t(d.title)}</Button>
       })}
     </div>
-    <div className="col-span-3 lg:col-span-4 shadow-md shadow-gray-500 rounded-lg overflow-y-scroll my-scroll relative p-2">
+    <div className="col-span-3 lg:col-span-4 shadow-md shadow-gray-500 rounded-lg relative p-2">
+      {/* overflow-y-scroll my-scroll */}
       {screen}
     </div>
   </div>
