@@ -9,6 +9,8 @@ import { useSocket } from '../../../hooks/useWebSocket';
 import TooltipNavigate from '../../../layouts/TooltipNavigate';
 import type { ISymbolPosition } from '../../History/type';
 import { type IBootAcc } from '../type';
+import { postCloseOrderBoot } from '../../../api/boot';
+import toast from 'react-hot-toast';
 
 export default function BootMonitor() {
   const { t } = useTranslation();
@@ -55,7 +57,7 @@ export default function BootMonitor() {
                                   a.position_type === '1' ? 'text-red-500' : 'text-blue-500'
                                 }`}
                               >
-                                {a.position_type === "1" ? "SELL" : "BUY"} {a.volume}
+                                {a.position_type === '1' ? 'SELL' : 'BUY'} {a.volume}
                               </span>
                               {idx === 0 && (
                                 <TooltipNavigate
@@ -155,7 +157,24 @@ const Modal = ({
   const { t } = useTranslation();
   const [loading, setLoading] = useState<boolean>(false);
 
-  const handleClick = async () => {};
+  const handleClick = async () => {
+    setLoading(true);
+    const dataNew: any = dataCurrent.map((i) => {
+      return { id: i.id_transaction, serverName: i.username };
+    });
+    await postCloseOrderBoot(dataNew)
+      .then((data) => {
+        setLoading(false);
+        if (data.data.status === 'success') {
+          setOpen(false);
+          toast.success('Đóng lệnh thành công!');
+        } else {
+          toast.error(`Đóng lệnh thất bại`);
+        }
+        console.log(data);
+      })
+      .catch(() => setLoading(false));
+  };
 
   return (
     <Dialog open={open} onClose={setOpen} className="relative z-100">

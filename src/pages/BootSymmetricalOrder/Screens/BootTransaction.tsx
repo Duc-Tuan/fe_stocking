@@ -17,7 +17,6 @@ import {
 } from '../type';
 import { useSocket } from '../../../hooks/useWebSocket';
 import { postOpenOrderBoot } from '../../../api/boot';
-import type { AnyIfEmpty } from 'react-redux';
 import toast from 'react-hot-toast';
 
 const initData: IOrderSend[] = [
@@ -102,16 +101,22 @@ export default function BootTransaction() {
 
   const priceDataBoot = (d: any) => {
     let price = 0;
-    switch (d.data.type) {
-      case 0:
-        price = dataBoot.ask;
-        break;
-      case 1:
-        price = dataBoot.bid;
-        break;
-      default:
-        price = 0;
-        break;
+    if (dataBoot) {
+      switch (d.data.type) {
+        case 0:
+        case 2:
+        case 4:
+          price = dataBoot.ask;
+          break;
+        case 1:
+        case 3:
+        case 5:
+          price = dataBoot.bid;
+          break;
+        default:
+          price = 0;
+          break;
+      }
     }
     return price;
   };
@@ -154,6 +159,46 @@ export default function BootTransaction() {
       });
     }
   }, [dataBoot, pip]);
+
+  const isTextColor = (data: any) => {
+    let color = '';
+    switch (data) {
+      case 0:
+      case 2:
+      case 4:
+        color = 'text-blue-500';
+        break;
+      case 1:
+      case 3:
+      case 5:
+        color = 'text-red-500';
+        break;
+      default:
+        color = 'text-red-500';
+        break;
+    }
+    return color;
+  };
+  
+  const isText = (data: any) => {
+    let text = '';
+    switch (data) {
+      case 0:
+      case 2:
+      case 4:
+        text = 'ask';
+        break;
+      case 1:
+      case 3:
+      case 5:
+        text = 'bid';
+        break;
+      default:
+        text = 'bid';
+        break;
+    }
+    return text;
+  };
 
   const classInputHeder =
     'text-lg font-semibold border-b-2 caret-[var(--color-background)] text-center border-b-gray-300 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none p-1 w-full h-10 pl-2 focus:outline-none focus:border-b-[var(--color-background)]';
@@ -256,7 +301,9 @@ export default function BootTransaction() {
 
           <div className="grid grid-cols-2 gap-2 my-3 px-4">
             <div className="flex flex-col justify-center items-start gap-1 col-span-1">
-              <label htmlFor="exness-symbol">{t('Cặp tiền')}:</label>
+              <label htmlFor="exness-symbol">
+                {t('Cặp tiền')} (<span className={isTextColor(data[0].data.type)}>{isText(data[0].data.type)}: {priceDataBoot(data[0]).toFixed(7)}</span>): 
+              </label>
               <SeletSymbol setValue={setData} setServerId={setServerId} />
             </div>
             <div className="flex flex-col justify-center items-start gap-1 col-span-1">
@@ -387,7 +434,9 @@ export default function BootTransaction() {
 
           <div className="grid grid-cols-2 gap-2 my-3 px-4">
             <div className="flex flex-col justify-center items-start gap-1 col-span-1">
-              <label htmlFor="exness-symbol">{t('Cặp tiền')}:</label>
+              <label htmlFor="exness-symbol">
+                {t('Cặp tiền')} (<span className={isTextColor(data[1].data.type)}>{isText(data[1].data.type)}: {priceDataBoot(data[1]).toFixed(7)}</span>):
+              </label>
               <div className="border border-gray-300 p-1 rounded w-full h-10 pl-2 shadow-sm shadow-gray-200 flex justify-start items-center font-semibold text-sm">
                 {data[1].data.symbol ?? t('Chọn')}
               </div>
