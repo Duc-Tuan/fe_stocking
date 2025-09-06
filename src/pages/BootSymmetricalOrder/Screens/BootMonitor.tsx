@@ -41,7 +41,7 @@ export default function BootMonitor() {
             <div key={idx} className="col-span-1 shadow rounded">
               <div className="flex justify-between flex-col items-center gap-2 h-full">
                 <div className="flex-1 w-full p-2">
-                  {position ? (
+                  {position.length !== 0 ? (
                     position
                       .filter((d) => Number(d.username) === item.username)
                       .map((a, id) => (

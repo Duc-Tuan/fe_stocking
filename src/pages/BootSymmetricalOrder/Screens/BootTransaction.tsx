@@ -18,6 +18,7 @@ import {
 import { useSocket } from '../../../hooks/useWebSocket';
 import { postOpenOrderBoot } from '../../../api/boot';
 import toast from 'react-hot-toast';
+import TooltipNavigate from '../../../layouts/TooltipNavigate';
 
 const initData: IOrderSend[] = [
   {
@@ -84,6 +85,7 @@ export default function BootTransaction() {
   const { t } = useTranslation();
   const [data, setData] = useState<IOrderSend[]>(initData);
   const [coefficient, setCoefficient] = useState<number>(3.75);
+  const [difference, setDifference] = useState<number>(0.9);
   const [pip, setPip] = useState<number>(63);
   const [open, setOpen] = useState<boolean>(false);
   const [serverId, setServerId] = useState<number | null>(null);
@@ -120,6 +122,30 @@ export default function BootTransaction() {
     }
     return price;
   };
+
+  const addDifference = (d: any, pair: string) => {
+    let price = 0;
+    const pipSize = pair.includes('JPY') ? 0.01 : 0.0001;
+    if (dataBoot) {
+      switch (d.data.type) {
+        case 0:
+        case 2:
+        case 4:
+          price = 0 - difference * pipSize;
+          break;
+        case 1:
+        case 3:
+        case 5:
+          price = difference * pipSize;
+          break;
+        default:
+          price = 0;
+          break;
+      }
+    }
+    return price;
+  };
+
   useEffect(() => {
     if (data[0].data.type === 0 || data[0].data.type === 1) {
       setData((prev) => {
@@ -145,20 +171,22 @@ export default function BootTransaction() {
             data: {
               ...prev[1].data,
               price: priceDataBoot(prev[1]),
-              tp: calculateTpSl(
-                priceDataBoot(prev[0]),
-                pip - 0.5,
-                isSymbol,
-                paretypeOrder(prev[1].data.type) as OrderSide,
-              ).tp,
-              sl: calculateTpSl(priceDataBoot(prev[0]), pip, isSymbol, paretypeOrder(prev[1].data.type) as OrderSide)
-                .sl,
+              tp:
+                calculateTpSl(
+                  priceDataBoot(prev[0]),
+                  pip - 0.5,
+                  isSymbol,
+                  paretypeOrder(prev[1].data.type) as OrderSide,
+                ).tp + addDifference(prev[0], isSymbol),
+              sl:
+                calculateTpSl(priceDataBoot(prev[0]), pip, isSymbol, paretypeOrder(prev[1].data.type) as OrderSide).sl +
+                addDifference(prev[0], isSymbol),
             },
           },
         ];
       });
     }
-  }, [dataBoot, pip]);
+  }, [dataBoot, pip, difference]);
 
   const isTextColor = (data: any) => {
     let color = '';
@@ -179,7 +207,7 @@ export default function BootTransaction() {
     }
     return color;
   };
-  
+
   const isText = (data: any) => {
     let text = '';
     switch (data) {
@@ -206,11 +234,61 @@ export default function BootTransaction() {
     'border border-gray-300 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none p-1 rounded w-full h-10 pl-2 shadow-sm shadow-gray-200 focus:outline-none focus:border-[var(--color-background)]';
   return (
     <div className="relative h-full">
+      <div className="absolute top-0 left-0 flex justify-start items-center gap-2">
+        <TooltipNavigate
+          title="Đổi tài khoản tham chiếu"
+          path="#"
+          iconName="icon-refresh"
+          className="rounded-4xl"
+          handle={() =>
+            setData((prev) => [
+              { ...prev[0], username: prev[1].username },
+              { ...prev[1], username: prev[0].username },
+            ])
+          }
+        />
+        <div className="">
+          {t('Tài khoản tham chiếu')} ({data[0].username === 205908671 ? 'Exness' : t('Quỹ')}: {data[0].username})
+        </div>
+      </div>
+
       <h1 className="text-center font-bold text-lg text-shadow-sm">
         <span className="border-b border-b-gray-500">{t('Boot vào lệnh đối ứng')}</span>
       </h1>
 
-      <div className="grid grid-cols-2 gap-4 w-xs mx-auto mt-6">
+      <div className="grid grid-cols-3 gap-4 w-lg mx-auto mt-6">
+        <div className="col-span-1">
+          <InputNumber
+            type="number"
+            placeholder={t('Nhập hệ số...')}
+            value={String(difference)}
+            onChange={(e) => {
+              setDifference(Number(e.target.value));
+              setData((prev) => [
+                {
+                  ...prev[0],
+                  data: {
+                    ...prev[0].data,
+                    price: prev[0].data.price,
+                    tp: prev[0].data.tp,
+                    sl: prev[0].data.sl,
+                  },
+                },
+                {
+                  ...prev[1],
+                  data: {
+                    ...prev[1].data,
+                    price: prev[1].data.price,
+                    tp: prev[1].data.tp,
+                    sl: prev[1].data.sl,
+                  },
+                },
+              ]);
+            }}
+            className={classInputHeder}
+          />
+          <h2 className="text-sm text-center text-gray-500 mt-1">{t('Hệ số lệch(Quỹ) sl, tp')}</h2>
+        </div>
         <div className="col-span-1">
           <InputNumber
             type="number"
@@ -270,18 +348,20 @@ export default function BootTransaction() {
                     ...prev[1],
                     data: {
                       ...prev[1].data,
-                      tp: calculateTpSl(
-                        price,
-                        Number(e.target.value) - 0.5,
-                        isSymbol,
-                        paretypeOrder(prev[1].data.type) as OrderSide,
-                      ).tp,
-                      sl: calculateTpSl(
-                        price,
-                        Number(e.target.value),
-                        isSymbol,
-                        paretypeOrder(prev[1].data.type) as OrderSide,
-                      ).sl,
+                      tp:
+                        calculateTpSl(
+                          price,
+                          Number(e.target.value) - 0.5,
+                          isSymbol,
+                          paretypeOrder(prev[1].data.type) as OrderSide,
+                        ).tp + addDifference(prev[0], isSymbol),
+                      sl:
+                        calculateTpSl(
+                          price,
+                          Number(e.target.value),
+                          isSymbol,
+                          paretypeOrder(prev[1].data.type) as OrderSide,
+                        ).sl + addDifference(prev[0], isSymbol),
                     },
                   },
                 ];
@@ -296,13 +376,17 @@ export default function BootTransaction() {
       <div className="grid grid-cols-2 mt-4 gap-4 px-2">
         <div className="col-span-1 shadow shadow-gray-300 p-2 rounded">
           <h1 className="text-center">
-            <span className="border-b border-b-gray-500">{t('Vào lệnh cho tài khoản exness')}</span>
+            <span className="border-b border-b-gray-500">{t('Vào lệnh cho tài khoản tham chiếu')} ({data[0].username === 205908671 ? 'Exness' : t('Quỹ')}: {data[0].username})</span>
           </h1>
 
           <div className="grid grid-cols-2 gap-2 my-3 px-4">
             <div className="flex flex-col justify-center items-start gap-1 col-span-1">
               <label htmlFor="exness-symbol">
-                {t('Cặp tiền')} (<span className={isTextColor(data[0].data.type)}>{isText(data[0].data.type)}: {priceDataBoot(data[0]).toFixed(7)}</span>): 
+                {t('Cặp tiền')} (
+                <span className={isTextColor(data[0].data.type)}>
+                  {isText(data[0].data.type)}: {priceDataBoot(data[0]).toFixed(7)}
+                </span>
+                ):
               </label>
               <SeletSymbol setValue={setData} setServerId={setServerId} />
             </div>
@@ -429,13 +513,17 @@ export default function BootTransaction() {
         </div>
         <div className="col-span-1 shadow shadow-gray-300 p-2 rounded">
           <h1 className="text-center">
-            <span className="border-b border-b-gray-500">{t('Vào lệnh cho tài khoản quỹ')}</span>
+            <span className="border-b border-b-gray-500">{t('Vào lệnh cho tài khoản đối ứng')} ({data[1].username === 205908671 ? 'Exness' : t('Quỹ')}: {data[1].username})</span>
           </h1>
 
           <div className="grid grid-cols-2 gap-2 my-3 px-4">
             <div className="flex flex-col justify-center items-start gap-1 col-span-1">
               <label htmlFor="exness-symbol">
-                {t('Cặp tiền')} (<span className={isTextColor(data[1].data.type)}>{isText(data[1].data.type)}: {priceDataBoot(data[1]).toFixed(7)}</span>):
+                {t('Cặp tiền')} (
+                <span className={isTextColor(data[1].data.type)}>
+                  {isText(data[1].data.type)}: {priceDataBoot(data[1]).toFixed(7)}
+                </span>
+                ):
               </label>
               <div className="border border-gray-300 p-1 rounded w-full h-10 pl-2 shadow-sm shadow-gray-200 flex justify-start items-center font-semibold text-sm">
                 {data[1].data.symbol ?? t('Chọn')}

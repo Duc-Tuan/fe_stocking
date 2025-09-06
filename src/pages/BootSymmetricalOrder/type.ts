@@ -77,19 +77,35 @@ export function calculateTpSl(entryPrice: number, pipDistance: number, pair: str
 
     if (side === 'BUY' || side === 'BUY_LIMIT' || side === 'BUY_STOP') {
         return {
-            tp: entryPrice + pipDistance * pipSize,
-            sl: entryPrice - pipDistance * pipSize,
+            tp: Math.ceil((entryPrice + pipDistance * pipSize) * 1000000) / 1000000,
+            sl: Math.ceil((entryPrice - pipDistance * pipSize) * 1000000) / 1000000,
         };
     } else {
         return {
-            tp: entryPrice - pipDistance * pipSize,
-            sl: entryPrice + pipDistance * pipSize,
+            tp: Math.ceil((entryPrice - pipDistance * pipSize) * 1000000) / 1000000,
+            sl: Math.ceil((entryPrice + pipDistance * pipSize) * 1000000) / 1000000,
         };
     }
 }
 
 export interface IBootAcc extends IServerTransaction {
     orders: ISymbolPosition[]
+}
+
+export interface ISymbolBoot {
+    account_id: number
+    id: number
+    id_transaction: number
+    order_type: string
+    price: number
+    profit: number
+    sl: number
+    status: string
+    symbol: string
+    time: string
+    tp: number
+    user_id: number
+    volume: number
 }
 
 export const dataHistory: ISymbolPosition[] = [

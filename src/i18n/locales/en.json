@@ -157,8 +157,9 @@
   "Tổng volume": "Total volume",
   "Hiện đang không có lệnh nào đang mở.": "There are currently no open orders.",
   "Boot vào lệnh đối ứng": "Boot into corresponding command",
-  "Vào lệnh cho tài khoản exness": "Order for exness account",
-  "Vào lệnh cho tài khoản quỹ": "Order for fund account",
+  "Vào lệnh cho tài khoản": "Order for account",
+  "Vào lệnh cho tài khoản tham chiếu": "Place order for reference account",
+  "Vào lệnh cho tài khoản đối ứng": "Place orders for corresponding accounts",
   "Kiểu lệnh": "Order type",
   "Giá vào": "Entry price",
   "Chốt lời (TP)": "Take profit (TP)",
@@ -175,6 +176,10 @@
   "Số pip": "Number of pips",
   "Hệ số nhân": "Multiplier",
   "Bạn xác nhận muốn đóng lệnh": "You confirm you want to close the order",
-    "Tài khoản quỹ": "Fund account",
-  "Tài khoản exness": "exness account"
+  "Tài khoản quỹ": "Fund account",
+  "Tài khoản exness": "exness account",
+  "Hệ số lệch(Quỹ) sl, tp": "Coefficient(Fund) sl, tp",
+  "Tài khoản tham chiếu": "Reference Account",
+  "Đổi tài khoản tham chiếu": "Change Reference Account",
+  "Quỹ": "Fund"
 }

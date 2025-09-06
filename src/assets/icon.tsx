@@ -31,6 +31,7 @@ import IconPaintBrush from './icons/IconPaintBrush.svg?react';
 import IconMoreV2 from './icons/IconMoreV2.svg?react';
 import IconWatchStatus from './icons/IconWatchStatus.svg?react';
 import IconHelp from './icons/IconHelp.svg?react';
+import IconRefresh from './icons/IconRefresh.svg?react';
 
 export default function Icon(props: any) {
     switch (props?.name?.toLowerCase()) {
@@ -100,6 +101,8 @@ export default function Icon(props: any) {
             return <IconWatchStatus {...props} />;
         case 'icon-help':
             return <IconHelp {...props} />;
+        case 'icon-refresh':
+            return <IconRefresh {...props} />;
         default:
             return null;
     }

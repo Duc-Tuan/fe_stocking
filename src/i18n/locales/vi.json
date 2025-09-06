@@ -156,8 +156,9 @@
   "Tổng lợi nhuận": "Tổng lợi nhuận",
   "Tổng volume": "Tổng volume",
   "Boot vào lệnh đối ứng": "Boot vào lệnh đối ứng",
-  "Vào lệnh cho tài khoản exness": "Vào lệnh cho tài khoản exness",
-  "Vào lệnh cho tài khoản quỹ": "Vào lệnh cho tài khoản quỹ",
+  "Vào lệnh cho tài khoản": "Vào lệnh cho tài khoản",
+  "Vào lệnh cho tài khoản tham chiếu": "Vào lệnh cho tài khoản tham chiếu",
+  "Vào lệnh cho tài khoản đối ứng": "Vào lệnh cho tài khoản đối ứng",
   "Kiểu lệnh": "Kiểu lệnh",
   "Giá vào": "Giá vào",
   "Chốt lời (TP)": "Chốt lời (TP)",
@@ -175,5 +176,9 @@
   "Hệ số nhân": "Hệ số nhân",
   "Bạn xác nhận muốn đóng lệnh": "Bạn xác nhận muốn đóng lệnh",
   "Tài khoản quỹ": "Tài khoản quỹ",
-  "Tài khoản exness": "Tài khoản exness"
+  "Tài khoản exness": "Tài khoản exness",
+  "Hệ số lệch(Quỹ) sl, tp": "Hệ số lệch(Quỹ) sl, tp",
+  "Tài khoản tham chiếu": "Tài khoản tham chiếu",
+  "Đổi tài khoản tham chiếu": "Đổi tài khoản tham chiếu",
+  "Quỹ": "Quỹ"
 }
