@@ -156,7 +156,10 @@ export function findStrokeAt(
         const stroke = strokes[i];
 
         for (let j = 0; j < stroke.length; j++) {
-            const xx = chartRef.current.timeScale().timeToCoordinate(stroke[j].time);
+            const t = stroke[j].time;
+            if (t == null) continue; // bỏ qua nếu time chưa có
+
+            const xx = chartRef.current.timeScale().timeToCoordinate(t);
             const yy = candleSeriesRef.current.priceToCoordinate(stroke[j].price);
 
             if (xx != null && yy != null) {
@@ -200,9 +203,12 @@ export function redraw(
 
     allStrokes.forEach((stroke) => {
         const pixelPoints = stroke.map(p => {
-            const x = chartRef.current?.timeScale().timeToCoordinate(p?.time);
-            const y = candleSeriesRef.current?.priceToCoordinate(p?.price);
-            return (x != null && y != null) ? { x, y } : null;
+            if (p.time) {
+                // chỉ skip point null, KHÔNG reset segment
+                const x = chartRef.current?.timeScale().timeToCoordinate(p.time);
+                const y = candleSeriesRef.current?.priceToCoordinate(p?.price);
+                return (x != null && y != null) ? { x, y } : null;
+            }
         }).filter(Boolean) as { x: number; y: number }[];
 
 
