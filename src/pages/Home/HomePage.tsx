@@ -1,7 +1,7 @@
 import type { IChartApi, ISeriesApi, UTCTimestamp } from 'lightweight-charts';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { symbolApi } from '../../api/symbol';
+import { getSwapApi, symbolApi } from '../../api/symbol';
 import Icon from '../../assets/icon';
 import Atr from '../../components/atr/Atr';
 import { Button } from '../../components/button';
@@ -460,6 +460,7 @@ export default function HomePage() {
   useEffect(() => {
     if (!chartRef.current) return;
     widthCharRef.current = chartRef.current.timeScale().width();
+    getSwapApi()
   }, []);
 
   const drawFib = () => {

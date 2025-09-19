@@ -12,7 +12,7 @@ interface IData extends IServerTransaction {
 
 export default function PopupAcc({ setDataSubmit }: { setDataSubmit: Dispatch<SetStateAction<IOrderTransaction | undefined>> }) {
     const popupRef: any = useRef(null);
-    const { loadingserverTransaction, dataServerTransaction } = useAppInfo()
+    const { dataServerTransaction } = useAppInfo()
     const { t } = useTranslation()
     const [open, setOpen] = useState(false);
     const [visible, setVisible] = useState(false); // để delay unmount
@@ -67,7 +67,7 @@ export default function PopupAcc({ setDataSubmit }: { setDataSubmit: Dispatch<Se
 
     return (
         <div ref={popupRef} className="col-span-2 font-semibold shadow-xs shadow-gray-500 rounded-md text-sm relative">
-            <Button onClick={handleToggle} className="flex h-11 justify-between items-center w-full font-bold cursor-pointer text-black px-2 hover:bg-[var(--color-background-opacity-2)] transition text-md">
+            <Button onClick={handleToggle} className="flex h-9 md:h-11 justify-between items-center w-full font-bold cursor-pointer text-black px-2 hover:bg-[var(--color-background-opacity-2)] transition text-[12px] md:text-md">
                 {data.find((a) => a.active) ?
                     <span>{t("Tài khoản")}: {data.find((a) => a.active)?.username}</span>
                     :
@@ -80,7 +80,7 @@ export default function PopupAcc({ setDataSubmit }: { setDataSubmit: Dispatch<Se
             {visible && (
                 <div className={`flex justify-center items-start gap-1 flex-col transition-all duration-200  absolute bottom-full w-full mb-2 z-50 bg-white shadow-sm rounded-lg border border-gray-300 p-2 ${open ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
                     {data.map((a, i) => (
-                        <Button key={i} onClick={() => handleClick(a)} className={`${a.active ? "text-[var(--color-background)] bg-[var(--color-background-opacity-2)]" : "text-black"} cursor-pointer w-full text-start shadow-none py-2 pl-2 hover:bg-[var(--color-background-opacity-2)] transition text-md`} >{a.username}</Button>
+                        <Button key={i} onClick={() => handleClick(a)} className={`${a.active ? "text-[var(--color-background)] bg-[var(--color-background-opacity-2)]" : "text-black"} cursor-pointer w-full text-start shadow-none py-2 pl-2 hover:bg-[var(--color-background-opacity-2)] transition text-[12px] md:text-md`} >{a.username}</Button>
                     ))}
                 </div>
             )}

@@ -61,11 +61,11 @@ export default function Deals() {
       <div className="p-2 flex flex-col justify-center items-start gap-2">
         {
           !loading ? data.map((a, idx) => <div key={idx} className="flex justify-between items-center w-full shadow-sm shadow-gray-300 p-2 rounded-sm">
-            <div className="text-sm">
-              <div className='font-bold mb-1'>{a.symbol} <span className={`text-sm font-semibold ${a.type === "SELL" ? "text-red-500" : "text-blue-500"}`}>{a.type}</span></div>
+            <div className="text-[12px] md:text-sm">
+              <div className='font-bold mb-1'>{a.symbol} <span className={`text-[12px] md:text-sm font-semibold ${a.type === "SELL" ? "text-red-500" : "text-blue-500"}`}>{a.type}</span></div>
               <div>{a.volume} {t("tại")} {a.price_open}</div>
             </div>
-            <div className="text-sm">
+            <div className="text-[12px] md:text-sm">
               <div className={`mb-1 text-right ${a.status === "filled" ? "text-blue-700" : (a.status === "pending" ? "text-yellow-500" : "text-red-500")} font-semibold`}>{a.profit} <span>{a.status}</span></div>
               <div>{a.account_transaction_id} | {(dayjs.utc(a.time)).tz("Asia/Ho_Chi_Minh").format("YYYY-MM-DD HH:mm:ss")}</div>
             </div>
@@ -77,16 +77,16 @@ export default function Deals() {
 
       <div className="sticky bottom-0 bg-white p-2">
         <div className="flex justify-between items-center">
-          <div className="font-semibold">{t("Tổng lệnh")}</div>
-          <span className='font-bold'>{total.total}</span>
+          <div className="font-semibold text-[12px] md:text-sm">{t("Tổng lệnh")}</div>
+          <span className='font-bold text-[12px] md:text-sm'>{total.total}</span>
         </div>
         <div className="flex justify-between items-center">
-          <div className="font-semibold">Filled</div>
-          <span className='font-bold'>{total.totalFilled}</span>
+          <div className="font-semibold text-[12px] md:text-sm">Filled</div>
+          <span className='font-bold text-[12px] md:text-sm'>{total.totalFilled}</span>
         </div>
         <div className="flex justify-between items-center">
-          <div className="font-semibold">{t("Đã đóng lệnh")}</div>
-          <span className='font-bold'>{total.totalCancelled}</span>
+          <div className="font-semibold text-[12px] md:text-sm">{t("Đã đóng lệnh")}</div>
+          <span className='font-bold text-[12px] md:text-sm'>{total.totalCancelled}</span>
         </div>
       </div>
     </div>

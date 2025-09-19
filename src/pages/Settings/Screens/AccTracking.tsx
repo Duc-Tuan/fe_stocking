@@ -11,10 +11,10 @@ export default function AccTracking() {
       {
         !loadingServerMonitor ? serverMonitor.map((d) => {
           return <div className="bg-[var(--color-background-opacity-1)] w-full p-1 py-2 shadow-sm shadow-gray-200 rounded-sm" key={d.value}>
-            <div className=""><span className='font-bold mr-2'>{t("Tài khoản")}: </span>{d.value}</div>
-            <div className=""><span className='font-bold mr-2'>{t("Máy chủ")}: </span>{d.label}</div>
-            <div className=""><span className='font-bold mr-2'>{t("Cặp tiền theo dõi")}: </span>
-              <span className="text-[var(--color-background)] font-bold">{d.data?.map((a: string, i: number) => {
+            <div className="text-[12px] md:text-sm"><span className='font-bold mr-2'>{t("Tài khoản")}: </span>{d.value}</div>
+            <div className="text-[12px] md:text-sm"><span className='font-bold mr-2'>{t("Máy chủ")}: </span>{d.label}</div>
+            <div className="text-[12px] md:text-sm"><span className='font-bold mr-2'>{t("Cặp tiền theo dõi")}: </span>
+              <span className="text-[var(--color-background)] font-bold text-[12px] md:text-[16px]">{d.data?.map((a: string, i: number) => {
                 return a + ((i !== (d.data.length - 1)) ? " - " : "")
               })}</span>
             </div>

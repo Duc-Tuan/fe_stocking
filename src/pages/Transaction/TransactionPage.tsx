@@ -115,10 +115,10 @@ export default function TransactionPage() {
     }, [data?.status_sl_tp, stopLoss, pnl, takeProfit])
 
     return (
-        <div className="flex justify-center items-center mt-20">
+        <div className="flex justify-center items-center mt-0 md:mt-20">
             <div className="w-full max-w-4xl p-4 space-y-4">
                 {/* Header */}
-                <div className="text-center shadow-xs shadow-gray-500 rounded-lg py-2 mb-4 text-sm">
+                <div className="text-center shadow-xs shadow-gray-500 rounded-lg py-2 mb-4 text-[12px] md:text-sm">
                     <div className="font-bold">{t("Cặp tiền của tài khoản theo dõi")} {serverMonitorActive?.value}</div>
                     <div className="text-gray-500">{serverMonitorActive?.label}</div>
                     <div className="text-[var(--color-background)] mt-1 font-bold">{serverMonitorActive?.data?.map((a: string, i: number) => {
@@ -133,7 +133,7 @@ export default function TransactionPage() {
                             {currentPnl?.by_symbol.map((item, index) => (
                                 <div
                                     key={index}
-                                    className={`text-sm flex justify-between items-center text-gray-700 py-1 border-b border-b-gray-300 border-solid}`}
+                                    className={`text-[12px] md:text-sm flex justify-between items-center text-gray-700 py-1 border-b border-b-gray-300 border-solid}`}
                                 >
                                     <span className="font-bold">
                                         {item.symbol}
@@ -156,7 +156,7 @@ export default function TransactionPage() {
                             <div className="w-full">
                                 {activateTypetransaction.filter((a) => a.active && a.type === "Lenh_thi_truong").length === 0 &&
                                     <div className="text-sm flex justify-between py-2">
-                                        <span className="font-bold text-md">{t("Giá")}: (PNL)</span>
+                                        <span className="font-bold text-[12px] md:text-md">{t("Giá")}: (PNL)</span>
                                         <div className="flex items-center space-x-1">
                                             <button
                                                 onClick={() => setPnl((prev) => prev - 1)}
@@ -180,7 +180,7 @@ export default function TransactionPage() {
                                     </div>
                                 }
                                 <div className="text-sm flex justify-between items-center pb-2">
-                                    <span className="font-bold text-md">{t("Cắt lỗ")}: (PNL)</span>
+                                    <span className="font-bold text-[12px] md:text-md">{t("Cắt lỗ")}: (PNL)</span>
                                     <div className="flex items-center space-x-1">
                                         <button
                                             onClick={() => setStopLoss((prev) => prev - 1)}
@@ -204,7 +204,7 @@ export default function TransactionPage() {
                                     </div>
                                 </div>
                                 <div className="text-sm flex justify-between items-center pb-2">
-                                    <span className="font-bold text-md">{t("Chốt lời")}: (PNL)</span>
+                                    <span className="font-bold text-[12px] md:text-md">{t("Chốt lời")}: (PNL)</span>
                                     <div className="flex items-center space-x-1">
                                         <button
                                             onClick={() => setTakeProfit((prev) => prev - 1)}
@@ -229,7 +229,7 @@ export default function TransactionPage() {
                                 </div>
                             </div>
                             <div className="w-full text-sm flex justify-between items-center border-t border-t-gray-300 border-solid pt-2">
-                                <span className="font-bold text-md">{t("Hết hạn")}</span>
+                                <span className="font-bold text-[12px] md:text-md">{t("Hết hạn")}</span>
                                 <span >GTC</span>
                             </div>
                         </div>
@@ -242,7 +242,7 @@ export default function TransactionPage() {
                                 <React.Fragment key={i}>
                                     <TooltipCustom isButton titleTooltip={<p style={{ whiteSpace: "pre-line" }}>{a.subTitle}</p>} placement="right-end">
                                         <Button onClick={() => handlClickActive(a.type)} className={`flex w-full justify-between items-center  ${i === 0 ? "rounded-none border-b border-b-gray-300 border-solid py-1 px-2" : "py-2 px-2"} cursor-pointer shadow-none hover:bg-[var(--color-background-opacity-2)] transition`}>
-                                            <div className={`text-sm font-bold ${a.color}`}>{t(a.title)}</div>
+                                            <div className={`text-[10px] md:text-sm font-bold ${a.color}`}>{t(a.title)}</div>
                                             {a.active && <span><Icon name="icon-check" width={18} height={18} className="text-[var(--color-background)]" /></span>}
                                         </Button>
                                     </TooltipCustom>
@@ -254,12 +254,12 @@ export default function TransactionPage() {
 
                 {/* Dòng dưới cùng */}
                 <div className="grid grid-cols-3 gap-2 items-center">
-                    <div className="col-span-1 flex items-center rounded-md p-2 text-sm shadow-xs shadow-gray-500">
+                    <div className="col-span-1 flex items-center rounded-md p-2 text-[12px] md:text-sm shadow-xs shadow-gray-500">
                         <div className="flex justify-between items-center w-full font-bold">
                             <span>
                                 PNL:
                             </span>
-                            <span className="text-lg">{currentPnl?.total_pnl.toFixed(3)}</span>
+                            <span className="text-[14px] md:text-lg">{currentPnl?.total_pnl.toFixed(3)}</span>
                         </div>
                     </div>
                     <PopupAcc setDataSubmit={setData} />
@@ -269,19 +269,19 @@ export default function TransactionPage() {
                 {activateTypetransaction.filter((a) => a.active && a.type === "Lenh_thi_truong").length === 0 ?
                     <Button onClick={() => {
                         isCheckSumbit && handleSendOrder()
-                    }} className={`${isCheckSumbit ? "bg-[var(--color-background)]" : "bg-gray-300"} p-0 w-full h-10 font-bold cursor-pointer text-white px-2 shadow-md shadow-gray-500`}>
+                    }} className={`${isCheckSumbit ? "bg-[var(--color-background)]" : "bg-gray-300"} p-0 w-full h-10 font-bold cursor-pointer text-white px-2 shadow-md shadow-gray-500 text-[12px] md:text-lg`}>
                         <span>{t("Đặt lệnh")}</span>
                     </Button>
                     :
                     <div className="flex gap-2 h-10">
                         <Button onClick={() => {
                             ((currentPnl?.total_pnl ?? 0) > stopLoss && ((currentPnl?.total_pnl ?? 0) < takeProfit)) && handleSendOrder("Xuoi_Limit")
-                        }} aria-current="page" className={`${((currentPnl?.total_pnl ?? 0) > stopLoss && ((currentPnl?.total_pnl ?? 0) < takeProfit)) ? "bg-rose-600 hover:bg-red-600" : "bg-gray-300"} p-0 flex-1  text-white rounded-lg shadow-xs shadow-gray-500  cursor-pointer font-bold`}>
+                        }} aria-current="page" className={`${((currentPnl?.total_pnl ?? 0) > stopLoss && ((currentPnl?.total_pnl ?? 0) < takeProfit)) ? "bg-rose-600 hover:bg-red-600" : "bg-gray-300"} p-0 flex-1  text-white rounded-lg shadow-xs shadow-gray-500  cursor-pointer font-bold text-[12px] md:text-lg`}>
                             {t("Xuôi")}
                         </Button>
                         <Button onClick={() => {
                             ((currentPnl?.total_pnl ?? 0) < stopLoss && ((currentPnl?.total_pnl ?? 0) > takeProfit)) && handleSendOrder("Nguoc_Limit")
-                        }} aria-current="page" className={`${((currentPnl?.total_pnl ?? 0) < stopLoss && ((currentPnl?.total_pnl ?? 0) > takeProfit)) ? "bg-blue-600 hover:bg-blue-800" : "bg-gray-300"} p-0 flex-1 text-white rounded-lg shadow-xs shadow-gray-500 cursor-pointer font-bold`}>
+                        }} aria-current="page" className={`${((currentPnl?.total_pnl ?? 0) < stopLoss && ((currentPnl?.total_pnl ?? 0) > takeProfit)) ? "bg-blue-600 hover:bg-blue-800" : "bg-gray-300"} p-0 flex-1 text-white rounded-lg shadow-xs shadow-gray-500 cursor-pointer font-bold text-[12px] md:text-lg` }>
                             {t("Ngược")}
                         </Button>
                     </div>
@@ -394,7 +394,7 @@ const Modal = ({ open, setOpen, dataCurrent }: { open: boolean, setOpen: Dispatc
                                 !loading && handleClick()
                             }}
                             type="button"
-                            className="shadow-gray-400 cursor-pointer inline-flex w-full justify-center rounded-md bg-[var(--color-background)] px-3 py-2 text-sm font-semibold text-white shadow-md sm:ml-3 sm:w-auto"
+                            className="shadow-gray-400 cursor-pointer inline-flex w-full justify-center rounded-md bg-[var(--color-background)] px-3 py-2 text-[12px] md:text-sm font-semibold text-white shadow-md sm:ml-3 sm:w-auto"
                         >
                             {t("Xác nhận")}
                         </Button>
@@ -402,7 +402,7 @@ const Modal = ({ open, setOpen, dataCurrent }: { open: boolean, setOpen: Dispatc
                             type="button"
                             data-autofocus
                             onClick={() => setOpen(false)}
-                            className="shadow-gray-400 cursor-pointer mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-md inset-ring inset-ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
+                            className="shadow-gray-400 cursor-pointer mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-[12px] md:text-sm font-semibold text-gray-900 shadow-md inset-ring inset-ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
                         >
                             {t("Hủy")}
                         </Button>

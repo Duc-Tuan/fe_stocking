@@ -158,7 +158,7 @@
   "Boot vào lệnh đối ứng": "Boot vào lệnh đối ứng",
   "Vào lệnh cho tài khoản": "Vào lệnh cho tài khoản",
   "Vào lệnh cho tài khoản tham chiếu": "Vào lệnh cho tài khoản tham chiếu",
-  "Vào lệnh cho tài khoản đối ứng": "Vào lệnh cho tài khoản đối ứng",
+  "Vào lệnh cho tài khoản đối ứng của": "Vào lệnh cho tài khoản đối ứng của",
   "Kiểu lệnh": "Kiểu lệnh",
   "Giá vào": "Giá vào",
   "Chốt lời (TP)": "Chốt lời (TP)",
@@ -180,5 +180,7 @@
   "Hệ số lệch(Quỹ) sl, tp": "Hệ số lệch(Quỹ) sl, tp",
   "Tài khoản tham chiếu": "Tài khoản tham chiếu",
   "Đổi tài khoản tham chiếu": "Đổi tài khoản tham chiếu",
-  "Quỹ": "Quỹ"
+  "Quỹ": "Quỹ",
+  "Tổng số lô đang vào": "Tổng số lô đang vào",
+  "Đăng nhập": "Đăng nhập"
 }

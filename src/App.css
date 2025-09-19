@@ -32,9 +32,9 @@ input[type="checkbox"].custom-checkbox:checked::after {
   font-size: 12px;
 }
 
-.absolute {
+/* .absolute {
   position: absolute !important;
-}
+} */
 
 .font-dancing-bold {
   font-family: "dancing";

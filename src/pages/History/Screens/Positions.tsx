@@ -29,7 +29,9 @@ interface IBreakEven {
     pnl: number,
     pnl_break_even: number,
     total_profit: number,
-    total_volume: number
+    total_volume: number,
+    type: string,
+    total_order: number
 }
 
 interface IData extends IServerTransaction {
@@ -40,7 +42,7 @@ interface IData extends IServerTransaction {
 
 export default function Positions() {
     const { t } = useTranslation()
-    const { dataServerTransaction, loadingserverTransaction } = useAppInfo()
+    const { dataServerTransaction } = useAppInfo()
     const [dataAccTransaction, setDataAccTransaction] = useState<IData[]>(dataServerTransaction)
     const [filter, setFilter] = useState<IFilterAllLot>(initFilter)
     const [data, setData] = useState<ISymbolPosition[]>([])
@@ -150,7 +152,7 @@ export default function Positions() {
                 {
                     !loading ?
                         data.length === 0 ?
-                            <div className='text-gray-300 flex justify-center items-center flex-1 w-full'>{t("Hiện không có lệnh nào đang mở")}</div>
+                            <div className='text-gray-300 flex justify-center items-center flex-1 w-full text-[12px] md:text-sm'>{t("Hiện không có lệnh nào đang mở")}</div>
                             :
                             data.map((a, idx) => <div key={idx} className="flex justify-between items-center w-full shadow-sm shadow-gray-300 p-2 rounded-sm">
                                 <div className="">
@@ -167,7 +169,7 @@ export default function Positions() {
                 }
             </div>
 
-            <div className="sticky bottom-0 bg-white p-2 grid grid-cols-5">
+            <div className="sticky bottom-0 bg-white p-2 grid grid-cols-2 md:grid-cols-5">
                 {
                     [
                         ...dataAccTransaction,
@@ -176,26 +178,27 @@ export default function Positions() {
                     ].map((d, index) => {
                         if (d.isFake) {
                             return (
-                                <div className="col-span-1 border border-dashed border-gray-300 p-2 opacity-50" key={`fake-${index}`}>
-                                    <div className="text-sm text-gray-400">{t("Đang chờ tài khoản")}</div>
-                                </div>
+                                // <div className="col-span-1 border border-dashed border-gray-300 p-2 opacity-50" key={`fake-${index}`}>
+                                //     <div className="text-[10px] md:text-sm text-gray-400">{t("Đang chờ tài khoản")}</div>
+                                // </div>
+                                <></>
                             )
                         }
 
                         return (
                             <div className="col-span-1 border border-gray-300 p-2" key={d.id}>
                                 <div className="flex justify-between items-center">
-                                    <div className="text-sm"><span className='font-bold mr-2'>{t("Tài khoản")}: </span>{d.name}</div>
+                                    <div className="text-[10px] md:text-sm"><span className='font-bold mr-2'>{t("Tài khoản")}: </span>{d.name}</div>
                                     <More data={d.break_even} title={d.name} />
                                 </div>
-                                <div className="text-sm"><span className='font-bold mr-2'>{t("Máy chủ")}: </span>{d.server}</div>
-                                <div className="text-sm"><span className='font-bold mr-2'>{t("Số dư")}: </span>{d.balance}</div>
-                                <div className="text-sm"><span className='font-bold mr-2'>{t("Vốn")}: </span>{d.equity}</div>
-                                <div className="text-sm"><span className='font-bold mr-2'>{t("Ký quỹ")}: </span>{d.margin}</div>
-                                <div className="text-sm"><span className='font-bold mr-2'>{t("Ký quỹ khả dụng")}: </span>{d.free_margin}</div>
-                                <div className="text-sm"><span className='font-bold mr-2'>{t("Đòn bẩy")}: </span>{d.leverage}</div>
-                                <div className="text-sm"><span className='font-bold mr-2'>{t("Phí qua đêm")}: </span>{d.swap}</div>
-                                <div className="text-sm"><span className='font-bold mr-2'>{t("Số lệnh đang mở")}: </span>{d.position ?? 0}</div>
+                                <div className="text-[10px] md:text-sm"><span className='font-bold mr-2'>{t("Máy chủ")}: </span>{d.server}</div>
+                                <div className="text-[10px] md:text-sm"><span className='font-bold mr-2'>{t("Số dư")}: </span>{d.balance}</div>
+                                <div className="text-[10px] md:text-sm"><span className='font-bold mr-2'>{t("Vốn")}: </span>{d.equity}</div>
+                                <div className="text-[10px] md:text-sm"><span className='font-bold mr-2'>{t("Ký quỹ")}: </span>{d.margin}</div>
+                                <div className="text-[10px] md:text-sm"><span className='font-bold mr-2'>{t("Ký quỹ khả dụng")}: </span>{d.free_margin}</div>
+                                <div className="text-[10px] md:text-sm"><span className='font-bold mr-2'>{t("Đòn bẩy")}: </span>{d.leverage}</div>
+                                <div className="text-[10px] md:text-sm"><span className='font-bold mr-2'>{t("Phí qua đêm")}: </span>{d.swap}</div>
+                                <div className="text-[10px] md:text-sm"><span className='font-bold mr-2'>{t("Số lệnh đang mở")}: </span>{d.position ?? 0}</div>
                             </div>
                         )
                     })
@@ -205,6 +208,26 @@ export default function Positions() {
     )
 }
 
+const typeOrder = (d: string) => {
+    switch(d) {
+        case "Xuoi_Limit":
+        case "Xuoi_Stop":
+            return "Xuôi";
+        case "Nguoc_Limit":
+        case "Nguoc_Stop":
+            return "Ngược";
+        default:
+            return "Xuôi"
+    }
+}
+
+const Pnlbreak_even = (pnl: number, denta: number, d: string) => {
+    if (d === "Xuoi_Limit" || d === "Xuoi_Stop") {
+        return pnl - denta
+    } else {
+        return pnl + denta
+    }
+}
 
 const More = ({ data, title }: { data: IBreakEven[], title: string }) => {
     const { t } = useTranslation();
@@ -239,6 +262,14 @@ const More = ({ data, title }: { data: IBreakEven[], title: string }) => {
                                             <div className="font-semibold pl-2">{d.account_monitor}</div>
                                         </div>
                                         <div className="flex">
+                                            <div className="">{t("Trạng thái")}: </div>
+                                            <div className="font-semibold pl-2">{t(typeOrder(d.type))}</div>
+                                        </div>
+                                        <div className="flex">
+                                            <div className="">{t("Tổng số lô đang vào")}: </div>
+                                            <div className="font-semibold pl-2">{d.total_order}</div>
+                                        </div>
+                                        <div className="flex">
                                             <div className="">{t("PNL thị trường")}: </div>
                                             <div className="font-semibold pl-2 text-[var(--color-background)]">{d.pnl.toFixed(5)}</div>
                                         </div>
@@ -256,7 +287,8 @@ const More = ({ data, title }: { data: IBreakEven[], title: string }) => {
                                         </div>
                                         <div className="flex">
                                             <div className="">{t("Điểm PNL hòa vốn")}: </div>
-                                            <div className="font-semibold pl-2">{(d.pnl - d.pnl_break_even).toFixed(5)}</div>
+                                            {/* <div className="font-semibold pl-2">{(d.pnl - d.pnl_break_even).toFixed(5)}</div> */}
+                                            <div className="font-semibold pl-2">{Pnlbreak_even(d.pnl, d.pnl_break_even, d.type).toFixed(5)}</div>
                                         </div>
                                     </div>
                                 ) : <div className="text-sm w-full col-span-2 text-center min-h-40 flex justify-center items-center text-gray-400">{t("Hiện đang không có lệnh nào đang mở.")}</div> }

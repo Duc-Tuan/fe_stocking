@@ -32,27 +32,27 @@ export default function BootHistory() {
       {data.map((a, idx) => (
         <div key={idx} className="flex justify-between items-center w-full shadow-sm shadow-gray-300 p-2 rounded-sm">
           <div className="">
-            <div className="font-bold">
+            <div className="font-bold text-[12px] md:text-sm">
               {a.symbol}{' '}
               <span
-                className={`text-sm font-semibold ${a.order_type === '1' ? 'text-red-500' : 'text-blue-500'}`}
+                className={`text-[12px] md:text-sm font-semibold ${a.order_type === '1' ? 'text-red-500' : 'text-blue-500'}`}
               >
                 {a.order_type === "0" ? "BUY" : "SELL"} {a.volume}
               </span>
             </div>
-            <div className="text-sm flex justify-start items-center gap-1">
-              <span className='font-semibold'>Ticket</span>: {a.id_transaction} | <span className='font-semibold'>{t("Giá")}</span>: {a.price} | <span className='font-semibold'>{t("TP")}</span>: {a.tp} | <span className='font-semibold'>{t("SL")}</span>: {a.sl}
+            <div className="text-[10px] md:text-sm flex justify-start items-center gap-1">
+              <span className='font-semibold'>Ticket</span>: {a.id_transaction} | <span className='font-semibold'>{t("Giá")}</span>: {a.price.toFixed(4)} | <span className='font-semibold'>{t("TP")}</span>: {a.tp.toFixed(4)} | <span className='font-semibold'>{t("SL")}</span>: {a.sl.toFixed(4)}
             </div>
           </div>
           <div className="">
             <div
-              className={`text-right ${
+              className={`text-right text-[12px] md:text-sm ${
                 a.profit > 0 ? 'text-blue-700' : a.profit === 0 ? 'text-gray-400' : 'text-red-500'
               } font-semibold`}
             >
               {a.profit} {t("Đã đóng lệnh")}
             </div>
-            <div className="text-sm">{a.account_id} | {dayjs.utc(a.time).tz('Asia/Ho_Chi_Minh').format('YYYY-MM-DD HH:mm:ss')}</div>
+            <div className="text-[12px] md:text-sm">{a.account_id} | {dayjs.utc(a.time).tz('Asia/Ho_Chi_Minh').format('YYYY-MM-DD HH:mm:ss')}</div>
           </div>
         </div>
       ))}

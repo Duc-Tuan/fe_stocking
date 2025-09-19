@@ -50,10 +50,10 @@ export default function BootMonitor() {
                           className="flex justify-between items-center w-full shadow-sm shadow-gray-300 p-2 rounded-sm"
                         >
                           <div className="">
-                            <div className="font-bold flex gap-2 justify-start items-center">
+                            <div className="font-bold flex gap-1 md:gap-2 justify-start items-center text-[12px] md:text-sm">
                               {a.symbol}{' '}
                               <span
-                                className={`text-sm font-semibold ${
+                                className={`font-semibold ${
                                   a.position_type === '1' ? 'text-red-500' : 'text-blue-500'
                                 }`}
                               >
@@ -65,27 +65,27 @@ export default function BootMonitor() {
                                     setOpen(true);
                                     setDataCurrent(position);
                                   }}
-                                  className="shadow-sm w-[24px] h-[24px] p-0 flex justify-center items-center"
+                                  className="shadow-sm md:w-[24px] w-[20px] md:h-[24px] h-[20px] p-0 flex justify-center items-center"
                                   iconName="icon-close-transaction"
                                   path="#"
                                   title="Đóng lệnh nhanh"
                                 />
                               )}
                             </div>
-                            <div className="text-sm flex justify-start items-center gap-1">
-                              {a.open_price} <Icon name="icon-right-v2" width={14} height={14} /> {a.current_price}
+                            <div className="text-[12px] md:text-sm flex justify-start items-center gap-1">
+                              {a.open_price.toFixed(4)} <Icon name="icon-right-v2" width={14} height={14} /> {a.current_price.toFixed(4)}
                             </div>
                           </div>
                           <div className="">
                             <div
                               className={`text-right ${
                                 a.profit > 0 ? 'text-blue-700' : a.profit === 0 ? 'text-gray-400' : 'text-red-500'
-                              } font-semibold`}
+                              } font-semibold text-[14px] md:text-sm`}
                             >
                               {a.profit}
                             </div>
-                            <div className="text-sm">
-                              {a.username} | {dayjs.utc(a.time).tz('Asia/Ho_Chi_Minh').format('YYYY-MM-DD HH:mm:ss')}
+                            <div className="text-[12px] md:text-sm md:text-inherit text-right">
+                              {a.username} | <span className='md:w-auto w-full md:inline block'>{dayjs.utc(a.time).tz('Asia/Ho_Chi_Minh').format('YYYY-MM-DD HH:mm:ss')}</span>
                             </div>
                           </div>
                         </div>
@@ -97,39 +97,39 @@ export default function BootMonitor() {
                   )}
                 </div>
                 <div className="w-full border-t border-t-gray-200 p-2">
-                  <div className="text-md w-full">
+                  <div className="text-[14px] md:text-md w-full">
                     <div className="font-semibold text-center w-full mr-2">
                       {t(idx === 0 ? 'Tài khoản exness' : 'Tài khoản quỹ')}
                     </div>
                   </div>
 
                   <div className="flex justify-between items-center">
-                    <div className="text-sm">
+                    <div className="text-[12px] md:text-sm">
                       <span className="font-bold mr-2">{t('Tài khoản')}: </span>
                       {item.name}
                     </div>
                   </div>
-                  <div className="text-sm">
+                  <div className="text-[12px] md:text-sm">
                     <span className="font-bold mr-2">{t('Máy chủ')}: </span>
                     {item.server}
                   </div>
-                  <div className="text-sm">
+                  <div className="text-[12px] md:text-sm">
                     <span className="font-bold mr-2">{t('Số dư')}: </span>
                     {item.balance}
                   </div>
-                  <div className="text-sm">
+                  <div className="text-[12px] md:text-sm">
                     <span className="font-bold mr-2">{t('Vốn')}: </span>
                     {item.equity}
                   </div>
-                  <div className="text-sm">
+                  <div className="text-[12px] md:text-sm">
                     <span className="font-bold mr-2">{t('Ký quỹ')}: </span>
                     {item.margin}
                   </div>
-                  <div className="text-sm">
+                  <div className="text-[12px] md:text-sm">
                     <span className="font-bold mr-2">{t('Ký quỹ khả dụng')}: </span>
                     {item.free_margin}
                   </div>
-                  <div className="text-sm">
+                  <div className="text-[12px] md:text-sm">
                     <span className="font-bold mr-2">{t('Đòn bẩy')}: </span>
                     {item.leverage}
                   </div>
@@ -196,7 +196,7 @@ const Modal = ({
                     {t('Bạn xác nhận muốn đóng lệnh')} {dataCurrent[0]?.symbol}
                   </DialogTitle>
                   <div className="mt-2">
-                    <p className="text-sm text-gray-500">
+                    <p className="text-[12px] md:text-sm text-gray-500">
                       {t(
                         'Nếu bạn xác nhận đóng lệnh của các cặp tiền này thì sẽ không thể nào mở lại được tại thời điểm này nữa. Bạn vẫn muốn xác nhận chứ!',
                       )}
@@ -212,7 +212,7 @@ const Modal = ({
                   !loading && handleClick();
                 }}
                 type="button"
-                className="shadow-gray-400 cursor-pointer inline-flex w-full justify-center rounded-md bg-[var(--color-background)] px-3 py-2 text-sm font-semibold text-white shadow-md sm:ml-3 sm:w-auto"
+                className="text-[12px] md:text-sm shadow-gray-400 cursor-pointer inline-flex w-full justify-center rounded-md bg-[var(--color-background)] px-3 py-2 font-semibold text-white shadow-md sm:ml-3 sm:w-auto"
               >
                 {t('Xác nhận')}
               </Button>
@@ -220,7 +220,7 @@ const Modal = ({
                 type="button"
                 data-autofocus
                 onClick={() => setOpen(false)}
-                className="shadow-gray-400 cursor-pointer mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-md inset-ring inset-ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
+                className="text-[12px] md:text-sm shadow-gray-400 cursor-pointer mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 font-semibold text-gray-900 shadow-md inset-ring inset-ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
               >
                 {t('Hủy')}
               </Button>

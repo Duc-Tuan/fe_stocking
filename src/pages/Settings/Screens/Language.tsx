@@ -62,7 +62,7 @@ const ChangColor = ({ t }: any) => {
 
   return <div className="mb-2" ref={languageRef}>
     <Button className={`text-black cursor-pointer w-full p-2 rounded-none ${isOpen ? 'bg-[var(--color-background)] text-[var(--color-text)]' : 'hover:bg-[var(--color-background-opacity-2)]'}`} onClick={() => setIsOpen((prev) => !prev)}>
-      <div className="flex justify-between items-center w-full">
+      <div className="flex justify-between items-center w-full text-[12px] md:text-sm">
         <span>{t("Đổi màu hệ thống")}</span>
         <Icon name="icon-up" width={14} height={14} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : 'rotate-0'}`} />
       </div>
@@ -107,7 +107,7 @@ const LanguageComponent = ({ t }: any) => {
   }, isOpen);
 
   return <div className="" ref={languageRef}>
-    <Button className={`text-black cursor-pointer w-full p-2 rounded-none ${isOpen ? 'bg-[var(--color-background)] text-[var(--color-text)]' : 'hover:bg-[var(--color-background-opacity-2)]'
+    <Button className={`text-black cursor-pointer w-full p-2 rounded-none text-[12px] md:text-sm ${isOpen ? 'bg-[var(--color-background)] text-[var(--color-text)]' : 'hover:bg-[var(--color-background-opacity-2)]'
       }`} onClick={() => setIsOpen((prev) => !prev)}>
       <div className="flex justify-between items-center w-full">
         <span>{t("Chuyển đổi ngôn ngữ")}</span>
@@ -121,8 +121,8 @@ const LanguageComponent = ({ t }: any) => {
         }`}
     >
       {dataLanguage.map((a) =>
-        <Button key={a.value} onClick={() => handleLanguage(a.value)} className={`${a.active ? "text-[var(--color-background)]" : "text-black"} hover:bg-[var(--color-background-opacity-01)] cursor-pointer block w-full h-10 text-left shadow-none pl-2`}>
-          <div className='flex justify-start items-center gap-2'>
+        <Button key={a.value} onClick={() => handleLanguage(a.value)} className={`${a.active ? "text-[var(--color-background)]" : "text-black"} hover:bg-[var(--color-background-opacity-01)] cursor-pointer block w-full h-8 md:h-10 text-left shadow-none p-1 pl-2 md:p-2`}>
+          <div className='flex justify-start items-center gap-2 text-[12px] md:text-sm'>
             {a.label}
             {a.active &&
               <Icon name="icon-check" width={18} height={18} />

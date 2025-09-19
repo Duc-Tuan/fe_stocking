@@ -10,23 +10,25 @@ import toast from 'react-hot-toast';
 import { generateUUID } from '../../utils/timeRange';
 import { PathName } from '../../routes/path';
 import { getServer, getServerTransaction } from '../../store/transaction/transactionSlice';
+import { useTranslation } from 'react-i18next';
 
 export default function LoginPage() {
+  const { t } = useTranslation();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isOpen, toggleOpen, setOpen] = useToggle(false);
-  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate(); // ⬅️ bạn bị thiếu dòng này
 
   const handleLogin = async () => {
     try {
-      let deviceId = localStorage.getItem("device_id");
+      let deviceId = localStorage.getItem('device_id');
       if (!deviceId) {
         deviceId = generateUUID(); // fallback nếu cần
-        localStorage.setItem("device_id", deviceId);
+        localStorage.setItem('device_id', deviceId);
       }
-      setIsLoading(true)
+      setIsLoading(true);
       await dispatch(login({ username, password, deviceId })).unwrap(); // ⬅️ thêm unwrap để bắt lỗi
       await dispatch(getMe());
       await dispatch(getServer());
@@ -34,14 +36,15 @@ export default function LoginPage() {
       toast.success('Đăng nhập thành công!');
       return navigate(PathName.HOME);
     } catch (e: any) {
-      if (e?.message === "Request failed with status code 403") return toast.error('Chỉ được đăng nhập trên tối đa 2 thiết bị.', {
-        style: {
-          fontSize: '14px',
-        },
-      });
+      if (e?.message === 'Request failed with status code 403')
+        return toast.error('Chỉ được đăng nhập trên tối đa 2 thiết bị.', {
+          style: {
+            fontSize: '14px',
+          },
+        });
       return toast.error('Đăng nhập thất bại!');
     } finally {
-      return setIsLoading(false)
+      return setIsLoading(false);
     }
   };
 
@@ -54,7 +57,7 @@ export default function LoginPage() {
         }}
         className="p-6 space-y-4 max-w-sm mx-auto bg-white min-w-[400px] rounded-xl shadow-sm shadow-red-200"
       >
-        <h1 className='text-center font-bold mb-10 text-xl'>Đăng nhập</h1>
+        <h1 className="text-center font-bold mb-10 text-lg md:text-xl">{t('Đăng nhập')}</h1>
 
         <input
           value={username}
@@ -66,21 +69,31 @@ export default function LoginPage() {
         <div className="max-w-sm">
           <div className="relative">
             <input
-              type={isOpen ? "text" : "password"}
+              type={isOpen ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="border p-2 w-full mt-2 pr-10 rounded-sm"
               placeholder="Password"
             />
-            <button onClick={toggleOpen} type="button" className="h-min absolute inset-y-[18px] end-0 flex items-center z-20 px-3 cursor-pointer text-gray-400 rounded-e-md focus:outline-hidden focus:text-blue-600 dark:text-neutral-600 dark:focus:text-blue-500">
-              {isOpen ? <Icon name="icon-eye" className="text-neutral-500 w-5 h-5" /> :
-                <Icon name="icon-no-eye" className="text-neutral-500 w-5 h-5" />}
+            <button
+              onClick={toggleOpen}
+              type="button"
+              className="h-min absolute inset-y-[18px] end-0 flex items-center z-20 px-3 cursor-pointer text-gray-400 rounded-e-md focus:outline-hidden focus:text-blue-600 dark:text-neutral-600 dark:focus:text-blue-500"
+            >
+              {isOpen ? (
+                <Icon name="icon-eye" className="text-neutral-500 w-5 h-5" />
+              ) : (
+                <Icon name="icon-no-eye" className="text-neutral-500 w-5 h-5" />
+              )}
             </button>
           </div>
         </div>
 
-
-        <Button isLoading={isLoading} type="submit" className="w-full cursor-pointer text-[var(--color-text)] bg-[var(--color-background)] px-4 py-2  rounded mt-2">
+        <Button
+          isLoading={isLoading}
+          type="submit"
+          className="w-full cursor-pointer text-[var(--color-text)] bg-[var(--color-background)] px-4 py-2  rounded mt-2"
+        >
           Đăng nhập
         </Button>
       </form>

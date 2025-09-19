@@ -20,13 +20,13 @@ const Tabs = (props: IProps) => {
             {options.map((item: IOptions) => (
                 <React.Fragment key={item.value}>
                     <TooltipCustom isButton titleTooltip={<>
-                        <div>
+                        <div className="text-[12px] md:text-sm">
                             {t("Tài khoản")}: {item?.value}
                         </div>
-                        <div>
+                        <div className="text-[12px] md:text-sm">
                             {t("Máy chủ")}: {item?.label}
                         </div>
-                        <div className="font-bold">
+                        <div className="font-bold text-[12px] md:text-sm">
                             {t("Cặp tiền")}: {JSON.stringify(item?.data)}
                         </div>
                     </>}>
@@ -35,10 +35,10 @@ const Tabs = (props: IProps) => {
                             disabled={isLoading}
                             isLoading={isLoading}
                             onClick={() => handleClick(item)}
-                            className={`flex justify-center items-center h-[36px] w-[80px] rounded-lg ${item.value === serverMonitorActive?.value
+                            className={`flex justify-center items-center h-[32px] md:h-[36px] w-[70px] md:w-[80px] rounded-lg ${item.value === serverMonitorActive?.value
                                 ? "text-[var(--color-text)] bg-[var(--color-background)] active"
                                 : "bg-gray-200 text-black hover:bg-[var(--color-background-opacity-5)] hover:text-[var(--color-text)] border border-rose-100 dark:hover:border-rose-200"
-                                } cursor-pointer`}
+                                } cursor-pointer text-[12px] md:text-sm`}
                             aria-current="page"
                         >
                             T {String(item?.value).slice(-6)}

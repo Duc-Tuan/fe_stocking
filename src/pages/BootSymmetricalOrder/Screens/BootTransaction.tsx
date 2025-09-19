@@ -229,9 +229,9 @@ export default function BootTransaction() {
   };
 
   const classInputHeder =
-    'text-lg font-semibold border-b-2 caret-[var(--color-background)] text-center border-b-gray-300 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none p-1 w-full h-10 pl-2 focus:outline-none focus:border-b-[var(--color-background)]';
+    'text-sm md:text-lg font-semibold border-b-2 caret-[var(--color-background)] text-center border-b-gray-300 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none p-1 w-full h-10 pl-2 focus:outline-none focus:border-b-[var(--color-background)]';
   const classInputBorder =
-    'border border-gray-300 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none p-1 rounded w-full h-10 pl-2 shadow-sm shadow-gray-200 focus:outline-none focus:border-[var(--color-background)]';
+    'text-[12px] md:text-sm border border-gray-300 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none p-1 rounded w-full h-10 pl-2 shadow-sm shadow-gray-200 focus:outline-none focus:border-[var(--color-background)]';
   return (
     <div className="relative h-full">
       <div className="absolute top-0 left-0 flex justify-start items-center gap-2">
@@ -239,7 +239,7 @@ export default function BootTransaction() {
           title="Đổi tài khoản tham chiếu"
           path="#"
           iconName="icon-refresh"
-          className="rounded-4xl"
+          className="rounded-4xl md:h-[36px] md:w-[36px] w-[28px] h-[28px] flex justify-center items-center"
           handle={() =>
             setData((prev) => [
               { ...prev[0], username: prev[1].username },
@@ -247,16 +247,16 @@ export default function BootTransaction() {
             ])
           }
         />
-        <div className="">
+        <div className="text-[10px] md:text-sm w-32 md:w-full">
           {t('Tài khoản tham chiếu')} ({data[0].username === 205908671 ? 'Exness' : t('Quỹ')}: {data[0].username})
         </div>
       </div>
 
-      <h1 className="text-center font-bold text-lg text-shadow-sm">
+      <h1 className="text-center font-bold  text-[14px] md:text-lg text-shadow-sm">
         <span className="border-b border-b-gray-500">{t('Boot vào lệnh đối ứng')}</span>
       </h1>
 
-      <div className="grid grid-cols-3 gap-4 w-lg mx-auto mt-6">
+      <div className="grid grid-cols-3 gap-4 w-sm md:w-lg mx-auto mt-6">
         <div className="col-span-1">
           <InputNumber
             type="number"
@@ -287,7 +287,7 @@ export default function BootTransaction() {
             }}
             className={classInputHeder}
           />
-          <h2 className="text-sm text-center text-gray-500 mt-1">{t('Hệ số lệch(Quỹ) sl, tp')}</h2>
+          <h2 className="text-[12px] md:text-sm text-center text-gray-500 mt-1">{t('Hệ số lệch(Quỹ) sl, tp')}</h2>
         </div>
         <div className="col-span-1">
           <InputNumber
@@ -311,7 +311,7 @@ export default function BootTransaction() {
             }}
             className={classInputHeder}
           />
-          <h2 className="text-sm text-center text-gray-500 mt-1">{t('Hệ số nhân volume')}</h2>
+          <h2 className="text-[12px] md:text-sm text-center text-gray-500 mt-1">{t('Hệ số nhân volume')}</h2>
         </div>
 
         <div className="col-span-1">
@@ -369,19 +369,18 @@ export default function BootTransaction() {
             }}
             className={classInputHeder}
           />
-          <h2 className="text-sm text-center text-gray-500 mt-1">{t('Số pip tính sl, tp')}</h2>
+          <h2 className="text-[12px] md:text-sm text-center text-gray-500 mt-1">{t('Số pip tính sl, tp')}</h2>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 mt-4 gap-4 px-2">
-        <div className="col-span-1 shadow shadow-gray-300 p-2 rounded">
-          <h1 className="text-center">
+      <div className="grid grid-cols-2 mt-4 gap-2 px-0 md:px-2">
+        <div className="col-span-1 shadow shadow-gray-300 p-0 md:p-2 rounded">
+          <h1 className="text-center text-[12px] md:text-[16px]">
             <span className="border-b border-b-gray-500">{t('Vào lệnh cho tài khoản tham chiếu')} ({data[0].username === 205908671 ? 'Exness' : t('Quỹ')}: {data[0].username})</span>
           </h1>
-
-          <div className="grid grid-cols-2 gap-2 my-3 px-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 my-3 px-2 md:px-4">
             <div className="flex flex-col justify-center items-start gap-1 col-span-1">
-              <label htmlFor="exness-symbol">
+              <label htmlFor="exness-symbol" className='text-[12px] md:text-[16px]'>
                 {t('Cặp tiền')} (
                 <span className={isTextColor(data[0].data.type)}>
                   {isText(data[0].data.type)}: {priceDataBoot(data[0]).toFixed(7)}
@@ -391,12 +390,12 @@ export default function BootTransaction() {
               <SeletSymbol setValue={setData} setServerId={setServerId} />
             </div>
             <div className="flex flex-col justify-center items-start gap-1 col-span-1">
-              <label htmlFor="exness-symbol">{t('Kiểu lệnh')}:</label>
+              <label htmlFor="exness-symbol" className='text-[12px] md:text-[16px]' >{t('Kiểu lệnh')}:</label>
               <SeletType setValue={setData} />
             </div>
           </div>
-          <div className="flex flex-col justify-center items-start gap-1 mb-3 px-4">
-            <label htmlFor="exness-volume">{t('Volume')}</label>
+          <div className="flex flex-col justify-center items-start gap-1 mb-3 px-2 md:px-4">
+            <label htmlFor="exness-volume" className='text-[12px] md:text-[16px]'>{t('Volume')}</label>
             <InputNumber
               id="exness-volume"
               type="number"
@@ -420,11 +419,12 @@ export default function BootTransaction() {
               min={0}
               max={1}
               step={0.01}
-              className="border border-gray-300 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none p-1 rounded w-full h-10 pl-2 shadow-sm shadow-gray-200 focus:outline-none focus:border-[var(--color-background)]"
+              // className="border border-gray-300 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none p-1 rounded w-full h-10 pl-2 shadow-sm shadow-gray-200 focus:outline-none focus:border-[var(--color-background)]"
+              className={`${classInputBorder}`}
             />
           </div>
-          <div className="flex flex-col justify-center items-start gap-1 mb-3 px-4">
-            <label htmlFor="exness-price">{t('Giá vào')}:</label>
+          <div className="flex flex-col justify-center items-start gap-1 mb-3 px-2 md:px-4">
+            <label htmlFor="exness-price" className='text-[12px] md:text-[16px]'>{t('Giá vào')}:</label>
             <InputNumber
               id="exness-price"
               type="number"
@@ -465,9 +465,9 @@ export default function BootTransaction() {
               }  ${classInputBorder}`}
             />
           </div>
-          <div className="flex flex-col justify-center items-start gap-1 mb-3 px-4">
+          <div className="flex flex-col justify-center items-start gap-1 mb-3 px-2 md:px-4">
             <div className="flex justify-start items-center gap-1">
-              <label htmlFor="exness-sl">{t('Cắt lỗ (SL)')}:</label>
+              <label htmlFor="exness-sl" className='text-[12px] md:text-[16px]'>{t('Cắt lỗ (SL)')}:</label>
               <TooltipCustom titleTooltip={`${t('Số pip')}: ${pip}`} placement="top" classNameButton="bg-none" isButton>
                 <Icon name="icon-help" className="cursor-help" width={16} height={16} />
               </TooltipCustom>
@@ -485,9 +485,9 @@ export default function BootTransaction() {
               }  ${classInputBorder}`}
             />
           </div>
-          <div className="flex flex-col justify-center items-start gap-1 mb-3 px-4">
+          <div className="flex flex-col justify-center items-start gap-1 mb-3 px-2 md:px-4">
             <div className="flex justify-start items-center gap-1">
-              <label htmlFor="exness-tp">{t('Chốt lời (TP)')}:</label>
+              <label htmlFor="exness-tp" className='text-[12px] md:text-[16px]'>{t('Chốt lời (TP)')}:</label>
               <TooltipCustom
                 titleTooltip={`${t('Số pip')} ${Number(pip) - 0.5}`}
                 placement="top"
@@ -511,34 +511,35 @@ export default function BootTransaction() {
             />
           </div>
         </div>
-        <div className="col-span-1 shadow shadow-gray-300 p-2 rounded">
-          <h1 className="text-center">
-            <span className="border-b border-b-gray-500">{t('Vào lệnh cho tài khoản đối ứng')} ({data[1].username === 205908671 ? 'Exness' : t('Quỹ')}: {data[1].username})</span>
+
+        <div className="col-span-1 shadow shadow-gray-300 p-0 md:p-2 rounded">
+          <h1 className="text-center text-[12px] md:text-[16px]">
+            <span className="border-b border-b-gray-500">{t('Vào lệnh cho tài khoản đối ứng của')} ({data[1].username === 205908671 ? 'Exness' : t('Quỹ')}: {data[1].username})</span>
           </h1>
 
-          <div className="grid grid-cols-2 gap-2 my-3 px-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 my-3 px-2 md:px-4">
             <div className="flex flex-col justify-center items-start gap-1 col-span-1">
-              <label htmlFor="exness-symbol">
+              <label htmlFor="exness-symbol" className='text-[12px] md:text-[16px]'>
                 {t('Cặp tiền')} (
                 <span className={isTextColor(data[1].data.type)}>
                   {isText(data[1].data.type)}: {priceDataBoot(data[1]).toFixed(7)}
                 </span>
                 ):
               </label>
-              <div className="border border-gray-300 p-1 rounded w-full h-10 pl-2 shadow-sm shadow-gray-200 flex justify-start items-center font-semibold text-sm">
+              <div className="border border-gray-300 p-1 rounded w-full h-10 pl-2 shadow-sm shadow-gray-200 flex justify-start items-center font-semibold text-[12px] md:text-sm">
                 {data[1].data.symbol ?? t('Chọn')}
               </div>
             </div>
             <div className="flex flex-col justify-center items-start gap-1 col-span-1">
-              <label htmlFor="exness-symbol">{t('Kiểu lệnh')}:</label>
-              <div className="border border-gray-300 p-1 rounded w-full h-10 pl-2 shadow-sm shadow-gray-200 flex justify-start items-center font-semibold text-sm">
+              <label htmlFor="exness-symbol" className='text-[12px] md:text-[16px]'>{t('Kiểu lệnh')}:</label>
+              <div className="border border-gray-300 p-1 rounded w-full h-10 pl-2 shadow-sm shadow-gray-200 flex justify-start items-center font-semibold text-[12px] md:text-sm">
                 {paretypeOrder(data[1].data.type) ?? t('Chọn')}
               </div>
             </div>
           </div>
-          <div className="flex flex-col justify-center items-start gap-1 mb-3 px-4">
+          <div className="flex flex-col justify-center items-start gap-1 mb-3 px-2 md:px-4">
             <div className="flex justify-start items-center gap-1">
-              <label htmlFor="exness-volume">{t('Volume')}:</label>
+              <label htmlFor="exness-volume" className='text-[12px] md:text-[16px]'>{t('Volume')}:</label>
               <TooltipCustom
                 titleTooltip={`${t('Hệ số nhân')}: ${coefficient}`}
                 placement="top"
@@ -557,8 +558,8 @@ export default function BootTransaction() {
               className={`${classInputBorder}`}
             />
           </div>
-          <div className="flex flex-col justify-center items-start gap-1 mb-3 px-4">
-            <label htmlFor="exness-price">{t('Giá vào')}:</label>
+          <div className="flex flex-col justify-center items-start gap-1 mb-3 px-2 md:px-4">
+            <label htmlFor="exness-price" className='text-[12px] md:text-[16px]'>{t('Giá vào')}:</label>
             <InputNumber
               id="exness-price"
               type="number"
@@ -568,9 +569,9 @@ export default function BootTransaction() {
               className={`${classInputBorder}`}
             />
           </div>
-          <div className="flex flex-col justify-center items-start gap-1 mb-3 px-4">
+          <div className="flex flex-col justify-center items-start gap-1 mb-3 px-2 md:px-4">
             <div className="flex justify-start items-center gap-1">
-              <label htmlFor="exness-sl">{t('Cắt lỗ (SL)')}:</label>
+              <label htmlFor="exness-sl" className='text-[12px] md:text-[16px]'>{t('Cắt lỗ (SL)')}:</label>
               <TooltipCustom titleTooltip={`${t('Số pip')}: ${pip}`} placement="top" classNameButton="bg-none" isButton>
                 <Icon name="icon-help" className="cursor-help" width={16} height={16} />
               </TooltipCustom>
@@ -584,9 +585,9 @@ export default function BootTransaction() {
               className={`${classInputBorder}`}
             />
           </div>
-          <div className="flex flex-col justify-center items-start gap-1 mb-3 px-4">
+          <div className="flex flex-col justify-center items-start gap-1 mb-3 px-2 md:px-4">
             <div className="flex justify-start items-center gap-1">
-              <label htmlFor="exness-tp">{t('Chốt lời (TP)')}:</label>
+              <label htmlFor="exness-tp" className='text-[12px] md:text-[16px]'>{t('Chốt lời (TP)')}:</label>
               <TooltipCustom
                 titleTooltip={`${t('Số pip')}: ${Number(pip) - 0.5}`}
                 placement="top"
@@ -611,7 +612,7 @@ export default function BootTransaction() {
       <Button
         className={`${
           isSubmit ? 'bg-[var(--color-background)]' : 'bg-gray-300'
-        } px-10 py-2 rounded cursor-pointer absolute bottom-2 right-2`}
+        } px-10 py-2 rounded cursor-pointer float-end m-2 mt-4 text-[12px] md:text-[16px]`}
         onClick={() => {
           isSubmit && setOpen(true);
         }}
@@ -664,7 +665,7 @@ const SeletSymbol = ({
         onClick={handleToggle}
         className="flex justify-between items-center gap-4 text-black p-1 rounded-none w-full cursor-pointer h-full shadow-sm shadow-gray-200 pl-2"
       >
-        <div className="text-sm font-semibold">{data.find((a) => a.active)?.label ?? t('Chọn')}</div>
+        <div className="text-[12px] md:text-sm font-semibold">{data.find((a) => a.active)?.label ?? t('Chọn')}</div>
         <div className="">
           <Icon
             name="icon-up"
@@ -698,7 +699,7 @@ const SeletSymbol = ({
                 }}
                 className={`${
                   item.active ? 'text-[var(--color-background)]' : 'text-black'
-                }  shadow-none p-1 hover:bg-[var(--color-background-opacity-2)] w-full cursor-pointer hover:text-[var(--color-background)] rounded-none text-left text-sm font-semibold`}
+                }  shadow-none p-1 hover:bg-[var(--color-background-opacity-2)] w-full cursor-pointer hover:text-[var(--color-background)] rounded-none text-left text-[12px] md:text-sm font-semibold`}
                 key={idx}
               >
                 {t(item.label)}
@@ -745,7 +746,7 @@ const SeletType = ({ setValue }: { setValue: Dispatch<SetStateAction<IOrderSend[
         onClick={handleToggle}
         className="flex justify-between items-center gap-4 text-black p-1 rounded-none w-full cursor-pointer h-full shadow-sm shadow-gray-200 pl-2"
       >
-        <div className="text-sm font-semibold">{data.find((a) => a.active)?.label ?? t('Chọn')}</div>
+        <div className="text-[12px] md:text-sm font-semibold">{data.find((a) => a.active)?.label ?? t('Chọn')}</div>
         <div className="">
           <Icon
             name="icon-up"
@@ -793,7 +794,7 @@ const SeletType = ({ setValue }: { setValue: Dispatch<SetStateAction<IOrderSend[
                 }}
                 className={`${
                   item.active ? 'text-[var(--color-background)]' : 'text-black'
-                }  shadow-none p-1 hover:bg-[var(--color-background-opacity-2)] w-full cursor-pointer hover:text-[var(--color-background)] rounded-none text-left text-md font-semibold`}
+                }  shadow-none p-1 hover:bg-[var(--color-background-opacity-2)] w-full cursor-pointer hover:text-[var(--color-background)] rounded-none text-left text-[12px] md:text-md font-semibold`}
                 key={idx}
               >
                 {t(item.label)}

@@ -16,3 +16,8 @@ export const symbolApi = async (pagination: IPagination, id_symbol: number) => {
     }
 }
 
+export const getSwapApi = async () => {
+    const data = await axiosClient.get('/swaps')
+    return data
+}
+

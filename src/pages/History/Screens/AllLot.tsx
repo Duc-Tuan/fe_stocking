@@ -112,23 +112,23 @@ export default function AllLot() {
                 {
                     !loading ?
                         data.map((a, idx) =>
-                            <div key={idx} className="shadow-sm shadow-gray-300 p-4 pt-2 mb-2 bg-[var(--color-background-opacity-1)]">
+                            <div key={idx} className="shadow-sm shadow-gray-300 p-4 pt-2 mb-2 bg-[var(--color-background-opacity-1)] text-[12px] md:text-[16px]">
                                 <div className="flex justify-between items-center border-b border-b-gray-200 pb-2">
                                     <div className="flex justify-start items-center gap-2">
                                         <span className='font-bold mr-2'>{t("Lô")} {idx + 1}</span>
-                                        <span className={`${colorbg(a.status).classC} rounded-md text-white px-2 py-1 text-sm font-bold`}>{t(colorbg(a.status).label)}</span>
-                                        {a.type === "CLOSE" && <span className='font-semibold text-sm bg-red-600 py-1 px-2 rounded-md text-white'>{t("Lô đã đóng lệnh")}</span>}
+                                        <span className={`${colorbg(a.status).classC} rounded-md text-white px-2 py-1 text-[12px] md:text-sm font-bold`}>{t(colorbg(a.status).label)}</span>
+                                        {a.type === "CLOSE" && <span className='font-semibold text-[12px] md:text-sm bg-red-600 py-1 px-2 rounded-md text-white'>{t("Lô đã đóng lệnh")}</span>}
                                         {a.type === "RUNNING" && a.status !== "Lenh_thi_truong" &&
                                             <TooltipNavigate handle={() => {
                                                 setDataCurrent({ ...a, lot: idx + 1 })
                                                 setIsDelete((prev) => !prev)
-                                            }} className='ml-1 shadow-sm w-[30px] h-[30px] p-0 flex justify-center items-center' iconName='icon-delete' path='#' title='Xóa lô' />
+                                            }} className='ml-1 shadow-sm w-[30px] md:w-[30px] h-[30px] md:h-[30px] p-0 flex justify-center items-center' iconName='icon-delete' path='#' title='Xóa lô' />
                                         }
                                         {a.type === "RUNNING" && a.status === "Lenh_thi_truong" &&
                                             <TooltipNavigate handle={() => {
                                                 setDataCurrent({ ...a, lot: idx + 1 })
                                                 setIsUpdate((prev) => !prev)
-                                            }} className='ml-1 shadow-sm w-[30px] h-[30px] p-0 flex justify-center items-center' iconName='icon-edit-lot' path='#' title='Sửa thông tin lô' />
+                                            }} className='ml-1 shadow-sm w-[30px] md:w-[30px] h-[30px] md:h-[30px] p-0 flex justify-center items-center' iconName='icon-edit-lot' path='#' title='Sửa thông tin lô' />
                                         }
                                     </div>
                                     <span className="text-[13px] font-bold">{(dayjs.utc(a.time)).tz("Asia/Ho_Chi_Minh").format("YYYY-MM-DD HH:mm:ss")}</span>
@@ -173,21 +173,21 @@ export default function AllLot() {
                                             {colorbg(a.status).label !== "Đang chờ" && a.type === "RUNNING" && <TooltipNavigate handle={() => {
                                                 setDataCurrent({ ...a, lot: idx + 1 })
                                                 setOpen((prev) => !prev)
-                                            }} className='shadow-sm w-[36px] h-[36px] p-0 flex justify-center items-center' iconName='icon-close-transaction' path='#' title='Đóng lệnh nhanh' />}
+                                            }} className='shadow-sm w-[30px] md:w-[36px] h-[30px] md:h-[36px] p-0 flex justify-center items-center' iconName='icon-close-transaction' path='#' title='Đóng lệnh nhanh' />}
                                         </div>
                                         <div className="mt-2">
                                             <div className="flex justify-between items-center">
                                                 <div className="border flex-1 border-gray-200">
-                                                    <div className="text-sm font-bold text-center border-b border-b-gray-200 p-1">{t("Tên cặp tiền")}</div>
-                                                    {a.bySymbol.map((d, idx) => <div key={idx} className="text-sm text-center font-semibold h-6">{d.symbol}</div>)}
+                                                    <div className="text-[12px] md:text-sm font-bold text-center border-b border-b-gray-200 p-1">{t("Tên cặp tiền")}</div>
+                                                    {a.bySymbol.map((d, idx) => <div key={idx} className="text-[12px] md:text-sm text-center font-semibold h-6">{d.symbol}</div>)}
                                                 </div>
                                                 <div className="border flex-1 border-gray-200">
-                                                    <div className="text-sm font-bold text-center border-b border-b-gray-200 p-1">{t("Trạng thái")}</div>
+                                                    <div className="text-[12px] md:text-sm font-bold text-center border-b border-b-gray-200 p-1">{t("Trạng thái")}</div>
                                                     {a.bySymbol.map((d, idx) => <div key={idx} className={`text-center h-6 text-[12px] font-bold flex justify-center items-center ${colorTextType(d.type)}`}>{d.type}</div>)}
                                                 </div>
                                                 <div className="border flex-1 border-gray-200">
-                                                    <div className="text-sm font-bold text-center border-b border-b-gray-200 p-1">{t("Giá vào lệnh")}</div>
-                                                    {a.bySymbol.map((d, idx) => <div key={idx} className="text-sm text-center h-6">{d.price_transaction}</div>)}
+                                                    <div className="text-[12px] md:text-sm font-bold text-center border-b border-b-gray-200 p-1">{t("Giá vào lệnh")}</div>
+                                                    {a.bySymbol.map((d, idx) => <div key={idx} className="text-[12px] md:text-sm text-center h-6">{d.price_transaction}</div>)}
                                                 </div>
                                             </div>
                                         </div>
@@ -236,7 +236,7 @@ const TaskSquare = ({ query, idx, setDataLost, isClose }: { query: QueryLots, id
 
     return <div className="inline-block">
         {visible ?
-            <div className={`ml-4 shadow-md rounded-md py-1 px-2 shadow-gray-300 flex justify-start items-center gap-2 transition-all duration-200 ${open ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-2'} pt-0`}>
+            <div className={`md:relative absolute top-full  bg-white left-0 text-[12px] md:text-sm ml-4 shadow-md rounded-md py-1 px-2 shadow-gray-300 flex justify-start items-center gap-2 transition-all duration-200 ${open ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-2'} pt-0`}>
                 <span>{t("Chốt lệnh nhanh theo lô từ")}</span>
                 <input type="number" onChange={(e) => changeValue(e, "from")} value={data.from} placeholder='1' className='w-16 text-center border border-[var(--color-background)] rounded-sm font-bold px-1 py-0.5 appearance-none focus:outline-none focus:ring-0 focus:border [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [MozAppearance:textfield]' />
                 <span>{t("đến")}</span>
@@ -248,7 +248,7 @@ const TaskSquare = ({ query, idx, setDataLost, isClose }: { query: QueryLots, id
                 }} className={`${isClose ? "bg-[var(--color-background)]" : "bg-gray-300"} h-[30px] text-white border p-0 px-2 cursor-pointer`}>{t("Xác nhận")}</Button>
             </div>
             :
-            <TooltipNavigate handle={handleToggle} iconName='icon-task-square' path='#' title='Chốt lệnh nhanh' className='ml-2' />
+            <TooltipNavigate handle={handleToggle} iconName='icon-task-square' path='#' title='Chốt lệnh nhanh' className='ml-2 w-[30px] md:w-[36px] h-[30px] md:h-[36px] flex justify-center items-center' />
         }
 
         <ModalTaskSquare open={openModal} setOpen={setOpenModal} data={data} idx={idx} setDataLost={setDataLost} />
@@ -566,17 +566,17 @@ const ModalUpdate = ({ open, setOpen, dataCurrent, setDataLost }: { setDataLost:
                                     {t("Hãy nhập thông tin cần chỉnh sửa cho lô")} {dataCurrent?.lot}
                                 </DialogTitle>
                                 <div className="mt-2">
-                                    <label htmlFor="" className='text-md'>{t("Cắt lỗ")}: (PNL)</label>
+                                    <label htmlFor="" className='text-[12px] md:text-md'>{t("Cắt lỗ")}: (PNL)</label>
                                     <input
-                                        className="text-sm border p-2 w-full rounded-sm focus:border-[var(--color-background)] focus:outline-hidden border-gray-300 mb-2"
+                                        className="text-[12px] md:text-sm border p-2 w-full rounded-sm focus:border-[var(--color-background)] focus:outline-hidden border-gray-300 mb-2"
                                         placeholder={t("Nhập thông tin...")}
                                         value={dataInput.stop_loss}
                                         type='number'
                                         onChange={(e) => setDataInput((prev) => ({ ...prev, stop_loss: e.target.value }))}
                                     />
-                                    <label htmlFor="" className='text-md'>{t("Chốt lời")}: (PNL)</label>
+                                    <label htmlFor="" className='text-[12px] md:text-md'>{t("Chốt lời")}: (PNL)</label>
                                     <input
-                                        className="text-sm border p-2 w-full rounded-sm focus:border-[var(--color-background)] focus:outline-hidden border-gray-300"
+                                        className="text-[12px] md:text-sm border p-2 w-full rounded-sm focus:border-[var(--color-background)] focus:outline-hidden border-gray-300"
                                         placeholder={t("Nhập thông tin...")}
                                         value={dataInput.take_profit}
                                         onChange={(e) => setDataInput((prev) => ({ ...prev, take_profit: e.target.value }))}

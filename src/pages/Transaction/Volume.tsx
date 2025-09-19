@@ -66,7 +66,7 @@ export default function Volume({ setData }: { setData: Dispatch<SetStateAction<I
 
     return (
         <div className="w-full max-w-sm mx-auto">
-            <div className="flex justify-between text-black text-sm font-semibold">
+            <div className="flex justify-between text-black text-[12px] md:text-sm font-semibold">
                 {steps.map((step, idx) => {
                     if (idx === 2) {
                         return (

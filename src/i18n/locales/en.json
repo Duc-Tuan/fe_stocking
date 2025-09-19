@@ -159,7 +159,7 @@
   "Boot vào lệnh đối ứng": "Boot into corresponding command",
   "Vào lệnh cho tài khoản": "Order for account",
   "Vào lệnh cho tài khoản tham chiếu": "Place order for reference account",
-  "Vào lệnh cho tài khoản đối ứng": "Place orders for corresponding accounts",
+  "Vào lệnh cho tài khoản đối ứng của": "Place orders for the corresponding account",
   "Kiểu lệnh": "Order type",
   "Giá vào": "Entry price",
   "Chốt lời (TP)": "Take profit (TP)",
@@ -181,5 +181,7 @@
   "Hệ số lệch(Quỹ) sl, tp": "Coefficient(Fund) sl, tp",
   "Tài khoản tham chiếu": "Reference Account",
   "Đổi tài khoản tham chiếu": "Change Reference Account",
-  "Quỹ": "Fund"
+  "Quỹ": "Fund",
+  "Tổng số lô đang vào": "Total number of incoming lots",
+  "Đăng nhập": "Login"
 }

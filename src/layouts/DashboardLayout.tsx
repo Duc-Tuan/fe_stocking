@@ -1,8 +1,6 @@
-import { useEffect, useState } from 'react';
-import toast from 'react-hot-toast';
+import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { Outlet, useNavigate } from 'react-router-dom';
-import { downloadFileExApi } from '../api/downloadFile';
 import Icon from '../assets/icon';
 import { logout } from '../auth/authSlice';
 import TooltipCustom from '../components/tooltip';
@@ -22,21 +20,20 @@ export default function DashboardLayout() {
     const { serverMonitorActive } = useAppInfo()
     const navigate = useNavigate();
     const dispatch = useDispatch<AppDispatch>();
-    const [loadingDownload, setLoadingDownload] = useState<boolean>(false);
 
-    const handleClickDownload = async () => {
-        if (!loadingDownload) {
-            try {
-                setLoadingDownload(true)
-                await downloadFileExApi()
-                return toast.success('Tải file xuống thành công!');
-            } catch (error) {
-                return toast.error('Tải file xuống thất bại!');
-            } finally {
-                setLoadingDownload(false)
-            }
-        }
-    }
+    // const handleClickDownload = async () => {
+    //     if (!loadingDownload) {
+    //         try {
+    //             setLoadingDownload(true)
+    //             await downloadFileExApi()
+    //             return toast.success('Tải file xuống thành công!');
+    //         } catch (error) {
+    //             return toast.error('Tải file xuống thất bại!');
+    //         } finally {
+    //             setLoadingDownload(false)
+    //         }
+    //     }
+    // }
 
     const handleLogout = () => {
         dispatch(logout())
@@ -75,7 +72,7 @@ export default function DashboardLayout() {
 
                 </div>
                 <div className="flex flex-wrap gap-2">
-                    <TooltipCustom classNameButton='shadow-md shadow-gray-500' w="w-[40px]" h='h-[40px]' handleClick={handleClickDownload} loading={loadingDownload} titleTooltip={"Xuất file"}><Icon name="icon-export" className="text-white" width={22} height={22} /></TooltipCustom>
+                    {/* <TooltipCustom classNameButton='shadow-md shadow-gray-500' w="w-[40px]" h='h-[40px]' handleClick={handleClickDownload} loading={loadingDownload} titleTooltip={"Xuất file"}><Icon name="icon-export" className="text-white" width={22} height={22} /></TooltipCustom> */}
 
                     <Logout handleclick={handleLogout} />
                 </div>
@@ -102,7 +99,7 @@ export default function DashboardLayout() {
 
 
 const Logout = ({ handleclick }: { handleclick: () => void }) => {
-    return <TooltipCustom classNameButton='shadow-md shadow-gray-500' w="w-[40px]" h='h-[40px]' handleClick={handleclick} titleTooltip={"Đăng xuất"}><Icon name="icon-logout" className="text-white " width={22} height={22} /></TooltipCustom>
+    return <TooltipCustom classNameButton='shadow-md shadow-gray-500 md:h-[36px] w-[32px] h-[32px] flex justify-center items-center' w="w-[36px]" h='h-[36px]' handleClick={handleclick} titleTooltip={"Đăng xuất"}><Icon name="icon-logout" className="text-white md:w-[22px] md:h-[22px] w-[18px] h-[18px] flex justify-center items-center" width={22} height={22} /></TooltipCustom>
 }
 
 function CustomComponent({ data, status }: { data: any, status: "open_order" | "close_order" }) {
