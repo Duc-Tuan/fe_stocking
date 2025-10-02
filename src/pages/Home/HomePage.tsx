@@ -1,33 +1,43 @@
-import type { IChartApi, ISeriesApi, UTCTimestamp } from 'lightweight-charts';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react';
+import type { IChartApi, UTCTimestamp } from 'lightweight-charts';
+import React, { useEffect, useMemo, useRef, useState, type Dispatch, type JSX, type SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getSwapApi, symbolApi } from '../../api/symbol';
 import Icon from '../../assets/icon';
+import Adr from '../../components/adr/Adr';
+import Adx from '../../components/adx/Adx';
 import Atr from '../../components/atr/Atr';
 import { Button } from '../../components/button';
 import { CandlestickSeriesComponent } from '../../components/candlestickSeries';
-import { type IDataSymbols } from '../../components/candlestickSeries/options';
+import { mergeLatestData, type IDataSymbols } from '../../components/candlestickSeries/options';
 import { ChartComponent } from '../../components/line';
 import { Loading } from '../../components/loading';
+import MenuSetupIndicator from '../../components/menuSetupIndicator';
+import type { IMenuSub } from '../../components/menuSetupIndicator/type';
+import Roc from '../../components/roc/Roc';
+import { calculateROC } from '../../components/roc/type';
+import Rolling from '../../components/rolling/Rolling';
+import { rollingStdDev } from '../../components/rolling/type';
 import Rsi from '../../components/rsi/Rsi';
+import SetupIndicatorAll from '../../components/setupIndicatorAll';
+import Slope from '../../components/slope/Slope';
+import { linearRegressionSlopePeriod } from '../../components/slope/type';
 import TooltipCustom from '../../components/tooltip';
+import Zscore from '../../components/zscore/Zscore';
+import { rollingZScore } from '../../components/zscore/type';
 import { useAppInfo } from '../../hooks/useAppInfo';
 import { useClickOutside } from '../../hooks/useClickOutside';
 import { useCurrentPnl } from '../../hooks/useCurrentPnl';
 import { useToggle } from '../../hooks/useToggle';
 import type { IDataRequest, IOptionsTabsCharts, IPagination } from '../../types/global';
-import { getColorChart, handleTimeRangeChange } from '../../utils/timeRange';
+import { getColorChart } from '../../utils/timeRange';
+import { calculateEMA, calculateRMA, calculateSMA, calculateWMA } from '../../utils/typeRecipe';
+import { VolumeProfileOverlay } from './VolumeProfileOverlay';
+import { convertDataCandline, optionsTabsCharts, timeOptions, type IinitialDataCand } from './options';
 import {
-  convertDataCandline,
-  convertDataLine,
-  optionsTabsCharts,
-  timeOptions,
-  type IinitialData,
-  type IinitialDataCand,
-} from './options';
-import {
-  dataBoundaryLine,
   dataIndicator,
+  dataIndicatorChart,
+  dataPeriodDefault,
   drawLabelWithBackground,
   drawSmoothLine,
   FIB_TOLERANCE,
@@ -36,12 +46,15 @@ import {
   findStrokeAt,
   formatDateLabel,
   getCssVar,
+  groupToCandles,
   isPointNearLine,
   redraw,
   type FibBlock,
-  type IboundaryLine,
+  type IDataPeriod,
+  type IDataRealTime,
   type Iindicator,
-  type Trendline,
+  type TF,
+  type Trendline
 } from './type';
 
 // Khoảng thời gian 1 nến (M5 = 300 giây)
@@ -52,23 +65,27 @@ export default function HomePage() {
   const { serverMonitorActive } = useAppInfo();
   const { currentPnl } = useCurrentPnl();
 
+  const chartRefCurentADR = useRef<any>(null);
   const chartRefCurentRSI = useRef<any>(null);
+  const chartRefCurentATR = useRef<any>(null);
+  const chartRefCurentROC = useRef<any>(null);
+  const chartRefCurentSLOPE = useRef<any>(null);
+  const chartRefCurentROLLING = useRef<any>(null);
+  const chartRefCurentZSCORE = useRef<any>(null);
+  const chartRefCurentADX = useRef<any>(null);
 
   const chartRefCurent = useRef<any>(null);
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const candleSeriesRef = useRef<any>(null);
-  const seriesRef = useRef<ISeriesApi<'Area'> | null>(null);
+  const seriesRef = useRef<any>(null);
 
   const chartRef: any = useRef<IChartApi | null>(null);
 
-  const chartRef1: any = useRef<IChartApi | null>(null);
-  const chartRef2: any = useRef<IChartApi | null>(null);
   const [isOpen, toggleOpen] = useToggle(true);
 
-  const [currentRange, setCurrentRange] = useState<string>('M1');
+  const [currentRange, setCurrentRange] = useState<TF>('M1');
 
-  const [symbols, setSymbols] = useState<IinitialData[]>([]);
-  const [symbolsSocket, setSymbolsSocket] = useState<IinitialData[]>([]);
+  const [candleIndicator, setCandleIndicator] = useState<IinitialDataCand[]>([]);
 
   const [symbolsCand, setSymbolsCand] = useState<IinitialDataCand[]>([]);
   const [symbolsCandSocket, setSymbolsCandSocket] = useState<IinitialDataCand[]>([]);
@@ -102,10 +119,6 @@ export default function HomePage() {
 
   const [fibBlocks, setFibBlocks] = useState<FibBlock[]>([]);
   const [activeFibId, setActiveFibId] = useState<string | null>(null);
-
-  const [indicator, setIndicator] = useState<Iindicator[]>(dataIndicator);
-
-  const [boundaryLine, setboundaryLine] = useState<IboundaryLine>(dataBoundaryLine);
 
   const overlayRef = useRef<any>(null);
   const isDraggingRef = useRef(false);
@@ -143,6 +156,27 @@ export default function HomePage() {
 
   const [showIndicator, setShowIndicator] = useState(true);
 
+  const [utilities, setUtilities] = useState<boolean>(false);
+
+  const [dataRealTime, setDataRealTime] = useState<IDataRealTime[]>([]);
+
+  const [dataPeriod, setDataPeriod] = useState<IDataPeriod>(dataPeriodDefault);
+
+  const [indicator, setIndicator] = useState<Iindicator[]>(dataIndicator(dataPeriodDefault));
+
+  const [indicatorChart, setIndicatorChart] = useState<Iindicator[]>(dataIndicatorChart(dataPeriodDefault));
+
+  const [dataReq, setDataReq] = useState<any>([])
+
+  useEffect(() => {
+    setIndicator((prev) =>
+      prev.map((i) => ({ ...i, period: dataIndicator(dataPeriod).find((d) => d.value === i.value)?.period || 0 })),
+    );
+    setIndicatorChart((prev) =>
+      prev.map((i) => ({ ...i, period: dataIndicatorChart(dataPeriod).find((d) => d.value === i.value)?.period || 0 })),
+    );
+  }, [dataPeriod]);
+
   // Gọi api khi page thay đổi
   const getSymbolApi = async (idServer: number) => {
     try {
@@ -159,10 +193,7 @@ export default function HomePage() {
         has_more: res.data.has_more,
       }));
 
-      const dataNew = convertDataLine(res.data.data);
-
-      setSymbols((prev) => [...dataNew, ...prev]);
-      setSymbolsCand((prev) => [...convertDataCandline(res.data.data), ...prev]);
+      setDataReq((prev: any) => [...res.data.data, ...prev])
     } catch (err) {
       console.error('Failed to fetch symbols:', err);
     }
@@ -185,8 +216,7 @@ export default function HomePage() {
         last_time: res.data.next_cursor,
       }));
 
-      setSymbolsCand(convertDataCandline(res.data.data));
-      setSymbols(convertDataLine(res.data.data));
+      setDataReq(res.data.data)
     } catch (error) {
       console.error('Failed to fetch symbols:', error);
     } finally {
@@ -195,11 +225,25 @@ export default function HomePage() {
   };
 
   useEffect(() => {
+    if (dataReq) {
+      const dataNew = groupToCandles(dataReq, currentRange)
+      setSymbolsCand(dataNew);
+      setCandleIndicator(dataNew)
+    }
+  }, [dataReq, currentRange])
+  
+  useEffect(() => {
     if (currentPnl) {
-      setSymbolsSocket(convertDataLine([currentPnl]));
-      setSymbolsCandSocket(convertDataCandline([currentPnl]));
+      setDataRealTime(currentPnl.by_symbol as IDataRealTime[]);
+      setSymbolsCandSocket(convertDataCandline(currentPnl));
     }
   }, [currentPnl]);
+
+  useEffect(() => {
+    const dataNew = mergeLatestData(candleIndicator, symbolsCandSocket, currentRange).sort((a, b) => a.time - b.time);
+    setCandleIndicator(dataNew);
+    setSymbolsCand(dataNew)
+  }, [symbolsCandSocket]);
 
   useEffect(() => {
     let ignore = false;
@@ -222,7 +266,7 @@ export default function HomePage() {
     };
   }, [pagination.page]);
 
-  const reset = () => {
+  function reset() {
     setlinesRef([]);
     setFibBlocks([]);
     dragStart.current = null;
@@ -232,7 +276,8 @@ export default function HomePage() {
     setActiveFibId(null);
     setIsDrawingMode(false);
     setIsCheckFibonacci(false);
-    setIndicator(dataIndicator);
+    // setIndicator(dataIndicator(dataPeriodDefault));
+    // setCandleIndicator([]);
     if (canvasRef.current) {
       canvasRef.current.style.pointerEvents = 'none';
     }
@@ -276,20 +321,24 @@ export default function HomePage() {
       canvasStrokes.current.style.pointerEvents = 'none';
       canvasTrendLine.current.style.pointerEvents = 'none';
     }
-  };
+  }
 
   useEffect(() => {
     if (serverId) {
       setPagination((prev) => ({ ...prev, last_time: undefined }));
-      setSymbols([]);
-      setSymbolsCand([]);
       getSymbolApiServerId(serverId);
-      setSymbolsSocket([]);
+      setSymbolsCand([]);
       setSymbolsCandSocket([]);
-
+      setCandleIndicator([]);
       reset();
     }
   }, [serverId]);
+
+  // useEffect(() => {
+  //   const dataNew: IinitialDataCand[] = dataChart.map((i) => ({ ...i, P: (i.low + i.high + i.close) / 3 }));
+  //   setSymbolsCand(dataNew);
+  //   setCandleIndicator(dataNew);
+  // }, []);
 
   const handleClick = (selected: IOptionsTabsCharts) => {
     const updated = activeTab.map((tab) => ({
@@ -304,13 +353,7 @@ export default function HomePage() {
     setActiveTab(updated);
   };
 
-  const handleRangeChange = (seconds: number | null, label: string) => {
-    if (chartRef1.current) {
-      handleTimeRangeChange(chartRef1, symbols, seconds, 'line');
-    }
-    if (chartRef2.current) {
-      handleTimeRangeChange(chartRef2, symbolsCand, seconds);
-    }
+  const handleRangeChange = (label: TF) => {
     setCurrentRange(label);
   };
 
@@ -424,10 +467,10 @@ export default function HomePage() {
       overlayRef.current.width = widthChart;
       overlayRef.current.height = height;
 
-      canvasTrendLine.current.width = widthChart - 58;
+      canvasTrendLine.current.width = widthChart - 70;
       canvasTrendLine.current.height = height;
 
-      canvasStrokes.current.width = widthChart - 58;
+      canvasStrokes.current.width = widthChart - 70;
       canvasStrokes.current.height = height;
       triggerDrawFib();
       requestRedraw();
@@ -460,7 +503,7 @@ export default function HomePage() {
   useEffect(() => {
     if (!chartRef.current) return;
     widthCharRef.current = chartRef.current.timeScale().width();
-    getSwapApi()
+    getSwapApi();
   }, []);
 
   const drawFib = () => {
@@ -472,11 +515,11 @@ export default function HomePage() {
     const canvasH = canvasRef.current.height;
 
     // 👉 Chart area thực sự
-    const chartW = canvasW - 58; // chừa Y-axis bên phải
+    const chartW = canvasW - 70; // chừa Y-axis bên phải
     const chartH =
       canvasH -
       28 -
-      (indicator.filter((a) => a.active).length > 1 ? 215 : indicator.filter((a) => a.active).length === 1 ? 94 : 0); // chừa time-axis bên dưới
+      (indicator.filter((a) => a.active).length > 1 ? 238 : indicator.filter((a) => a.active).length === 1 ? 115 : 0); // chừa time-axis bên dưới
 
     ctx.clearRect(0, 0, canvasW, canvasH);
 
@@ -633,6 +676,7 @@ export default function HomePage() {
     // Vẽ phần ngoài chart (time axis, y-axis background…)
     // ===========================
 
+    const heightX = 28;
     // Dải màu trục X (20px dưới)
     if (isCheckFibonacci) {
       fibBlocks.forEach((block) => {
@@ -653,7 +697,7 @@ export default function HomePage() {
 
         // Vẽ 1 dải màu ở cuối (gần trục X)
         ctx.fillStyle = getCssVar('--color-background-opacity-2'); // xanh nhạt
-        ctx.fillRect(left, h - 28, width, 28); // cao 20px ở sát đáy chart
+        ctx.fillRect(left, h - heightX, width, heightX); // cao 20px ở sát đáy chart
 
         // === Vẽ label thời gian A và B ===
         const timeA = ts.coordinateToTime(x1);
@@ -670,9 +714,9 @@ export default function HomePage() {
           const paddingX = 4;
           const paddingY = 6;
           const textWidth = metrics.width + paddingX * 4;
-          const textHeight = 28;
+          const textHeight = heightX;
           const rectX = x1 - textWidth / 2;
-          const rectY = h - 28;
+          const rectY = h - heightX;
 
           ctx.fillStyle = getCssVar('--color-background');
           ctx.fillRect(rectX, rectY, textWidth, textHeight);
@@ -687,9 +731,9 @@ export default function HomePage() {
           const paddingX = 4;
           const paddingY = 6;
           const textWidth = metrics.width + paddingX * 2;
-          const textHeight = 28;
+          const textHeight = heightX;
           const rectX = x2 - textWidth / 2;
-          const rectY = h - 28;
+          const rectY = h - heightX;
 
           ctx.fillStyle = getCssVar('--color-background');
           ctx.fillRect(rectX, rectY, textWidth, textHeight);
@@ -714,7 +758,7 @@ export default function HomePage() {
             const y2 = priceScale.priceToCoordinate(nextPrice);
             if (y == null || y2 == null) return;
 
-            const axisWidth = 58;
+            const axisWidth = 70;
             const priceScaleLeft = chartW;
 
             const top = Math.min(y, y2);
@@ -764,7 +808,7 @@ export default function HomePage() {
         ctx.lineWidth = 0.5;
         ctx.beginPath();
         ctx.moveTo(0, y + 0.5);
-        ctx.lineTo(canvas.width - 58, y + 0.5);
+        ctx.lineTo(canvas.width - 70, y + 0.5);
         ctx.strokeStyle = 'blue';
         ctx.stroke();
 
@@ -777,7 +821,7 @@ export default function HomePage() {
         const textHeight = 16; // tạm ước lượng chiều cao font ~14px
 
         // Toạ độ text (ở cuối vạch)
-        const textX = canvas.width - 58;
+        const textX = canvas.width - 70;
         const textY = y;
 
         // Vẽ background (ô chữ nhật bo nhỏ)
@@ -805,7 +849,7 @@ export default function HomePage() {
       if (y !== null) {
         ctx.beginPath();
         ctx.moveTo(0, y + 0.5);
-        ctx.lineTo(canvas.width - 58, y + 0.5);
+        ctx.lineTo(canvas.width - 70, y + 0.5);
         ctx.strokeStyle = 'rgba(0,0,0,1)';
         ctx.lineWidth = 0.2;
         ctx.setLineDash([10, 10]);
@@ -820,7 +864,7 @@ export default function HomePage() {
         const textHeight = 16; // tạm ước lượng chiều cao font ~14px
 
         // Toạ độ text (ở cuối vạch)
-        const textX = canvas.width - 58;
+        const textX = canvas.width - 70;
         const textY = y;
 
         // Vẽ background (ô chữ nhật bo nhỏ)
@@ -1129,76 +1173,111 @@ export default function HomePage() {
   };
 
   useEffect(() => {
-    if (!chartRefCurent.current && !chartRefCurentRSI.current) return;
-
-    if (activeTab.find((a) => a.active && a.tabsName === 'Biểu đồ đường')) {
-      chartRefCurent.current.applyOptions({
-        timeScale: {
-          visible: true,
-        },
-        height: 600,
-      });
-    } else {
-      chartRefCurent.current.applyOptions({
-        timeScale: {
-          visible: !indicator.some((a) => a.active),
-        },
-        height: indicator.some((a) => a.active) ? 480 : 600,
-      });
-
-      const height = chartContainerRef.current!.clientHeight;
-
-      switch (indicator.filter((a) => a.active).length) {
-        case 2:
-          overlayRef.current.height = height - 120;
-          canvasTrendLine.current.height = height - 120;
-          canvasStrokes.current.height = height - 120;
-          chartRefCurent.current.applyOptions({
-            height: 360,
-          });
-          break;
-        case 1:
-          overlayRef.current.height = height;
-          canvasStrokes.current.height = height;
-          canvasTrendLine.current.height = height;
-          break;
-        default:
-          overlayRef.current.height = height - 28;
-          canvasStrokes.current.height = height - 28;
-          canvasTrendLine.current.height = height - 28;
-          canvasRef.current.height = height;
-          break;
-      }
-
-      if (chartRefCurentRSI.current) {
-        if (
-          indicator.some((a) => a.active && a.value === 'rsi') &&
-          indicator.some((a) => !a.active && a.value === 'atr')
-        ) {
-          chartRefCurentRSI.current.applyOptions({
-            timeScale: {
-              visible: true,
-            },
-          });
-          // triggerDrawFib()
-        } else if (
-          indicator.some((a) => !a.active && a.value === 'rsi') &&
-          indicator.some((a) => a.active && a.value === 'atr')
-        ) {
-          chartRefCurentRSI.current.applyOptions({
-            timeScale: {
-              visible: false,
-            },
-          });
-        } else {
-          chartRefCurentRSI.current.applyOptions({
-            timeScale: {
-              visible: false,
-            },
-          });
-        }
-      }
+    if (!chartRefCurent.current) return;
+    const width = chartContainerRef.current!.clientWidth;
+    if (chartRefCurentADR.current) {
+      chartRefCurentADR.current.applyOptions({ width: width });
     }
+    if (chartRefCurentATR.current) {
+      chartRefCurentATR.current.applyOptions({ width: width });
+    }
+    if (chartRefCurentRSI.current) {
+      chartRefCurentRSI.current.applyOptions({ width: width });
+    }
+    if (chartRefCurentROC.current) {
+      chartRefCurentROC.current.applyOptions({ width: width });
+    }
+    if (chartRefCurentSLOPE.current) {
+      chartRefCurentSLOPE.current.applyOptions({ width: width });
+    }
+    if (chartRefCurentROLLING.current) {
+      chartRefCurentROLLING.current.applyOptions({ width: width });
+    }
+    if (chartRefCurentZSCORE.current) {
+      chartRefCurentZSCORE.current.applyOptions({ width: width });
+    }
+    if (chartRefCurentADX.current) {
+      chartRefCurentADX.current.applyOptions({ width: width });
+    }
+  }, [utilities]);
+
+  useEffect(() => {
+    if (!chartRefCurent.current) return;
+    const dataActiveTab: Iindicator[] = indicator.filter((a) => a.active);
+
+    chartRefCurent.current.applyOptions({
+      timeScale: {
+        visible: !indicator.some((a) => a.active),
+      },
+      height: indicator.some((a) => a.active) ? (dataActiveTab.length === 2 ? 430 : 480) : 620,
+    });
+
+    const height = chartContainerRef.current!.clientHeight;
+
+    switch (indicator.filter((a) => a.active).length) {
+      case 2:
+        overlayRef.current.height = height - 70;
+        canvasTrendLine.current.height = height - 70;
+        canvasStrokes.current.height = height - 70;
+        canvasRef.current.height = 628;
+        chartRefCurent.current.applyOptions({
+          height: 356,
+        });
+        break;
+      case 1:
+        overlayRef.current.height = height;
+        canvasStrokes.current.height = height;
+        canvasTrendLine.current.height = height;
+        canvasRef.current.height = 625;
+        break;
+      default:
+        overlayRef.current.height = height - 28;
+        canvasStrokes.current.height = height - 28;
+        canvasTrendLine.current.height = height - 28;
+        canvasRef.current.height = height;
+        break;
+    }
+
+    const chartAcitaveTime: (a?: string) => React.RefObject<any> = (a?: string) => {
+      switch (a) {
+        case 'rsi':
+          return chartRefCurentRSI;
+        case 'adr':
+          return chartRefCurentADR;
+        case 'atr':
+          return chartRefCurentATR;
+        case 'roc':
+          return chartRefCurentROC;
+        case 'slope':
+          return chartRefCurentSLOPE;
+        case 'rolling':
+          return chartRefCurentROLLING;
+        case 'zscore':
+          return chartRefCurentZSCORE;
+        case 'adx':
+          return chartRefCurentADX;
+        default:
+          return chartRefCurentRSI;
+      }
+    };
+
+    dataActiveTab.map((d, idx) => {
+      if (idx === dataActiveTab.length - 1) {
+        chartAcitaveTime(String(d.value)).current.applyOptions({
+          height: 147,
+          timeScale: {
+            visible: true,
+          },
+        });
+      } else {
+        chartAcitaveTime(String(d.value)).current.applyOptions({
+          height: 120,
+          timeScale: {
+            visible: false,
+          },
+        });
+      }
+    });
   }, [indicator, activeTab]);
 
   useEffect(() => {
@@ -1694,6 +1773,141 @@ export default function HomePage() {
     setShowIndicator(!showIndicator);
   };
 
+  const indicatorComponents: Record<string, (props: any) => JSX.Element> = {
+    adr: (props) => (
+      <Adr
+        candleData={props.candleIndicator}
+        chartRefCandl={props.chartRef}
+        chartRefCurentADR={props.chartRefCurentADR}
+        setIndicator={props.setIndicator}
+        setDataPeriod={props.setDataPeriod}
+        activeTab={props.activeTab}
+      />
+    ),
+    rsi: (props) => (
+      <Rsi
+        candleData={props.candleIndicator}
+        chartRefCandl={props.chartRef}
+        chartRefCurentRSI={props.chartRefCurentRSI}
+        setIndicator={props.setIndicator}
+        setDataPeriod={props.setDataPeriod}
+        activeTab={props.activeTab}
+      />
+    ),
+    atr: (props) => (
+      <Atr
+        candleData={props.candleIndicator}
+        chartRefCandl={props.chartRef}
+        currentRange={props.currentRange}
+        chartRefCurentATR={props.chartRefCurentATR}
+        setIndicator={props.setIndicator}
+        setDataPeriod={props.setDataPeriod}
+        activeTab={props.activeTab}
+      />
+    ),
+    roc: (props) => (
+      <Roc
+        candleData={props.candleIndicator}
+        chartRefCandl={props.chartRef}
+        chartRefCurentROC={props.chartRefCurentROC}
+        setIndicator={props.setIndicator}
+        setDataPeriod={props.setDataPeriod}
+        activeTab={props.activeTab}
+      />
+    ),
+    slope: (props) => (
+      <Slope
+        candleData={props.candleIndicator}
+        chartRefCandl={props.chartRef}
+        chartRefCurentSLOPE={props.chartRefCurentSLOPE}
+        setIndicator={props.setIndicator}
+        setDataPeriod={props.setDataPeriod}
+        activeTab={props.activeTab}
+      />
+    ),
+    rolling: (props) => (
+      <Rolling
+        candleData={props.candleIndicator}
+        chartRefCandl={props.chartRef}
+        chartRefCurentROLLING={props.chartRefCurentROLLING}
+        setIndicator={props.setIndicator}
+        setDataPeriod={props.setDataPeriod}
+        activeTab={props.activeTab}
+      />
+    ),
+    zscore: (props) => (
+      <Zscore
+        candleData={props.candleIndicator}
+        chartRefCandl={props.chartRef}
+        chartRefCurentZSCORE={props.chartRefCurentZSCORE}
+        setIndicator={props.setIndicator}
+        setDataPeriod={props.setDataPeriod}
+        activeTab={props.activeTab}
+      />
+    ),
+    adx: (props) => (
+      <Adx
+        candleData={props.candleIndicator}
+        chartRefCandl={props.chartRef}
+        chartRefCurentADX={props.chartRefCurentADX}
+        setIndicator={props.setIndicator}
+        setDataPeriod={props.setDataPeriod}
+        activeTab={props.activeTab}
+      />
+    ),
+  };
+
+  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
+  const [showSetting, setShowSetting] = useState<boolean>(false);
+
+  const menuSetup: IMenuSub[] = [
+    {
+      label: 'Cài đặt chỉ báo',
+      value: '',
+      onClick: () => setShowSetting(!showSetting),
+    },
+    {
+      label: 'Tắt tất cả chỉ báo',
+      value: 'activate',
+      onClick: () => {
+        // setIndicatorChart((prev) =>
+        //   prev.map((i) => {
+        //     if (i.value === 'bb') {
+        //       return {
+        //         ...i,
+        //         active: false,
+        //       };
+        //     }
+        //     return i;
+        //   }),
+        // );
+      },
+    },
+  ];
+
+  const roc = useMemo(() => {
+    const dataRoc = calculateROC(candleIndicator, dataPeriod.periodROC);
+    const dataSlope = linearRegressionSlopePeriod(candleIndicator, dataPeriod.periodSLOPE);
+    const rolling = rollingStdDev(candleIndicator, dataPeriod.periodROLLING);
+    const zScore = rollingZScore(candleIndicator, dataPeriod.periodZSCORE);
+
+    const sma = calculateSMA(candleIndicator as any, indicatorChart.find((i) => i.value === 'sma')?.period);
+    const ema = calculateEMA(candleIndicator as any, indicatorChart.find((i) => i.value === 'ema')?.period);
+    const wma = calculateWMA(candleIndicator as any, indicatorChart.find((i) => i.value === 'wma')?.period);
+    const rma = calculateRMA(candleIndicator as any, indicatorChart.find((i) => i.value === 'rma')?.period);
+
+    return {
+      dataRoc: dataRoc[dataRoc.length - 1]?.value?.toFixed(2),
+      dataSlope: dataSlope[dataSlope.length - 1]?.value?.toFixed(4),
+      rolling: rolling[rolling.length - 1]?.value?.toFixed(4),
+      zScore: zScore[zScore.length - 1]?.value?.toFixed(4),
+      sma: sma[sma.length - 1]?.value?.toFixed(4),
+      ema: ema[ema.length - 1]?.value?.toFixed(4),
+      wma: wma[wma.length - 1]?.value?.toFixed(4),
+      rma: rma[rma.length - 1]?.value?.toFixed(4),
+    };
+  }, [candleIndicator, dataPeriod, indicatorChart]);
+
   return (
     <div className="text-center">
       <div className="flex flex-wrap justify-between">
@@ -1706,7 +1920,7 @@ export default function HomePage() {
                     disabled={loading}
                     onClick={() => handleClick(item)}
                     isLoading={loading}
-                    className={`flex justify-center items-center h-[40px] w-[40px] rounded-lg ${
+                    className={`flex justify-center items-center md:w-[40px] md:h-[40px] w-[32px] h-[32px] rounded-lg p-0 ${
                       item.active
                         ? 'text-[var(--color-text)] bg-[var(--color-background)] active'
                         : 'bg-gray-200 text-black hover:text-[var(--color-text)] hover:bg-[var(--color-background-opacity-5)] border border-rose-100 dark:hover:border-rose-200'
@@ -1720,6 +1934,45 @@ export default function HomePage() {
             ))}
 
             <Filter handleClick={handleRangeChange} currentRange={currentRange} />
+
+            <TooltipCustom
+              handleClick={() => {
+                setUtilities((prev) => !prev);
+              }}
+              titleTooltip={`${utilities ? t('Mở') : t('Đóng')} ${t('tiện ích')}`}
+              classNameButton={`${
+                utilities ? 'bg-[var(--color-background)] text-white' : 'text-black bg-gray-200'
+              }  md:w-[40px] md:h-[40px] w-[32px] h-[32px]`}
+            >
+              <Icon name="icon-sidebar-right" width={20} height={20} />
+            </TooltipCustom>
+
+            <CompIndicatorChart
+              dataView={indicatorChart}
+              iconName="icon-indication-chart"
+              nameTitle="Chỉ báo biểu đồ"
+              indicator={indicatorChart}
+              setIndicator={setIndicatorChart}
+              className="z-[42]"
+            />
+
+            <CompIndicator
+              indicator={indicator}
+              dataView={indicator.filter((_, i) => i < 4)}
+              setIndicator={setIndicator}
+              className="z-40"
+              iconName="icon-rsi"
+              nameTitle="Các chỉ báo"
+            />
+
+            <CompIndicator
+              indicator={indicator}
+              dataView={indicator.filter((_, i) => i > 3)}
+              setIndicator={setIndicator}
+              className="z-30"
+              iconName="icon-quantitative"
+              nameTitle="Các chỉ báo định lượng"
+            />
           </div>
 
           {activeTab.filter((item: IOptionsTabsCharts) => item?.active)[0]?.tabsName === 'Biểu đồ nến' && (
@@ -1732,12 +1985,10 @@ export default function HomePage() {
                   setDrawing(false);
                   setIsDrawingBrush(false);
                 }}
-                w="w-[40px]"
-                h="h-[40px]"
                 titleTooltip={'fibonacci thoái lui'}
                 classNameButton={`${
                   isCheckFibonacci ? 'bg-[var(--color-background)] text-white' : 'text-black bg-gray-200'
-                }`}
+                }  md:w-[40px] md:h-[40px] w-[32px] h-[32px]`}
               >
                 <Icon name="icon-fibonacci" width={18} height={18} />
               </TooltipCustom>
@@ -1749,12 +2000,10 @@ export default function HomePage() {
                   setDrawing(false);
                   setIsDrawingBrush(false);
                 }}
-                w="w-[40px]"
-                h="h-[40px]"
                 titleTooltip={'Đường nằm ngang'}
                 classNameButton={`${
                   isDrawingMode ? 'bg-[var(--color-background)] text-white' : 'text-black bg-gray-200'
-                }`}
+                }  md:w-[40px] md:h-[40px] w-[32px] h-[32px]`}
               >
                 <Icon name="icon-line-v2" width={24} height={24} />
               </TooltipCustom>
@@ -1766,10 +2015,10 @@ export default function HomePage() {
                   setIsDrawingMode(false);
                   setIsDrawingBrush(false);
                 }}
-                w="w-[40px]"
-                h="h-[40px]"
                 titleTooltip={'Đường xu hướng'}
-                classNameButton={`${drawing ? 'bg-[var(--color-background)] text-white' : 'text-black bg-gray-200'}`}
+                classNameButton={`${
+                  drawing ? 'bg-[var(--color-background)] text-white' : 'text-black bg-gray-200'
+                }  md:w-[40px] md:h-[40px] w-[32px] h-[32px]`}
               >
                 <Icon name="icon-trend-line" width={20} height={20} />
               </TooltipCustom>
@@ -1781,24 +2030,20 @@ export default function HomePage() {
                   setDrawing(false);
                   setIsDrawingMode(false);
                 }}
-                w="w-[40px]"
-                h="h-[40px]"
                 titleTooltip={'Cọ vẽ'}
                 classNameButton={`${
                   isDrawingBrush ? 'bg-[var(--color-background)] text-white' : 'text-black bg-gray-200'
-                }`}
+                }  md:w-[40px] md:h-[40px] w-[32px] h-[32px]`}
               >
                 <Icon name="icon-paint-brush" width={20} height={20} />
               </TooltipCustom>
 
               <TooltipCustom
                 handleClick={handleShowIndicator}
-                w="w-[40px]"
-                h="h-[40px]"
                 titleTooltip={showIndicator ? 'Ẩn bản vẽ & chỉ báo' : 'Hiện bản vẽ & chỉ báo'}
                 classNameButton={`${
                   showIndicator ? 'bg-[var(--color-background)] text-white' : 'text-black bg-gray-200'
-                }`}
+                }  md:w-[40px] md:h-[40px] w-[32px] h-[32px]`}
               >
                 <Icon name={`${showIndicator ? 'icon-eye' : 'icon-no-eye'}`} width={20} height={20} />
               </TooltipCustom>
@@ -1810,12 +2055,6 @@ export default function HomePage() {
                 data={fibBlocks}
                 onClick={handleDelete}
               />
-
-              <CompIndicator indicator={indicator} setIndicator={setIndicator} />
-
-              {indicator.find((i) => i?.active && i?.value === 'rsi') && (
-                <CompBoundaryLine indicator={boundaryLine} setIndicator={setboundaryLine} />
-              )}
 
               <button className="flex items-center ml-4 cursor-pointer" onClick={toggleOpen}>
                 <input
@@ -1837,66 +2076,233 @@ export default function HomePage() {
         </div>
       </div>
 
-      <div className="mt-5 p-2 border border-gray-200  overflow-hidden rounded-lg shadow-xl relative">
-        <div ref={chartContainerRef}>
-          {/* style={{ position: "relative" }} */}
-          {activeTab.map((item) => (
-            <React.Fragment key={item.tabsName}>
-              {item.active &&
-                (loading ? (
-                  <Loading />
-                ) : item.tabsName === 'Biểu đồ đường' ? (
-                  <ChartComponent
-                    chartContainerRef={chartContainerRef}
-                    chartRef={chartRef}
-                    chartRefCurent={chartRefCurent}
-                    seriesRef={seriesRef}
-                    dataOld={symbols}
-                    setPagination={setPagination}
-                    latestData={symbolsSocket}
-                    currentRange={currentRange}
-                  />
-                ) : (
-                  <CandlestickSeriesComponent
-                    chartContainerRef={chartContainerRef}
-                    chartRef={chartRef}
-                    chartRefCurent={chartRefCurent}
-                    candleSeriesRef={candleSeriesRef}
-                    dataOld={symbolsCand}
-                    setPagination={setPagination}
-                    isOpen={isOpen}
-                    latestData={symbolsCandSocket}
-                    currentRange={currentRange}
-                  />
-                ))}
-            </React.Fragment>
-          ))}
+      <div className="grid grid-cols-4 mt-3 gap-1">
+        <div
+          className={`${
+            utilities ? 'col-span-3' : 'col-span-4'
+          } p-2 border border-gray-200  overflow-hidden rounded-lg shadow-xl relative`}
+        >
+          <div ref={chartContainerRef}>
+            {indicatorChart.find((i) => i.value === 'volume')?.active && (
+              <VolumeProfileOverlay
+                chartRef={chartRef}
+                seriesRefs={[seriesRef, candleSeriesRef]}
+                candleIndicator={candleIndicator}
+                activeIndex={activeTab.find((i) => i.active)?.tabsName === 'Biểu đồ đường' ? 0 : 1}
+                chartContainerRef={chartContainerRef}
+              />
+            )}
+            {indicatorChart.filter((i) => i.active).length !== 0 && (
+              <div className="absolute top-1 left-2 z-10 text-gray-500 text-sm">
+                {t('Hiển thị')}: {indicatorChart.filter((i) => i.active).map((i) => i.titleSub + ' ' + i.period + '; ')}
+              </div>
+            )}
+            {activeTab.map((item) => (
+              <React.Fragment key={item.tabsName}>
+                {item.active &&
+                  (loading ? (
+                    <Loading className="h-[620px]" />
+                  ) : item.tabsName === 'Biểu đồ đường' ? (
+                    <ChartComponent
+                      chartContainerRef={chartContainerRef}
+                      chartRef={chartRef}
+                      chartRefCurent={chartRefCurent}
+                      seriesRef={seriesRef}
+                      dataOld={symbolsCand}
+                      setPagination={setPagination}
+                      latestData={symbolsCandSocket}
+                      currentRange={currentRange}
+                      indicatorChart={indicatorChart}
+                      setMenu={setMenu}
+                    />
+                  ) : (
+                    <CandlestickSeriesComponent
+                      chartContainerRef={chartContainerRef}
+                      chartRef={chartRef}
+                      chartRefCurent={chartRefCurent}
+                      candleSeriesRef={candleSeriesRef}
+                      dataOld={symbolsCand}
+                      setPagination={setPagination}
+                      isOpen={isOpen}
+                      latestData={symbolsCandSocket}
+                      currentRange={currentRange}
+                      indicatorChart={indicatorChart}
+                      setMenu={setMenu}
+                    />
+                  ))}
+              </React.Fragment>
+            ))}
+          </div>
+          {indicator
+            .filter((item) => item.active)
+            .map((item, idx) => (
+              <React.Fragment key={idx}>
+                {indicatorComponents[item.value]?.({
+                  candleIndicator: candleIndicator,
+                  chartRef,
+                  chartRefCurentADR,
+                  chartRefCurentRSI,
+                  chartRefCurentATR,
+                  chartRefCurentROC,
+                  chartRefCurentSLOPE,
+                  chartRefCurentROLLING,
+                  chartRefCurentZSCORE,
+                  chartRefCurentADX,
+                  activeTab,
+                  setDataPeriod,
+                  setIndicator,
+                })}
+              </React.Fragment>
+            ))}
         </div>
-        {activeTab.find((a) => a.active && a.tabsName === 'Biểu đồ nến') ? (
-          <>
-            {indicator.find((a) => a.active && a.value === 'rsi') && (
-              <Rsi
-                latestData={symbolsCandSocket}
-                candleData={symbolsCand}
-                chartRefCandl={chartRef}
-                currentRange={currentRange}
-                chartRefCurentRSI={chartRefCurentRSI}
-                boundaryLine={boundaryLine}
-              />
-            )}
-            {indicator.find((a) => a.active && a.value === 'atr') && (
-              <Atr
-                latestData={symbolsCandSocket}
-                candleData={symbolsCand}
-                chartRefCandl={chartRef}
-                currentRange={currentRange}
-              />
-            )}
-          </>
-        ) : (
-          <></>
+
+        {utilities && (
+          <div className="col-span-1 p-2 border border-gray-200 rounded-lg shadow-xl relative">
+            <div className="grid grid-cols-2 gap-1">
+              <TooltipCustom
+                titleTooltip={'Tốc độ thay đổi'}
+                classNameButton="md:w-auto w-auto rounded-sm shadow-sm shadow-gray-500 rounded-sm bg-[var(--color-background-roc)]"
+                placement="top"
+              >
+                <div className="flex justify-start items-center gap-1">
+                  <div className="text-left">
+                    roc<sub>t</sub>
+                    <sup>({dataPeriod.periodROC})</sup>:
+                  </div>
+                  <div className="">{roc.dataRoc ?? '...'}%</div>
+                </div>
+              </TooltipCustom>
+              <TooltipCustom
+                titleTooltip={'Độ dốc hồi quy tuyến tính'}
+                classNameButton="md:w-auto w-auto rounded-sm shadow-sm shadow-gray-500 rounded-sm bg-[var(--color-background-slope)]"
+                placement="top"
+              >
+                <div className="flex justify-start items-center gap-1">
+                  <div className="text-left">
+                    slope<sub>t</sub>
+                    <sup>({dataPeriod.periodSLOPE})</sup>:
+                  </div>
+                  <div className="">{roc.dataSlope !== 'NaN' ? roc.dataSlope : '...'}</div>
+                </div>
+              </TooltipCustom>
+              <TooltipCustom
+                placement="top"
+                titleTooltip={'Độ lệnh chuẩn cuộn'}
+                classNameButton="md:w-auto w-auto rounded-sm shadow-sm shadow-gray-500 rounded-sm bg-[var(--color-background-rolling)]"
+              >
+                <div className="flex justify-start items-center gap-1">
+                  <div className="text-left">
+                    σ<sub>t</sub>
+                    <sup>({dataPeriod.periodROLLING})</sup>:
+                  </div>
+                  <div className="">{roc.rolling !== 'NaN' ? roc.rolling : '...'}</div>
+                </div>
+              </TooltipCustom>
+              <TooltipCustom
+                placement="top"
+                titleTooltip={'Z-score'}
+                classNameButton="md:w-auto w-auto rounded-sm shadow-sm shadow-gray-500 rounded-sm bg-[var(--color-background-zScore)]"
+              >
+                <div className="flex justify-start items-center gap-1">
+                  <div className="text-left">
+                    Z<sub>t</sub>
+                    <sup>({dataPeriod.periodZSCORE})</sup>:
+                  </div>
+                  <div className="">{roc.zScore !== 'NaN' ? roc.zScore : '...'}</div>
+                </div>
+              </TooltipCustom>
+              <TooltipCustom
+                placement="top"
+                titleTooltip={'Trung bình động đơn giản SMA'}
+                classNameButton="md:w-auto w-auto rounded-sm shadow-sm shadow-gray-500 rounded-sm bg-[var(--color-background-zScore)]"
+              >
+                <div className="flex justify-start items-center gap-1">
+                  <div className="text-left">
+                    sma<sup>({indicatorChart.find((i) => i.value === 'sma')?.period})</sup>:
+                  </div>
+                  <div className="">{roc.sma ?? '...'}</div>
+                </div>
+              </TooltipCustom>
+              <TooltipCustom
+                placement="top"
+                titleTooltip={'Trung bình động hàm mũ EMA'}
+                classNameButton="md:w-auto w-auto rounded-sm shadow-sm shadow-gray-500 rounded-sm bg-[var(--color-background-ema)]"
+              >
+                <div className="flex justify-start items-center gap-1">
+                  <div className="text-left">
+                    ema<sup>({indicatorChart.find((i) => i.value === 'ema')?.period})</sup>:
+                  </div>
+                  <div className="">{roc.ema ?? '...'}</div>
+                </div>
+              </TooltipCustom>
+              <TooltipCustom
+                placement="top"
+                titleTooltip={'Trung bình động có trọng số WMA'}
+                classNameButton="md:w-auto w-auto rounded-sm shadow-sm shadow-gray-500 rounded-sm bg-[var(--color-background-wma)]"
+              >
+                <div className="flex justify-start items-center gap-1">
+                  <div className="text-left">
+                    wma<sup>({indicatorChart.find((i) => i.value === 'wma')?.period})</sup>:
+                  </div>
+                  <div className="">{roc.wma ?? '...'}</div>
+                </div>
+              </TooltipCustom>
+              <TooltipCustom
+                placement="top"
+                titleTooltip={'Đường trung bình động của Wilder RMA'}
+                classNameButton="md:w-auto w-auto rounded-sm shadow-sm shadow-gray-500 rounded-sm bg-[var(--color-background-rma)]"
+              >
+                <div className="flex justify-start items-center gap-1">
+                  <div className="text-left">
+                    rma<sup>({indicatorChart.find((i) => i.value === 'rma')?.period})</sup>:
+                  </div>
+                  <div className="">{roc.rma ?? '...'}</div>
+                </div>
+              </TooltipCustom>
+            </div>
+            <div className="absolute bottom-2 left-0 right-0 p-2 pb-0">
+              <div className="grid grid-cols-3 font-bold text-[14px]">
+                <span className="border border-gray-200 py-1">{t('Cặp tiền')}</span>
+                <span className="border border-gray-200 py-1">{t('Giá hiện tại')}</span>
+                <span className="border border-gray-200 py-1">{t('Lợi nhuận')}</span>
+              </div>
+              {dataRealTime.map((item, idx) => (
+                <div key={idx} className="grid grid-cols-3 font-semibold text-[14px]">
+                  <span className="border border-gray-200 py-0.5">{item.symbol}</span>
+                  <span className="border border-gray-200 text-[var(--color-background)] py-0.5">
+                    {item.current_price.toFixed(4)}
+                  </span>
+                  <span
+                    className={`${
+                      item.profit > 0 ? 'text-blue-500' : item.profit === 0 ? 'text-gray-500' : 'text-red-500'
+                    } border border-gray-200 py-0.5`}
+                  >
+                    {item.profit.toFixed(4)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
       </div>
+
+      {menu && (
+        <MenuSetupIndicator
+          x={menu.x}
+          y={menu.y}
+          onClose={() => setMenu(null)}
+          dataMenu={menuSetup}
+          activate={showSetting}
+        />
+      )}
+
+      <SetupIndicatorAll
+        close={() => setShowSetting(false)}
+        open={showSetting}
+        data={indicatorChart}
+        setDataCurrent={setIndicatorChart}
+        setDataPeriod={setDataPeriod}
+      />
     </div>
   );
 }
@@ -1924,10 +2330,10 @@ const Filter = ({ handleClick, currentRange }: any) => {
     visible,
   );
   return (
-    <div ref={popupRef} className="z-30 relative">
+    <div ref={popupRef} className="z-[45] relative">
       <Button
         onClick={handleToggle}
-        className={`flex justify-center items-center rounded-lg w-[40px] h-[40px] active cursor-pointer font-semibold shadow-xs shadow-gray-500 text-[var(--color-text)] bg-[var(--color-background)]`}
+        className={`p-0 flex justify-center items-center rounded-lg md:w-[40px] md:h-[40px] w-[32px] h-[32px] active cursor-pointer font-semibold shadow-xs shadow-gray-500 text-[var(--color-text)] bg-[var(--color-background)] md:text-sm text-[12px]`}
       >
         <div>{timeOptions.find((a) => a.label === currentRange)?.label}</div>
       </Button>
@@ -1943,13 +2349,13 @@ const Filter = ({ handleClick, currentRange }: any) => {
               key={opt.label}
               onClick={() => {
                 handleToggle();
-                handleClick(opt.seconds, opt.label);
+                handleClick(opt.label);
               }}
-              className={`p-0 h-[40px] w-[46px] rounded-lg ${
+              className={`p-0 md:h-[36px] col-span-1 h-[32px] rounded-lg ${
                 currentRange === opt.label
                   ? 'text-[var(--color-text)] bg-[var(--color-background)] active'
                   : 'bg-gray-200 text-black hover:bg-[var(--color-background-opacity-2)] hover:text-[var(--color-background)] border border-rose-100 dark:hover:border-rose-200'
-              } cursor-pointer font-semibold`}
+              } cursor-pointer font-semibold md:text-sm text-[12px]`}
             >
               <div>{opt.label}</div>
             </Button>
@@ -2013,14 +2419,12 @@ const DeleteFibonacci = ({
       )}
       <TooltipCustom
         handleClick={handleToggle}
-        w="w-[40px]"
-        h="h-[40px]"
         titleTooltip={'Xóa fibonacci thoái lui'}
         classNameButton={`${
           data.length !== 0 || linesRef.length !== 0 || trendlinesRef.length !== 0 || strokes.length !== 0
             ? 'bg-[var(--color-background)] text-white'
             : 'text-black bg-gray-200'
-        }`}
+        }  md:w-[40px] md:h-[40px] w-[32px] h-[32px]`}
       >
         <Icon name="icon-delete" width={18} height={18} />
       </TooltipCustom>
@@ -2092,98 +2496,264 @@ const DeleteFibonacci = ({
 
 const CompIndicator = ({
   indicator,
+  dataView,
   setIndicator,
+  className,
+  iconName,
+  nameTitle,
 }: {
+  indicator: Iindicator[];
+  dataView: Iindicator[];
+  setIndicator: React.Dispatch<React.SetStateAction<Iindicator[]>>;
+  className?: string;
+  iconName: string;
+  nameTitle: string;
+}) => {
+  const { t } = useTranslation();
+  const popupRef: any = useRef(null);
+  const [open, setOpen] = useState(false);
+  const [openModal, setOpenModal] = useState(false);
+  const [visible, setVisible] = useState(false); // để delay unmount
+
+  const handleToggle = () => {
+    if (open) {
+      // Đóng có delay để chạy animation
+      setOpen(false);
+      setTimeout(() => setVisible(false), 200); // khớp với duration
+    } else {
+      setVisible(true);
+      setTimeout(() => setOpen(true), 10); // delay nhẹ để Tailwind áp transition
+    }
+  };
+
+  useClickOutside(
+    popupRef,
+    () => {
+      if (!openModal) {
+        setOpen(false);
+        setTimeout(() => setVisible(false), 200);
+      }
+    },
+    visible,
+  );
+
+  const onClick = (value: string) => {
+    const activate = indicator.filter((i) => i.active);
+    if (activate.length === 2 && !activate.some((i) => i.value === value)) {
+      setOpenModal(true);
+    } else {
+      const dataNew: Iindicator[] = [...indicator].map((a) => {
+        if (a.value === value) {
+          return { ...a, active: !a.active };
+        } else {
+          return { ...a };
+        }
+      });
+      setIndicator(dataNew);
+    }
+  };
+
+  return (
+    <>
+      <div ref={popupRef} className={`relative ${className}`}>
+        <TooltipCustom
+          handleClick={handleToggle}
+          titleTooltip={nameTitle}
+          classNameButton={`${
+            dataView.find((a) => a.active) ? 'bg-[var(--color-background)] text-white' : 'text-black bg-gray-200'
+          }  md:w-[40px] md:h-[40px] w-[32px] h-[32px]`}
+        >
+          <Icon name={`${iconName}`} width={24} height={24} />
+        </TooltipCustom>
+
+        {visible && (
+          <div
+            className={`ml-1 transition-all duration-200 absolute -top-2 left-full mt-2 bg-white shadow-sm shadow-gray-300 rounded-lg border border-gray-300 p-2 ${
+              open ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-2'
+            } flex flex-col justify-center items-center gap-1`}
+          >
+            <div>{nameTitle}</div>
+            {dataView?.map((d: Iindicator, idx: number) => {
+              return (
+                <Button
+                  onClick={() => onClick(d.value)}
+                  key={idx}
+                  className={`${
+                    d.active
+                      ? 'bg-[var(--color-background)] text-white'
+                      : 'text-black hover:bg-[var(--color-background-opacity-2)] hover:text-[var(--color-background)]'
+                  } shadow-none text-sm cursor-pointer font-semibold w-[320px] text-left px-4 py-2 rounded-sm`}
+                >
+                  {t(d.label)} {d.period}
+                </Button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+      <ModupComfimIndicator open={openModal} setOpen={setOpenModal} indicator={indicator} setIndicator={setIndicator} />
+    </>
+  );
+};
+
+const ModupComfimIndicator = ({
+  open,
+  setOpen,
+  indicator,
+  setIndicator,
+  max = 2,
+}: {
+  max?: number;
+  open: boolean;
+  setOpen: Dispatch<SetStateAction<boolean>>;
   indicator: Iindicator[];
   setIndicator: React.Dispatch<React.SetStateAction<Iindicator[]>>;
 }) => {
   const { t } = useTranslation();
-  const popupRef: any = useRef(null);
-  const [open, setOpen] = useState(false);
-  const [visible, setVisible] = useState(false); // để delay unmount
+  const [data, setData] = useState<Iindicator[]>(indicator);
 
-  const handleToggle = () => {
-    if (open) {
-      // Đóng có delay để chạy animation
-      setOpen(false);
-      setTimeout(() => setVisible(false), 200); // khớp với duration
-    } else {
-      setVisible(true);
-      setTimeout(() => setOpen(true), 10); // delay nhẹ để Tailwind áp transition
-    }
-  };
-
-  useClickOutside(
-    popupRef,
-    () => {
-      setOpen(false);
-      setTimeout(() => setVisible(false), 200);
-    },
-    visible,
-  );
-
-  const onClick = (idx: number) => {
-    const dataNew: Iindicator[] = [...indicator].map((a, id) => {
-      if (idx === id) {
-        return { ...a, active: !a.active };
-      } else {
-        return { ...a };
-      }
-    });
-    setIndicator(dataNew);
-  };
+  useEffect(() => {
+    setData(indicator);
+  }, [indicator]);
 
   return (
-    <div ref={popupRef} className="relative z-[14]">
-      <TooltipCustom
-        handleClick={handleToggle}
-        w="w-[40px]"
-        h="h-[40px]"
-        titleTooltip={'Các chỉ báo'}
-        classNameButton={`${
-          indicator.find((a) => a.active) ? 'bg-[var(--color-background)] text-white' : 'text-black bg-gray-200'
-        }`}
-      >
-        <Icon name="icon-rsi" width={24} height={24} />
-      </TooltipCustom>
+    <Dialog open={open} onClose={setOpen} className="relative z-100">
+      <DialogBackdrop
+        transition
+        className="fixed inset-0 bg-gray-500/75 transition-opacity data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in"
+      />
 
-      {visible && (
-        <div
-          className={`ml-2 transition-all duration-200 absolute -top-2 left-full mt-2 bg-white shadow-sm shadow-gray-300 rounded-lg border border-gray-300 p-2 ${
-            open ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-2'
-          } flex flex-col justify-center items-center gap-1`}
-        >
-          {indicator?.map((d: Iindicator, idx: number) => {
-            return (
+      <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
+        <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+          <DialogPanel
+            transition
+            className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in sm:my-8 sm:w-full sm:max-w-lg data-closed:sm:translate-y-0 data-closed:sm:scale-95"
+          >
+            <div className="bg-white px-4 sm:py-6 sm:pt-4">
+              <div className="mt-3 text-center sm:mt-0">
+                <DialogTitle as="h1" className="text-[15px] md:text-md font-semibold text-gray-900">
+                  {t('Để đảm bảo về trải nghiệm')} <br />
+                  {t('chúng tôi chỉ cho phép hiển thị tối đa 2 chỉ báo cùng lúc')}
+                </DialogTitle>
+
+                <div className="grid grid-cols-1 gap-4 mt-6">
+                  {data.filter((i) => i.active).length !== 0 && (
+                    <div className="grid grid-cols-6 gap-1">
+                      <div className="col-span-6 text-left font-semibold text-[14px] md:text-[16px]">
+                        {t('Chỉ báo hiển thị')}:
+                      </div>
+                      {data
+                        .filter((i) => i.active)
+                        .map((i) => (
+                          <Button
+                            onClick={() => {
+                              setData((prev) => {
+                                return prev.map((a) => {
+                                  if (a.value === i.value) {
+                                    return {
+                                      ...a,
+                                      active: false,
+                                    };
+                                  }
+                                  return a;
+                                });
+                              });
+                            }}
+                            key={i.value}
+                            className="col-span-1 bg-[var(--color-background)] p-1 rounded-sm px-0 cursor-pointer text-[14px] md:text-[16px"
+                          >
+                            {i.value.toLocaleUpperCase()}
+                          </Button>
+                        ))}
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-6 gap-1">
+                    <div className="col-span-6 text-left font-semibold text-[14px] md:text-[16px">
+                      {t('Tất cả các chỉ báo')}:
+                    </div>
+                    {data.map((i) => (
+                      <Button
+                        onClick={() => {
+                          const activeList = data.filter((d) => d.active);
+                          const dd = data.map((a) => {
+                            let dataNew = a;
+                            if (
+                              activeList.length === max &&
+                              a.value === activeList[0].value &&
+                              !activeList.some((z) => z.value === i.value)
+                            ) {
+                              dataNew = {
+                                ...a,
+                                active: false,
+                              };
+                            }
+                            if (a.value === i.value) {
+                              dataNew = {
+                                ...a,
+                                active: a.value === i.value,
+                              };
+                            }
+                            return dataNew;
+                          });
+                          setData(dd);
+                        }}
+                        className="text-[14px] md:text-[16px col-span-1 p-1 text-[var(--color-background)] rounded-sm px-0 cursor-pointer hover:bg-[var(--color-background-opacity-2)]"
+                        key={i.value}
+                      >
+                        {i.value.toLocaleUpperCase()}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-3">
               <Button
-                onClick={() => onClick(idx)}
-                key={idx}
-                className={`${
-                  d.active
-                    ? 'bg-[var(--color-background)] text-white'
-                    : 'text-black hover:bg-[var(--color-background-opacity-2)] hover:text-[var(--color-background)]'
-                } shadow-none text-sm cursor-pointer font-semibold w-[320px] text-left px-4 py-2`}
+                onClick={() => {
+                  setOpen(false);
+                  setIndicator(data);
+                }}
+                type="button"
+                className="shadow-gray-400 cursor-pointer inline-flex w-full justify-center rounded-md bg-[var(--color-background)] px-3 py-2 text-sm font-semibold text-white shadow-md sm:ml-3 sm:w-auto"
               >
-                {t(d.label)}
+                {t('Xác nhận')}
               </Button>
-            );
-          })}
+              <Button
+                type="button"
+                data-autofocus
+                onClick={() => setOpen(false)}
+                className="shadow-gray-400 cursor-pointer mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-md inset-ring inset-ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
+              >
+                {t('Hủy')}
+              </Button>
+            </div>
+          </DialogPanel>
         </div>
-      )}
-    </div>
+      </div>
+    </Dialog>
   );
 };
 
-const CompBoundaryLine = ({
+const CompIndicatorChart = ({
   indicator,
+  dataView,
   setIndicator,
+  className,
+  iconName,
+  nameTitle,
 }: {
-  indicator: IboundaryLine;
-  setIndicator: React.Dispatch<React.SetStateAction<IboundaryLine>>;
+  indicator: Iindicator[];
+  dataView: Iindicator[];
+  setIndicator: React.Dispatch<React.SetStateAction<Iindicator[]>>;
+  className?: string;
+  iconName: string;
+  nameTitle: string;
 }) => {
   const { t } = useTranslation();
   const popupRef: any = useRef(null);
   const [open, setOpen] = useState(false);
+  const [openModal, setOpenModal] = useState(false);
   const [visible, setVisible] = useState(false); // để delay unmount
 
   const handleToggle = () => {
@@ -2200,66 +2770,74 @@ const CompBoundaryLine = ({
   useClickOutside(
     popupRef,
     () => {
-      setOpen(false);
-      setTimeout(() => setVisible(false), 200);
+      if (!openModal) {
+        setOpen(false);
+        setTimeout(() => setVisible(false), 200);
+      }
     },
     visible,
   );
 
-  return (
-    <div ref={popupRef} className="relative z-[12]">
-      <TooltipCustom
-        handleClick={handleToggle}
-        w="w-[40px]"
-        h="h-[40px]"
-        titleTooltip={'Đường chỉ báo ngang RSI'}
-        classNameButton={`${
-          indicator.is50 || indicator.is70_30 || indicator.is80_20
-            ? 'bg-[var(--color-background)] text-white'
-            : 'text-black bg-gray-200'
-        }`}
-      >
-        <Icon name="icon-boundary-line" width={24} height={24} />
-      </TooltipCustom>
+  const onClick = (idx: number, value: string) => {
+    const activate = indicator.filter((i) => i.active);
+    if (activate.length === 3 && !activate.some((i) => i.value === value)) {
+      setOpenModal(true);
+    } else {
+      const dataNew: Iindicator[] = [...indicator].map((a, id) => {
+        if (idx === id) {
+          return { ...a, active: !a.active };
+        } else {
+          return { ...a };
+        }
+      });
+      setIndicator(dataNew);
+    }
+  };
 
-      {visible && (
-        <div
-          className={`w-[320px] ml-2 transition-all duration-200 absolute -top-2 left-full mt-2 bg-white shadow-sm shadow-gray-300 rounded-lg border border-gray-300 p-2 ${
-            open ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-2'
-          } flex flex-col justify-center items-center gap-1`}
+  return (
+    <>
+      <div ref={popupRef} className={`relative ${className}`}>
+        <TooltipCustom
+          handleClick={handleToggle}
+          titleTooltip={nameTitle}
+          classNameButton={`${
+            dataView.find((a) => a.active) ? 'bg-[var(--color-background)] text-white' : 'text-black bg-gray-200'
+          }  md:w-[40px] md:h-[40px] w-[32px] h-[32px]`}
         >
-          <Button
-            className={` shadow-none text-sm cursor-pointer font-semibold w-full text-left px-4 py-2 ${
-              indicator.is80_20
-                ? 'bg-[var(--color-background)] text-white'
-                : 'text-black hover:bg-[var(--color-background-opacity-2)] hover:text-[var(--color-background)]'
-            }`}
-            onClick={() => setIndicator((prev) => ({ ...prev, is80_20: !prev.is80_20 }))}
+          <Icon name={`${iconName}`} width={24} height={24} />
+        </TooltipCustom>
+
+        {visible && (
+          <div
+            className={`ml-1 transition-all duration-200 absolute -top-2 left-full mt-2 bg-white shadow-sm shadow-gray-300 rounded-lg border border-gray-300 p-2 ${
+              open ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-2'
+            } flex flex-col justify-center items-center gap-1`}
           >
-            {t('Đường chỉ báo ngang RSI')} 80-20
-          </Button>
-          <Button
-            className={` shadow-none text-sm cursor-pointer font-semibold w-full text-left px-4 py-2 ${
-              indicator.is70_30
-                ? 'bg-[var(--color-background)] text-white'
-                : 'text-black hover:bg-[var(--color-background-opacity-2)] hover:text-[var(--color-background)]'
-            }`}
-            onClick={() => setIndicator((prev) => ({ ...prev, is70_30: !prev.is70_30 }))}
-          >
-            {t('Đường chỉ báo ngang RSI')} 70-30
-          </Button>
-          <Button
-            className={` shadow-none text-sm cursor-pointer font-semibold w-full text-left px-4 py-2 ${
-              indicator.is50
-                ? 'bg-[var(--color-background)] text-white'
-                : 'text-black hover:bg-[var(--color-background-opacity-2)] hover:text-[var(--color-background)]'
-            }`}
-            onClick={() => setIndicator((prev) => ({ ...prev, is50: !prev.is50 }))}
-          >
-            {t('Đường chỉ báo ngang RSI')} 50
-          </Button>
-        </div>
-      )}
-    </div>
+            {dataView?.map((d: Iindicator, idx: number) => {
+              return (
+                <Button
+                  onClick={() => onClick(idx, d.value)}
+                  key={idx}
+                  className={`${
+                    d.active
+                      ? 'bg-[var(--color-background)] text-white'
+                      : 'text-black hover:bg-[var(--color-background-opacity-2)] hover:text-[var(--color-background)]'
+                  } shadow-none text-sm cursor-pointer font-semibold w-[320px] text-left px-4 py-2 rounded-sm`}
+                >
+                  {t(d.label)} {d.value === 'volume' ? '' : d.period}
+                </Button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+      <ModupComfimIndicator
+        open={openModal}
+        setOpen={setOpenModal}
+        indicator={indicator}
+        setIndicator={setIndicator}
+        max={3}
+      />
+    </>
   );
 };

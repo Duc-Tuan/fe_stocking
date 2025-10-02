@@ -63,7 +63,7 @@ function SymmetricalOrder() {
     );
   }, [data.find((d) => d.active)])
 
-  return <div className='grid grid-cols-5 gap-2 h-[calc(100vh-95px)]'>
+  return <div className='grid grid-cols-5 gap-2 h-[calc(100vh-65px)] md:h-[calc(100vh-80px)]'>
     <div className="col-span-1 lg:col-span-1 shadow-md shadow-gray-500 rounded-lg p-2 relative" ref={containerRef}>
       <div
         className="animate absolute left-2 w-[calc(100%-16px)] text-[var(--color-text)] bg-[var(--color-background)] rounded-md transition-all duration-300 -z-10 shadow-md shadow-gray-300"
@@ -73,11 +73,10 @@ function SymmetricalOrder() {
         }}
       />
       {data.map((d, idx) => {
-        return <Button id="button-history" onClick={() => handlelick(d, idx)} key={d.type} className={`${d.active ? "text-white" : "text-[var(--color-background)] hover:bg-[var(--color-background-opacity-2)]"} cursor-pointer  w-full text-left block shadow-none p-2 mb-1 text-[12px] md:text-sm`}>{t(d.title)}</Button>
+        return <Button id="button-history" onClick={() => handlelick(d, idx)} key={d.type} className={`${d.active ? "text-white" : "text-[var(--color-background)] hover:bg-[var(--color-background-opacity-2)]"} cursor-pointer  w-full text-left block shadow-none p-2 mb-1 text-[12px] md:text-base`}>{t(d.title)}</Button>
       })}
     </div>
-    <div className="col-span-4 lg:col-span-4 shadow-md shadow-gray-500 rounded-lg relative p-2">
-      {/* overflow-y-scroll my-scroll */}
+    <div className="col-span-4 lg:col-span-4 shadow-md shadow-gray-500 rounded-lg relative p-2 overflow-y-scroll my-scroll">
       {screen}
     </div>
   </div>

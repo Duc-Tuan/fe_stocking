@@ -1,180 +1,215 @@
-import React, { useEffect, useRef, useState } from "react";
-import { createChart } from "lightweight-charts";
-import { getCssVar } from "../Home/type";
+import { useEffect, useRef } from 'react';
+import { ColorType, createChart } from 'lightweight-charts';
+import { gridColor } from '../../components/line/formatTime';
+import { getColorChart } from '../../utils/timeRange';
 
-export default function ChartWithTrendlines() {
-    const chartContainerRef = useRef<HTMLDivElement>(null);
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    const chartRef = useRef<any>(null);
+const ChartWithTrendlines = (props: any) => {
+  const { colors: { backgroundColor = 'transparent', textColor = 'black' } = {} } = props;
+  const chartContainerRef = useRef<any>(null);
+  const overlayRef = useRef<any>(null);
+  const chartRef = useRef<any>(null);
+  const candleSeriesRef = useRef<any>(null);
+  const dataRef = useRef<any>([]);
 
-    const [isDrawing, setIsDrawing] = useState(false);
-    const [strokes, setStrokes] = useState<{ x: number; y: number }[][]>([]);
-    const currentStroke = useRef<{ x: number; y: number }[]>([]);
+  useEffect(() => {
+    const chart = createChart(chartContainerRef.current, {
+      layout: {
+        background: { type: ColorType.Solid, color: backgroundColor },
+        textColor,
+      },
+      grid: gridColor,
+      width: chartContainerRef.current.clientWidth,
+      height: 620,
+      rightPriceScale: {
+        borderColor: '#00000030',
+      },
+      timeScale: {
+        rightOffset: 5,
+        barSpacing: 10,
+        lockVisibleTimeRangeOnResize: false,
+        rightBarStaysOnScroll: true,
+        borderVisible: true,
+        timeVisible: true,
+        secondsVisible: true,
+        borderColor: '#00000030',
+      },
+      handleScroll: {
+        mouseWheel: true,
+        pressedMouseMove: true,
+        horzTouchDrag: true,
+        vertTouchDrag: true,
+      },
+      handleScale: {
+        axisPressedMouseMove: true,
+        mouseWheel: true,
+        pinch: true,
+      },
+    });
 
-    const [draggingStrokeIndex, setDraggingStrokeIndex] = useState<number | null>(null);
-    const dragStart = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+    chartRef.current = chart;
+    const candleSeries = chart.addCandlestickSeries();
+    candleSeriesRef.current = candleSeries;
 
-    function drawSmoothLine(ctx: CanvasRenderingContext2D, points: { x: number, y: number }[]) {
-        if (points.length < 2) return;
+    // 🔹 tạo dữ liệu mẫu OHLCV
+    const data: any = [];
+    let price = 100;
+    for (let i = 0; i < 200; i++) {
+      const open = price;
+      const close = open + (Math.random() - 0.5) * 2;
+      const high = Math.max(open, close) + Math.random() * 2;
+      const low = Math.min(open, close) - Math.random() * 2;
+      const volume = Math.floor(100 + Math.random() * 500);
+      data.push({ time: i + 1, open, high, low, close, volume });
+      price = close;
+    }
 
+    dataRef.current = data;
+    candleSeries.setData(data);
+
+    const overlay = overlayRef.current;
+    const ctx = overlay.getContext('2d');
+
+    const resizeOverlay = () => {
+      const dpr = window.devicePixelRatio || 1;
+      overlay.width = overlay.clientWidth * dpr;
+      overlay.height = overlay.clientHeight * dpr;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(dpr, dpr);
+    };
+
+    resizeOverlay();
+
+    function calculateVolumeProfile(ohlcv: any, bins = 40) {
+      const low = Math.min(...ohlcv.map((d: any) => d.low));
+      const high = Math.max(...ohlcv.map((d: any) => d.high));
+      const step = (high - low) / bins;
+
+      const profile = Array.from({ length: bins }, (_, i) => ({
+        price: low + i * step,
+        volume: 0,
+      }));
+
+      for (const d of ohlcv) {
+        const avgPrice = (d.high + d.low) / 2;
+        const idx = Math.floor((avgPrice - low) / step);
+        if (profile[idx]) profile[idx].volume += d.volume;
+      }
+
+      return profile;
+    }
+
+    function drawVolumeProfile() {
+      ctx.clearRect(0, 0, overlay.clientWidth, overlay.clientHeight);
+
+      const visibleRange = chart.timeScale().getVisibleRange();
+      if (!visibleRange) return;
+
+      const visibleData = dataRef.current.filter((d: any) => d.time >= visibleRange.from && d.time <= visibleRange.to);
+
+      const profile = calculateVolumeProfile(visibleData, 40);
+      if (profile.length === 0) return;
+
+      console.log(profile);
+
+      const maxVol = Math.max(...profile.map((p) => p.volume)) || 1;
+
+      const dpr = window.devicePixelRatio || 1;
+      const fullWidth = overlay.width / dpr;
+
+      const barAreaWidth = 120; // vùng để vẽ Volume Profile
+      const gap = 20; // khoảng cách giữa line và Volume Profile
+      const barX = fullWidth - barAreaWidth; // điểm bắt đầu Volume Profile
+
+            // 🚀 Tính POC
+      const poc = profile.reduce((a, b) => (a.volume > b.volume ? a : b), { price: 0, volume: 0 });
+
+      // 🚀 Tính VAH & VAL (70% volume)
+      const totalVol = profile.reduce((sum, p) => sum + p.volume, 0);
+      const targetVol = totalVol * 0.7;
+      const sorted = [...profile].sort((a, b) => b.volume - a.volume);
+      let cumVol = 0;
+      let included: typeof profile = [];
+      for (let i = 0; i < sorted.length; i++) {
+        included.push(sorted[i]);
+        cumVol += sorted[i].volume;
+        if (cumVol >= targetVol) break;
+      }
+      const prices = included.map((p) => p.price);
+      const VAL = Math.min(...prices);
+      const VAH = Math.max(...prices);
+
+      // 🚀 Vẽ Volume Profile bars
+      profile.forEach((p) => {
+        const y = candleSeriesRef.current.priceToCoordinate(p.price);
+        if (!y) return;
+        
+        const barWidth = (p.volume / maxVol) * barAreaWidth;
+        if (p.price === poc.price) {
+          ctx.fillStyle = 'red'; // xanh lá trùng line VAH
+        } else if (p.price >= VAH) {
+          ctx.fillStyle = getColorChart('--color-background-opacity-2'); // mặc định
+        } else {
+          ctx.fillStyle = getColorChart(); // mặc định
+        }
+        ctx.fillRect(barX + (barAreaWidth - barWidth), y - 3, barWidth, 6);
+      });
+
+      // 🔹 Helper: vẽ 1 đường ngang
+      function drawLine(y: number, color: string, label: string) {
+        if (!y) return;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 0.5;
         ctx.beginPath();
-        ctx.moveTo(points[0].x, points[0].y);
-
-        for (let i = 0; i < points.length - 1; i++) {
-            const midX = (points[i].x + points[i + 1].x) / 2;
-            const midY = (points[i].y + points[i + 1].y) / 2;
-            ctx.quadraticCurveTo(points[i].x, points[i].y, midX, midY);
-        }
+        ctx.moveTo(0, y);
+        ctx.lineTo(barX - gap, y);
         ctx.stroke();
+        ctx.fillStyle = color;
+      }
+
+      // 🚀 Vẽ các line
+      drawLine(candleSeriesRef.current.priceToCoordinate(poc.price), 'red', `POC: ${poc.price.toFixed(2)}`);
+      drawLine(candleSeriesRef.current.priceToCoordinate(VAH), getColorChart(), `VAH: ${VAH.toFixed(2)}`);
+      drawLine(candleSeriesRef.current.priceToCoordinate(VAL), getColorChart(), `VAL: ${VAL.toFixed(2)}`);
     }
 
-    function redraw(allStrokes: { x: number; y: number }[][]) {
-        const canvas = canvasRef.current!;
-        const ctx = canvas.getContext("2d")!;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = "red";
-        ctx.lineJoin = "round";
-        ctx.lineCap = "round";
+    chart.timeScale().subscribeVisibleTimeRangeChange(drawVolumeProfile);
+    chart.subscribeCrosshairMove(() => {
+      drawVolumeProfile();
+    });
 
-        allStrokes.forEach((stroke) => {
-            drawSmoothLine(ctx, stroke);
+    drawVolumeProfile();
 
-            // vẽ chấm tròn ở đầu & cuối stroke
-            if (stroke.length > 1) {
-                // điểm đầu
-                ctx.beginPath();
-                ctx.arc(stroke[0].x, stroke[0].y, 4, 0, Math.PI * 2);
-                ctx.fillStyle = "white";       // màu trong
-                ctx.fill();
-                ctx.strokeStyle = getCssVar("--color-background");;     // viền dễ thấy
-                ctx.lineWidth = 2;
-                ctx.stroke();
-
-                // điểm cuối
-                ctx.beginPath();
-                ctx.arc(stroke[stroke.length - 1].x, stroke[stroke.length - 1].y, 4, 0, Math.PI * 2);
-                ctx.fillStyle = "white";
-                ctx.fill();
-                ctx.strokeStyle = getCssVar("--color-background");;
-                ctx.stroke();
-            }
-        }
-        );
-    }
-
-    useEffect(() => {
-        if (!chartContainerRef.current) return;
-
-        const chart = createChart(chartContainerRef.current, { width: 600, height: 400 });
-        const candleSeries = chart.addCandlestickSeries();
-
-        const data: any = [
-            { time: 1, open: 100, high: 110, low: 95, close: 105 },
-            { time: 2, open: 105, high: 120, low: 100, close: 115 },
-            { time: 3, open: 115, high: 125, low: 110, close: 120 },
-            { time: 4, open: 120, high: 130, low: 115, close: 125 },
-            { time: 5, open: 125, high: 135, low: 120, close: 130 },
-        ];
-        candleSeries.setData(data);
-
-        chartRef.current = chart;
-
-        const canvas = canvasRef.current!;
-        canvas.style.zIndex = "10";
-        canvas.style.pointerEvents = "auto";
-        canvas.width = chartContainerRef.current!.clientWidth;
-        canvas.height = chartContainerRef.current!.clientHeight;
-
-        redraw(strokes);
-    }, []);
-
-    // Kiểm tra click gần stroke nào
-    function findStrokeAt(x: number, y: number): number | null {
-        const tolerance = 5;
-        for (let i = 0; i < strokes.length; i++) {
-            const stroke = strokes[i];
-            for (let j = 0; j < stroke.length; j++) {
-                if (Math.hypot(stroke[j].x - x, stroke[j].y - y) < tolerance) {
-                    return i;
-                }
-            }
-        }
-        return null;
-    }
-
-    const handleMouseDown = (e: React.MouseEvent) => {
-        const x = e.nativeEvent.offsetX;
-        const y = e.nativeEvent.offsetY;
-
-        // thử chọn stroke cũ
-        const hitIndex = findStrokeAt(x, y);
-        if (hitIndex !== null) {
-            setDraggingStrokeIndex(hitIndex);
-            dragStart.current = { x, y };
-            return;
-        }
-
-        // nếu không chọn trúng stroke nào thì bắt đầu vẽ mới
-        setIsDrawing(true);
-        currentStroke.current = [{ x, y }];
+    const handleResize = () => {
+      chart.resize(chartContainerRef.current.clientWidth, chartContainerRef.current.clientHeight);
+      resizeOverlay();
+      drawVolumeProfile();
     };
 
-    const handleMouseMove = (e: React.MouseEvent) => {
-        const x = e.nativeEvent.offsetX;
-        const y = e.nativeEvent.offsetY;
+    window.addEventListener('resize', handleResize);
 
-        if (draggingStrokeIndex !== null) {
-            // đang kéo stroke
-            const dx = x - dragStart.current.x;
-            const dy = y - dragStart.current.y;
-
-            const newStrokes = [...strokes];
-            newStrokes[draggingStrokeIndex] = newStrokes[draggingStrokeIndex].map((p) => ({
-                x: p.x + dx,
-                y: p.y + dy,
-            }));
-            setStrokes(newStrokes);
-            dragStart.current = { x, y };
-            redraw(newStrokes);
-            return;
-        }
-
-        if (!isDrawing) return;
-
-        const last = currentStroke.current[currentStroke.current.length - 1];
-        if (!last || Math.hypot(last.x - x, last.y - y) > 2) {
-            currentStroke.current.push({ x, y });
-        }
-
-        const ctx = canvasRef.current!.getContext("2d")!;
-        ctx.clearRect(0, 0, canvasRef.current!.width, canvasRef.current!.height);
-
-        redraw(strokes);
-        drawSmoothLine(ctx, currentStroke.current);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      chart.remove();
     };
+  }, []);
 
-    const handleMouseUp = () => {
-        if (draggingStrokeIndex !== null) {
-            setDraggingStrokeIndex(null);
-            return;
-        }
+  return (
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+      <div ref={chartContainerRef} style={{ width: '100%', height: '100%' }} />
+      <canvas
+        ref={overlayRef}
+        style={{
+          position: 'absolute',
+          top: 0,
+          right: '60px',
+          bottom: 0,
+          width: '95%',
+          height: '100%',
+          pointerEvents: 'none',
+        }}
+      />
+    </div>
+  );
+};
 
-        if (isDrawing) {
-            setIsDrawing(false);
-            setStrokes((prev) => [...prev, [...currentStroke.current]]);
-        }
-    };
-
-    return (
-        <div ref={chartContainerRef} style={{ position: "relative", width: 600, height: 400 }}>
-            <canvas
-                ref={canvasRef}
-                style={{ position: "absolute", top: 0, left: 0 }}
-                onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
-            />
-        </div>
-    );
-}
+export default ChartWithTrendlines;

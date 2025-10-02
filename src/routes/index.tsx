@@ -12,10 +12,24 @@ import { PathName } from './path';
 import ProtectedRoute from './protectedRoute';
 import SymmetricalOrder from '../pages/BootSymmetricalOrder';
 
+// ✅ Tạo mảng children path
+const settingChildren = [
+  PathName.NOTIFICATION,
+  PathName.ACCMONITOR,
+  PathName.EMAIL,
+  PathName.ACCTRANSACTION,
+  PathName.LANGUAGE,
+  PathName.INFOACC,
+  PathName.NOTIFICATION_DETAIL(),
+].map((path) => ({
+  path,
+  element: <SettingTransaction />,
+}));
+
 const router = createBrowserRouter([
   {
     path: PathName.LOGIN,
-    element: <LoginPage />
+    element: <LoginPage />,
   },
   {
     path: PathName.HOME,
@@ -40,6 +54,7 @@ const router = createBrowserRouter([
       {
         path: PathName.SETTING,
         element: <SettingTransaction />,
+        children: settingChildren,
       },
       {
         path: PathName.ORTHER,

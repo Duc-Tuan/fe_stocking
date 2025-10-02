@@ -39,7 +39,7 @@ export type OrderType = typeof OrderType[keyof typeof OrderType];
 
 export interface IOrderSend {
     type: "EXNESS" | "FUND";
-    username: number;
+    username: number | undefined;
     data: {
         symbol: "EURUSD" | "GBPUSD" | "XAUUSD" | "USDJPY" | undefined;
         volume: number | undefined;
@@ -107,97 +107,3 @@ export interface ISymbolBoot {
     user_id: number
     volume: number
 }
-
-export const dataHistory: ISymbolPosition[] = [
-    {
-        account_id: 1,
-        comment: "1",
-        commission: 1,
-        current_price: 1,
-        id: 1,
-        id_transaction: 1,
-        magic_number: 1,
-        open_price: 1,
-        open_time: "2025-09-02T16:17:58.192398",
-        position_type: "BUY",
-        profit: 1,
-        sl: 0,
-        swap: 1,
-        symbol: "EURUSD",
-        time: "2025-09-02T16:17:58.192398",
-        tp: 1,
-        username_id: 1,
-        volume: 1
-    }
-]
-
-export const dataServer: IBootAcc[] = [
-    {
-        id: 1,
-        balance: 0,
-        equity: 0,
-        free_margin: 0,
-        leverage: 0,
-        loginId: 0,
-        margin: 0,
-        name: "1",
-        server: "Server 1",
-        username: 0,
-        orders: [
-            {
-                account_id: 1,
-                comment: "1",
-                commission: 1,
-                current_price: 1,
-                id: 1,
-                id_transaction: 1,
-                magic_number: 1,
-                open_price: 1,
-                open_time: "2025-09-02T16:17:58.192398",
-                position_type: "BUY",
-                profit: 1,
-                sl: 0,
-                swap: 1,
-                symbol: "EURUSD",
-                time: "2025-09-02T16:17:58.192398",
-                tp: 1,
-                username_id: 1,
-                volume: 1
-            }
-        ]
-    },
-    {
-        id: 2,
-        balance: 0,
-        equity: 0,
-        free_margin: 0,
-        leverage: 0,
-        loginId: 0,
-        margin: 0,
-        name: "2",
-        server: "Server 2",
-        username: 0,
-        orders: [
-            {
-                account_id: 2,
-                comment: "2",
-                commission: 2,
-                current_price: 2,
-                id: 2,
-                id_transaction: 2,
-                magic_number: 2,
-                open_price: 2,
-                open_time: "2025-09-02T16:17:58.192398",
-                position_type: "SELL",
-                profit: -2,
-                sl: 0,
-                swap: 2,
-                symbol: "EURUSD",
-                time: "2025-09-02T16:17:58.192398",
-                tp: 2,
-                username_id: 2,
-                volume: 2
-            }
-        ]
-    },
-]

@@ -68,7 +68,7 @@ export default function HistoryTransaction() {
     }, [data.find((d) => d.active)])
 
     return (
-        <div className='grid grid-cols-5 gap-2 h-[calc(100vh-95px)]'>
+        <div className='grid grid-cols-5 gap-2 h-[calc(100vh-65px)] md:h-[calc(100vh-80px)]'>
             <div className="col-span-1 lg:col-span-1 shadow-md shadow-gray-500 rounded-lg p-2 relative" ref={containerRef}>
                 <div
                     className="animate absolute left-2 w-[calc(100%-16px)] text-[var(--color-text)] bg-[var(--color-background)] rounded-md transition-all duration-300 -z-10 shadow-md shadow-gray-300"

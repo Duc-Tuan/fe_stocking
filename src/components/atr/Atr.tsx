@@ -1,229 +1,238 @@
 import { ColorType, createChart, type BarData } from 'lightweight-charts';
 import { useEffect, useRef, useState } from 'react';
-import { timeOptions, type IinitialDataCand } from '../../pages/Home/options';
-import { aggregateCandlesByInterval, getColorChart } from '../../utils/timeRange';
+import { type IinitialDataCand } from '../../pages/Home/options';
+import { getColorChart } from '../../utils/timeRange';
 import { normalizeChartData } from '../candlestickSeries/options';
 import { formatVietnamTimeSmart, gridColor } from '../line/formatTime';
 import { calculateATR } from './type';
+import type { IMenuSub } from '../setupIndicator/type';
+import { useRightClickMenu } from '../../hooks/useRightClick';
+import { initSetupIndicatorADR, type ISetupIndicator } from '../../types/global';
+import MenuSetupIndicator from '../menuSetupIndicator';
+import SetupIndicator from '../setupIndicator';
+import { usePriceLines } from '../../hooks/usePriceLines';
+import type { IDataPeriod, Iindicator } from '../../pages/Home/type';
 
 export default function Atr({
-    candleData,
-    chartRefCandl,
-    currentRange,
-    latestData,
-    colors: {
-        backgroundColor = 'transparent',
-        lineColor = getColorChart('--color-background-atr'),
-        textColor = 'black',
-    } = {}
-}: { candleData: IinitialDataCand[], currentRange: any, chartRefCandl: any, colors?: any, latestData: IinitialDataCand[] }) {
-    const chartAtrRef = useRef<HTMLDivElement>(null);
-    const chartAtr = useRef<any>(null);
+  candleData,
+  chartRefCandl,
+  currentRange,
+  chartRefCurentATR,
+  setIndicator,
+  setDataPeriod,
+  activeTab,
+  colors: {
+    backgroundColor = 'transparent',
+    lineColor = getColorChart('--color-background-atr'),
+    textColor = 'black',
+  } = {},
+}: {
+  candleData: IinitialDataCand[];
+  currentRange: any;
+  chartRefCandl: any;
+  chartRefCurentATR: any;
+  colors?: any;
+  setIndicator: any;
+  setDataPeriod: React.Dispatch<React.SetStateAction<IDataPeriod>>;
+  activeTab: any
+}) {
+  const chartAtrRef = useRef<HTMLDivElement>(null);
+  const chartAtr = useRef<any>(null);
 
-    const seriesRef = useRef<any>(null);
-    const allData = useRef<BarData[]>([]);
+  const seriesRef = useRef<any>(null);
+  const allData = useRef<BarData[]>([]);
 
-    const currentData = useRef<any>(null);
+  const currentData = useRef<any>(null);
 
-    const currentDataAtr = useRef<any>(null);
-    const [currentAtr, setCurrentAtr] = useState<{ time: any, value: any } | null>(null)
+  const currentDataAtr = useRef<any>(null);
+  const [currentAtr, setCurrentAtr] = useState<{ time: any; value: any } | null>(null);
 
-    useEffect(() => {
-        if (!chartAtrRef.current) return;
+  const { menu, setMenu } = useRightClickMenu(chartAtrRef);
+  const [openSetup, setOpenSetup] = useState<boolean>(false);
+  const [dataCurrent, setDataCurrent] = useState<ISetupIndicator>(initSetupIndicatorADR);
 
-        // Chart ATR
-        const atrChart = createChart(chartAtrRef.current, {
-            layout: {
-                background: { type: ColorType.Solid, color: backgroundColor },
-                textColor,
-            },
-            grid: gridColor,
-            height: 120,
-            rightPriceScale: {
-                borderColor: '#00000030'
-            },
-            timeScale: {
-                rightOffset: 5,
-                barSpacing: 10,
-                lockVisibleTimeRangeOnResize: false,
-                rightBarStaysOnScroll: true,
-                borderVisible: true,
-                timeVisible: true,
-                secondsVisible: true,
-                borderColor: '#00000030'
-            },
-            handleScroll: {
-                mouseWheel: true,
-                pressedMouseMove: true,
-                horzTouchDrag: true,
-                vertTouchDrag: true,
-            },
-            handleScale: {
-                axisPressedMouseMove: true,
-                mouseWheel: true,
-                pinch: true,
-            },
-            crosshair: {
-                vertLine: { labelBackgroundColor: getColorChart() },
-                horzLine: { labelBackgroundColor: getColorChart("--color-background-atr") },
-            },
-            localization: {
-                locale: 'vi-VN',
-                timeFormatter: (time: any) => formatVietnamTimeSmart(time, true),
-            },
-        });
+  useEffect(() => {
+    if (!chartAtrRef.current) return;
 
-        const atrSeries = atrChart.addLineSeries({
-            color: lineColor,
-            lineWidth: 1,
-        });
+    // Chart ATR
+    const atrChart = createChart(chartAtrRef.current, {
+      layout: {
+        background: { type: ColorType.Solid, color: backgroundColor },
+        textColor,
+      },
+      grid: gridColor,
+      height: 120,
+      rightPriceScale: {
+        borderColor: '#00000030',
+      },
+      timeScale: {
+        rightOffset: 5,
+        barSpacing: 10,
+        lockVisibleTimeRangeOnResize: false,
+        rightBarStaysOnScroll: true,
+        borderVisible: true,
+        timeVisible: true,
+        secondsVisible: true,
+        borderColor: '#00000030',
+      },
+      handleScroll: {
+        mouseWheel: true,
+        pressedMouseMove: true,
+        horzTouchDrag: true,
+        vertTouchDrag: true,
+      },
+      handleScale: {
+        axisPressedMouseMove: true,
+        mouseWheel: true,
+        pinch: true,
+      },
+      crosshair: {
+        vertLine: { labelBackgroundColor: getColorChart() },
+        horzLine: { labelBackgroundColor: lineColor },
+      },
+      localization: {
+        locale: 'vi-VN',
+        timeFormatter: (time: any) => formatVietnamTimeSmart(time, true),
+      },
+    });
 
-        chartAtr.current = atrChart;
-        seriesRef.current = atrSeries;
+    const atrSeries = atrChart.addLineSeries({
+      color: lineColor,
+      lineWidth: 1,
+      priceLineVisible: false,
+      crosshairMarkerVisible: false,
+    });
 
-        const handleResize = () => {
-            atrChart.applyOptions({ width: chartAtrRef.current!.clientWidth });
-        };
+    chartAtr.current = atrChart;
+    chartRefCurentATR.current = atrChart;
+    seriesRef.current = atrSeries;
 
-        return () => {
-            window.removeEventListener('resize', handleResize);
-            atrChart.remove();
-            chartAtr.current = null;
-            seriesRef.current = null;
-        };
-    }, []);
+    return () => {
+      atrChart.remove();
+      chartAtr.current = null;
+      seriesRef.current = null;
+      chartRefCurentATR.current = null;
+    };
+  }, []);
 
-    useEffect(() => {
-        const candleChart = chartRefCandl.current;
-        const atrChart = chartAtr.current;
+  useEffect(() => {
+    const candleChart = chartRefCandl.current;
+    const atrChart = chartAtr.current;
 
-        if (!candleChart || !atrChart) return;
+    if (!candleChart || !atrChart) return;
 
-        // Sync zoom/pan giữa 2 chart
-        const unsubCandle = candleChart.timeScale().subscribeVisibleLogicalRangeChange((range: any) => {
-            if (range) {
-                atrChart.timeScale().setVisibleLogicalRange(range);
-            }
-        });
+    // Sync zoom/pan giữa 2 chart
+    const unsubCandle = candleChart.timeScale().subscribeVisibleLogicalRangeChange((range: any) => {
+      if (range) {
+        atrChart.timeScale().setVisibleLogicalRange(range);
+      }
+    });
 
-        const unsubAtr = atrChart.timeScale().subscribeVisibleLogicalRangeChange((range: any) => {
-            if (range) {
-                candleChart.timeScale().setVisibleLogicalRange(range);
-            }
-        });
+    const unsubAtr = atrChart.timeScale().subscribeVisibleLogicalRangeChange((range: any) => {
+      if (range) {
+        candleChart.timeScale().setVisibleLogicalRange(range);
+      }
+    });
 
-        // Sync crosshair
-        const unsubCrosshair = candleChart.subscribeCrosshairMove((param: any) => {
-            if (param.time) {
-                const rsiPoint = currentData.current.find((p: any) => p.time === param.time);
-                const data = currentDataAtr.current.find((p: any) => p.time === param.time);
-                setCurrentAtr(data);
+    // Sync crosshair
+    const unsubCrosshair = candleChart.subscribeCrosshairMove((param: any) => {
+      if (param.time) {
+        const rsiPoint = currentData.current.find((p: any) => p.time === param.time);
+        const data = currentDataAtr.current.find((p: any) => p.time === param.time);
+        setCurrentAtr(data);
 
-                if (rsiPoint) {
-                    atrChart.setCrosshairPosition(
-                        rsiPoint.value,
-                        param.time,
-                        seriesRef.current
-                    );
-                }
-            } else {
-                atrChart.clearCrosshairPosition();
-                setCurrentAtr(currentDataAtr.current[currentDataAtr.current.length - 1]);
-            }
-        });
-
-        // Đồng bộ chiều rộng
-        const width = candleChart?.getWidth?.(); // Nếu chart có hàm getWidth, không dùng _private__
-        if (width) {
-            atrChart.applyOptions({ width });
+        if (rsiPoint) {
+          atrChart.setCrosshairPosition(rsiPoint.value, param.time, seriesRef.current);
         }
+      } else {
+        setCurrentAtr(currentDataAtr.current[currentDataAtr.current.length - 1]);
+        atrChart.clearCrosshairPosition();
+      }
+    });
 
-        atrChart.priceScale("right").applyOptions({ minimumWidth: 58 });
+    atrChart.priceScale('right').applyOptions({ minimumWidth: 70 });
 
-        // Cleanup
-        return () => {
-            unsubCandle?.();
-            unsubAtr?.();
-            unsubCrosshair?.();
-        };
-    }, []); // Chỉ chạy 1 lần sau mount
+    // Cleanup
+    return () => {
+      unsubCandle?.();
+      unsubAtr?.();
+      unsubCrosshair?.();
+    };
+  }, [chartRefCandl.current, activeTab]); // Chỉ chạy 1 lần sau mount
 
-    const renderData = (data: any) => {
-        let time = undefined
-        if (currentRange) {
-            time = timeOptions.filter((i) => i.label === currentRange)[0].seconds
-        }
-        return aggregateCandlesByInterval(data, time)
-    }
+  useEffect(() => {
+    const atrData = calculateATR(candleData, dataCurrent.period).sort((a: any, b: any) => a.time - b.time);
 
-    useEffect(() => {
-        if (!seriesRef.current || !candleData?.length) return;
+    currentData.current = atrData;
+    currentDataAtr.current = atrData;
 
-        allData.current = []
-        const fixed = normalizeChartData(candleData).sort((a: any, b: any) => a.time - b.time);
-        const existing = allData.current;
+    setCurrentAtr(atrData[atrData.length - 1]);
 
-        const unique = fixed.filter(d => !existing.some(e => e.time === d.time));
-        if (!unique.length) return;
+    seriesRef.current.setData(atrData);
+  }, [candleData, dataCurrent.period]);
 
-        const merged = [...existing];
-        for (const d of unique) {
-            const index = merged.findIndex(item => item.time === d.time);
-            if (index !== -1) {
-                merged[index] = d;
-            } else {
-                merged.push(d);
+  useEffect(() => {
+    setDataPeriod((prev) => ({ ...prev, periodATR: dataCurrent.period ?? 14 }));
+  }, [dataCurrent.period]);
+
+  const menuSetup: IMenuSub[] = [
+    {
+      label: 'Cài đặt chỉ báo',
+      value: 'ATR',
+      onClick: () => setOpenSetup(true),
+    },
+    {
+      label: 'Bật/tắt đường tiệm cận',
+      value: 'activate',
+      onClick: () => setDataCurrent((prev) => ({ ...prev, isOpen: !prev.isOpen })),
+    },
+    {
+      label: 'Tắt chỉ báo',
+      value: 'indication',
+      onClick: () => {
+        setIndicator((prev: Iindicator[]) =>
+          prev.map((i: Iindicator) => {
+            if (i.value === 'atr') {
+              return {
+                ...i,
+                active: false,
+              };
             }
-        }
+            return i;
+          }),
+        );
+      },
+    },
+  ];
 
-        allData.current = merged.sort((a: any, b: any) => a.time - b.time);
-        const data = renderData(allData.current)
-        const rsiData = calculateATR(data, 14);
+  usePriceLines(seriesRef, dataCurrent);
 
-        currentData.current = data
-        currentDataAtr.current = rsiData
+  return (
+    <>
+      <div ref={chartAtrRef} style={{ position: 'relative', marginTop: '4px' }}>
+        <div className="absolute w-[calc(100%-70px)] h-[120px] bg-[var(--color-background-atr-1)] left-0 right-0 top-0" />
 
-        setCurrentAtr(rsiData[rsiData.length - 1])
-
-        seriesRef.current.setData(rsiData);
-    }, [candleData, currentRange]);
-
-    useEffect(() => {
-        if (!latestData || !Array.isArray(latestData) || !latestData.length || !seriesRef.current) return;
-
-        const fixed = normalizeChartData(latestData);
-        if (!fixed.length) return;
-
-        let updated = [...allData.current];
-        let hasNew = false;
-
-        for (const point of fixed) {
-            const idx = updated.findIndex(p => Number(p.time) === Number(point.time));
-            if (idx !== -1) {
-                updated[idx] = point;
-            } else {
-                updated.push(point);
-                hasNew = true;
-            }
-        }
-
-        if (hasNew) updated.sort((a: any, b: any) => a.time - b.time);
-        allData.current = updated;
-
-        const data = renderData(allData.current);
-        const rsiData = calculateATR(data, 14);
-
-        currentData.current = data
-        currentDataAtr.current = rsiData
-
-        setCurrentAtr(rsiData[rsiData.length - 1])
-
-        seriesRef.current.setData(rsiData);
-    }, [latestData]);
-
-    return <div ref={chartAtrRef} style={{ position: "relative" }}>
-        <div className="absolute w-[calc(100%-58px)] h-[92px] bg-[var(--color-background-atr-1)] left-0 right-0 top-0" />
-
-        <div className="absolute left-4 top-0 text-[12px]">ATR 14 <span className='text-gray-400'>RMA</span> <span className='text-[var(--color-background)] ml-2'>{currentAtr && currentAtr.value.toFixed(2)}</span></div>
-    </div>
+        <div className="absolute left-4 top-1 text-[12px]">
+          ATR {dataCurrent.period} <span className="text-gray-400">RMA</span>{' '}
+          <span className="text-[var(--color-background)] ml-2">{currentAtr && currentAtr.value.toFixed(2)}</span>
+        </div>
+      </div>
+      {menu && (
+        <MenuSetupIndicator
+          x={menu.x}
+          y={menu.y}
+          onClose={() => setMenu(null)}
+          dataMenu={menuSetup}
+          activate={dataCurrent.isOpen}
+        />
+      )}
+      <SetupIndicator
+        title="atr"
+        open={openSetup}
+        setOpen={setOpenSetup}
+        data={dataCurrent}
+        setDataCurrent={setDataCurrent}
+      />
+    </>
+  );
 }

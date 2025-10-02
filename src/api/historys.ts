@@ -10,7 +10,8 @@ export const getLots = async (query: QueryLots) => {
             start_time: query.start_time,
             end_time: query.end_time,
             status: query.status,
-            acc_transaction: query.acc_transaction
+            acc_transaction: query.acc_transaction,
+            statusType: query.statusType
         },
     })
 

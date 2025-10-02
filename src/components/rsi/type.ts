@@ -1,6 +1,5 @@
-import type { IinitialDataCand } from "../../pages/Home/options";
 
-export function calculateRSI(data: IinitialDataCand[], period = 14) {
+export function calculateRSI(data: any[], period = 14) {
     if (!data || data.length <= period) return [];
 
     let rsi: { time: number; value: number }[] = [];
@@ -16,7 +15,7 @@ export function calculateRSI(data: IinitialDataCand[], period = 14) {
 
     // Pad trước bằng null cho 14 cây đầu tiên
     for (let i = 0; i < period; i++) {
-        rsi.push({ time: data[i].time, value: i });
+        rsi.push({ time: data[i].time, value: NaN });
     }
 
     // Bước 2: SMA lần đầu

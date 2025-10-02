@@ -31,14 +31,13 @@ const Tabs = (props: IProps) => {
                         </div>
                     </>}>
                         <Button
-
                             disabled={isLoading}
                             isLoading={isLoading}
                             onClick={() => handleClick(item)}
-                            className={`flex justify-center items-center h-[32px] md:h-[36px] w-[70px] md:w-[80px] rounded-lg ${item.value === serverMonitorActive?.value
+                            className={`flex justify-center items-center h-[32px] md:h-[36px] w-[70px] md:w-[90px] rounded-lg ${item.value === serverMonitorActive?.value
                                 ? "text-[var(--color-text)] bg-[var(--color-background)] active"
                                 : "bg-gray-200 text-black hover:bg-[var(--color-background-opacity-5)] hover:text-[var(--color-text)] border border-rose-100 dark:hover:border-rose-200"
-                                } cursor-pointer text-[12px] md:text-sm`}
+                                } cursor-pointer text-[12px] md:text-sm p-0`}
                             aria-current="page"
                         >
                             T {String(item?.value).slice(-6)}

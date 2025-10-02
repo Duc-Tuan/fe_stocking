@@ -44,6 +44,9 @@ const transactionSlice = createSlice({
         setCurrentPnl(state, action) {
             state.currentPnl = action.payload
         },
+        setDataAccTransaction(state, action) {
+            state.dataServerTransaction = action.payload
+        },
     },
     extraReducers: (builder) => {
         builder
@@ -71,5 +74,5 @@ const transactionSlice = createSlice({
     },
 });
 
-export const { setCurrentPnl, setServerMonitor } = transactionSlice.actions;
+export const { setCurrentPnl, setServerMonitor, setDataAccTransaction } = transactionSlice.actions;
 export default transactionSlice.reducer;

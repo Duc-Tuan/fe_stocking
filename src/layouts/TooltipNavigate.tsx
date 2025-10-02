@@ -13,6 +13,7 @@ interface IProps {
   disabled?: boolean;
   w?: number;
   h?: number;
+  classSub?: string
 }
 
 export default function TooltipNavigate({
@@ -24,6 +25,7 @@ export default function TooltipNavigate({
   disabled,
   w = 20,
   h = 20,
+  classSub
 }: IProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -42,7 +44,7 @@ export default function TooltipNavigate({
         disabled={disabled}
         className={`${
           disabled ? 'text-black bg-gray-200' : 'text-[var(--color-text)] bg-[var(--color-background)]'
-        } cursor-pointer inline-block p-2 rounded-lg active shadow-md shadow-gray-500 ${className} md:w-[36px] md:h-[36px] w-[32px] h-[32px] flex justify-center items-center`}
+        } cursor-pointer  p-2 rounded-lg active shadow-md shadow-gray-500 ${className} md:w-[36px] md:h-[36px] w-[28px] h-[28px] flex justify-center items-center ${classSub}`}
         aria-current="page"
       >
         <Icon name={iconName} width={w} height={h} />

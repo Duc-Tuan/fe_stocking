@@ -6,12 +6,12 @@ export default function Acc() {
     const { t } = useTranslation();
     
     return (
-        <div className='relative'>
+        <div className='relative m-4'>
             <div className='shadow-lg shadow-gray-300 absolute top-0 -left-10 md:-left-12 text-white bg-[var(--color-background)] font-bold px-8 py-1 -rotate-45 text-[10px] md:text-sm'>{user?.role === 200 ? "ADMIN" : "USER"}</div>
 
             <div className="flex justify-center items-center pt-10 flex-col">
                 <div className="shadow-[inset_0_0_10px_theme(colors.blue.200),_inset_0_0_6px_var(--color-background)] p-4 rounded-lg px-8">
-                    <div className="text-[12px] md:text-sm"><span className='font-bold'>{t("Tài khoản")}:</span> {user.username}</div>
+                    <div className="text-[12px] md:text-sm"><span className='font-bold'>{t("Tài khoản")}:</span> {user?.username}</div>
                     <div className="text-[12px] md:text-sm"><span className='font-bold'>{t("Máy chủ")}:</span> {t("Hệ thống theo dõi")}</div>
 
                 </div>

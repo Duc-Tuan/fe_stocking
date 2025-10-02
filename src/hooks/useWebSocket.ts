@@ -18,6 +18,7 @@ export function useSocket(
   const [dataOrder, setDataOrder] = useState<any>()
   const [dataBoot, setDataBoot] = useState<any>()
   const [dataBootAcc, setDataBootAcc] = useState<any>()
+  const [dataNotification, setDataNotification] = useState<any>()
 
   useEffect(() => {
     if (id_symbol) {
@@ -61,6 +62,8 @@ export function useSocket(
       const handleBoot = (data: any) => setDataBoot(data)
       const handleBootAcc = (data: any) => setDataBootAcc(data)
 
+      const handleNotification = (data: any) => setDataNotification(data)
+
       // Đăng ký listener theo "listen"
       if (listen === "order_filled") socket.on("order_filled", handleOrderFilled);
       if (listen === "chat_message") socket.on("chat_message", handleChat);
@@ -68,6 +71,8 @@ export function useSocket(
       if (listen === "acc_transaction_message") socket.on("acc_transaction_message", handleAccTransaction);
       if (listen === "boot_opposition") socket.on("boot_opposition", handleBoot);
       if (listen === "boot_monitor_acc") socket.on("boot_monitor_acc", handleBootAcc);
+
+      if (listen === "notification_message") socket.on("notification_message", handleNotification);
       
       return () => {
         if (listen === "order_filled") socket.off("order_filled", handleOrderFilled);
@@ -76,6 +81,7 @@ export function useSocket(
         if (listen === "acc_transaction_message") socket.off("acc_transaction_message", handleAccTransaction);
         if (listen === "boot_opposition") socket.off("boot_opposition", handleBoot);
         if (listen === "boot_monitor_acc") socket.off("boot_monitor_acc", handleBootAcc);
+        if (listen === "notification_message") socket.off("notification_message", handleNotification);
 
         socket.disconnect();
       };
@@ -88,6 +94,7 @@ export function useSocket(
     dataCurrentAccTransaction,
     dataOrder,
     dataBoot,
-    dataBootAcc
+    dataBootAcc,
+    dataNotification
   }
 }

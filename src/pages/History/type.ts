@@ -47,6 +47,8 @@ export interface IHistoryLot {
     type: "CLOSE" | "RUNNING";
     username_id: number;
     volume: number;
+    IsUSD: boolean,
+    usd: number,
 }
 
 export interface IActiveHistoryLot extends IHistoryLot {
@@ -163,6 +165,13 @@ export interface ISymbolAll {
     symbol: string,
 }
 
+export interface IProfitOrderClose {
+    account_transaction_id: number,
+    time: string,
+    total_profit: number,
+    transaction_count: number
+}
+
 export interface ISymbolPosition {
     account_id: number,
     username?: string,
@@ -182,7 +191,8 @@ export interface ISymbolPosition {
     time: string,
     tp: number,
     username_id: number,
-    volume: number
+    volume: number,
+    is_odd: boolean
 }
 
 export const dataAccTransaction = [20305495, 102743455, 957463445, 333354356]

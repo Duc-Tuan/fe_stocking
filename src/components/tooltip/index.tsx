@@ -11,13 +11,11 @@ interface IProps {
     loading?: boolean,
     handleClick?: () => void;
     isButton?: boolean;
-    w?: string;
-    h?: string;
     classNameButton?: string
     placement?: placement
 }
 
-export default function TooltipCustom({ placement = "bottom", children, titleTooltip, loading, handleClick, isButton, w, h, classNameButton }: IProps) {
+export default function TooltipCustom({ placement = "bottom", children, titleTooltip, loading, handleClick, isButton, classNameButton }: IProps) {
     const { t } = useTranslation()
     return (
         <Tooltip
@@ -33,7 +31,7 @@ export default function TooltipCustom({ placement = "bottom", children, titleToo
                 disabled={loading}
                 onClick={handleClick}
                 isLoading={loading}
-                className={`flex justify-center items-center ${w ?? 'w-[46px]'} ${h ?? 'h-[44px]'} rounded-lg text-[var(--color-text)] bg-[var(--color-background)] active cursor-pointer ${classNameButton}`}
+                className={`flex justify-center items-center rounded-lg text-[var(--color-text)] bg-[var(--color-background)] active cursor-pointer p-0 md:h-[36px] md:w-[36px] w-[28px] h-[28px] ${classNameButton}`}
                 aria-current="page"
             >
                 {loading ? <LoadingOnly /> : children}

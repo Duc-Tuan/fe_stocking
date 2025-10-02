@@ -1,4 +1,4 @@
-import { LineStyle } from "lightweight-charts";
+import { LineStyle, type Time } from "lightweight-charts";
 import { adjustToUTCPlus_7 } from "../../pages/Home/options";
 
 export const gridColor = {
@@ -11,7 +11,6 @@ export const gridColor = {
         style: LineStyle.Solid,
     }
 }
-formatVietnamTimeSmart
 
 export function formatVietnamTimeSmart(time: number, isTooltip?: boolean) {
     const date = new Date(adjustToUTCPlus_7(time) * 1000);
@@ -22,4 +21,16 @@ export function formatVietnamTimeSmart(time: number, isTooltip?: boolean) {
     const mm = date.getMinutes().toString().padStart(2, '0');
     const ss = date.getSeconds().toString().padStart(2, '0');
     if (isTooltip) return `${dd}/${MM}/${yyyy} ${hh}:${mm}:${ss}`
+}
+
+export interface IDataLine {
+    time: Time,
+    value: number
+}
+
+export const covertDataLine = (data: any[]): IDataLine[] => {
+    return data.map(item => ({
+        time: item.time,
+        value: item.high
+    }));
 }

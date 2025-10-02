@@ -6,4 +6,11 @@ export const PathName = {
     SETTING: "settings",
     ORTHER: "orther",
     SYMMETRICAL_ORDER: "symmetrical-order",
+    NOTIFICATION: "notification",
+    INFOACC: "info_acc",
+    ACCMONITOR: "acc_monitor",
+    ACCTRANSACTION: "acc_transaction",
+    EMAIL: "email",
+    LANGUAGE: "language",
+    NOTIFICATION_DETAIL: (id?: number) => `/settings/notification/${id ?? ':id'}`,
 }

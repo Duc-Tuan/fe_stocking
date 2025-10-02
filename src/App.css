@@ -1,6 +1,6 @@
 @font-face {
-  font-family: "dancing";
-  src: url("src/assets/fonts/DancingScript-Bold.ttf");
+  font-family: 'dancing';
+  src: url('src/assets/fonts/DancingScript-Bold.ttf');
   font-weight: 700;
   font-style: normal;
 }
@@ -11,7 +11,7 @@ a[href*="https://www.tradingview.com/?utm_medium=lwc-link&utm_campaign=lwc-chart
   display: none !important;
 }
 
-img[src*="tradingview"] {
+img[src*='tradingview'] {
   display: none !important;
 }
 
@@ -19,12 +19,12 @@ img[src*="tradingview"] {
   border-radius: 10px !important;
 }
 
-input[type="checkbox"].custom-checkbox {
+input[type='checkbox'].custom-checkbox {
   position: relative;
 }
 
-input[type="checkbox"].custom-checkbox:checked::after {
-  content: "✓";
+input[type='checkbox'].custom-checkbox:checked::after {
+  content: '✓';
   color: white;
   position: absolute;
   top: -1px;
@@ -37,7 +37,7 @@ input[type="checkbox"].custom-checkbox:checked::after {
 } */
 
 .font-dancing-bold {
-  font-family: "dancing";
+  font-family: 'dancing';
   font-weight: 900;
 }
 
@@ -60,7 +60,8 @@ input[type="checkbox"].custom-checkbox:checked::after {
 }
 
 .my-scroll::-webkit-scrollbar {
-  width: 4px; /* độ rộng thanh cuộn */
+  /* width: 4px; */
+  width: 0; /* độ rộng thanh cuộn */
 }
 
 .my-scroll::-webkit-scrollbar-track {
@@ -78,8 +79,7 @@ input[type="checkbox"].custom-checkbox:checked::after {
 
 button,
 div.animate {
-  transition: background-color 0.5s ease, color 0.5s ease,
-    border-color 0.5s ease;
+  transition: background-color 0.5s ease, color 0.5s ease, border-color 0.5s ease;
 }
 
 .ant-picker-input {
@@ -109,18 +109,9 @@ div.animate {
   border-color: var(--color-background) !important;
 }
 
-.ant-picker-dropdown
-  .ant-picker-cell-in-view.ant-picker-cell-in-range:not(
-    .ant-picker-cell-disabled
-  ):before,
-.ant-picker-dropdown
-  .ant-picker-cell-in-view.ant-picker-cell-range-start:not(
-    .ant-picker-cell-disabled
-  ):before,
-.ant-picker-dropdown
-  .ant-picker-cell-in-view.ant-picker-cell-range-end:not(
-    .ant-picker-cell-disabled
-  ):before {
+.ant-picker-dropdown .ant-picker-cell-in-view.ant-picker-cell-in-range:not(.ant-picker-cell-disabled):before,
+.ant-picker-dropdown .ant-picker-cell-in-view.ant-picker-cell-range-start:not(.ant-picker-cell-disabled):before,
+.ant-picker-dropdown .ant-picker-cell-in-view.ant-picker-cell-range-end:not(.ant-picker-cell-disabled):before {
   background-color: var(--color-background-opacity-2) !important;
 }
 
@@ -133,7 +124,54 @@ div.animate {
   box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2), inset 0 0 5px var(--color-background-opacity-5) !important;
 }
 
-.Toastify__close-button{
+.Toastify__close-button {
   color: var(--color-background) !important;
   opacity: 1;
+}
+
+.notify-dot {
+  position: relative;
+  width: 8px; /* = w-2 */
+  height: 8px; /* = h-2 */
+  border-radius: 50%;
+  background-color: #dc2626; /* đỏ-600 */
+}
+
+/* Vòng sáng lan tỏa */
+.notify-dot::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background-color: #dc2626;
+  opacity: 0.7;
+  animation: ping 1.5s ease-out infinite;
+}
+
+@keyframes ping {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(3);
+    opacity: 0;
+  }
+}
+
+.right-line {
+  position: relative;
+}
+.right-line::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 2px;
+  height: 50%;
+  background-color: rgba(0, 0, 0, 0.2);
 }

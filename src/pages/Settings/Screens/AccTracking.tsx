@@ -7,7 +7,7 @@ export default function AccTracking() {
   const { t } = useTranslation()
 
   return (
-    <div className='flex flex-col justify-center items-center gap-2'>
+    <div className='flex flex-col justify-center items-center gap-2 p-2'>
       {
         !loadingServerMonitor ? serverMonitor.map((d) => {
           return <div className="bg-[var(--color-background-opacity-1)] w-full p-1 py-2 shadow-sm shadow-gray-200 rounded-sm" key={d.value}>

@@ -16,6 +16,30 @@
   --color-background: #ff637e;
   --color-background-atr: #0000ff;
   --color-background-atr-1: rgba(0, 0, 255, 0.05);
+  --color-background-adr: rgb(225, 0, 255);
+  --color-background-adr-1: rgba(225, 0, 255, 0.05);
+
+  --color-background-roc: rgb(52, 211, 153);
+  --color-background-roc-1: rgba(52, 211, 153, 0.05);
+
+  --color-background-slope: #f59e0b;
+  --color-background-slope-1: rgba(245, 158, 11, 0.05);
+
+  --color-background-rolling: #8b5cf6;
+  --color-background-rolling-1: rgba(139, 92, 246, 0.05);
+
+  --color-background-zScore: #3b82f6;
+  --color-background-zScore-1: rgba(59, 130, 246, 0.05);
+
+  --color-background-sma: #1E90FF;
+  --color-background-ema: #FFD700;
+  --color-background-wma: #32CD32;
+  --color-background-rma: #800080;
+
+  --color-background-adx: #FFD700;
+  --color-background-adx-positive-di: #00FF7F;
+  --color-background-adx-minus-di: #FF4500;
+  
   --color-background-opacity-5: rgba(255, 99, 125, 0.5);
   --color-background-opacity-2: rgba(255, 99, 125, 0.2);
   --color-background-opacity-1: rgba(255, 99, 125, 0.05);

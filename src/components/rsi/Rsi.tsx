@@ -1,290 +1,329 @@
-import React, { useEffect, useRef, useState } from 'react'
-import { calculateRSI } from './type';
-import { ColorType, createChart, LineStyle, type BarData, type IChartApi, type UTCTimestamp } from 'lightweight-charts';
-import { timeOptions, type IinitialDataCand } from '../../pages/Home/options';
-import { formatVietnamTimeSmart, gridColor } from '../line/formatTime';
-import { aggregateCandlesByInterval, getColorChart } from '../../utils/timeRange';
-import { normalizeChartData } from '../candlestickSeries/options';
+import { ColorType, createChart, type IChartApi } from 'lightweight-charts';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { IboundaryLine } from '../../pages/Home/type';
+import { usePriceLines } from '../../hooks/usePriceLines';
+import { useRightClickMenu } from '../../hooks/useRightClick';
+import { type IinitialDataCand } from '../../pages/Home/options';
+import type { IDataPeriod, Iindicator } from '../../pages/Home/type';
+import { initSetupIndicatorRSI, type ISetupIndicator } from '../../types/global';
+import { getColorChart } from '../../utils/timeRange';
+import { calculateADX } from '../../utils/typeRecipe';
+import { formatVietnamTimeSmart, gridColor } from '../line/formatTime';
+import MenuSetupIndicator from '../menuSetupIndicator';
+import type { IMenuSub } from '../menuSetupIndicator/type';
+import SetupIndicator from '../setupIndicator';
+import { calculateRSI } from './type';
+import SetupIndicatorADX from '../setupIndicatorADX';
 
-export default function Rsi({ latestData, chartRefCurentRSI, candleData, chartRefCandl, currentRange, boundaryLine, colors: {
+export default function Rsi({
+  chartRefCurentRSI,
+  candleData,
+  chartRefCandl,
+  setIndicator,
+  setDataPeriod,
+  activeTab,
+  colors: {
     backgroundColor = 'transparent',
-    lineColor = getColorChart('--color-background'),
+    lineColor = getColorChart('--color-background-atr'),
     textColor = 'black',
-} = {} }: { latestData: IinitialDataCand[], candleData: IinitialDataCand[], currentRange: any, chartRefCandl: any, colors?: any, chartRefCurentRSI: any, boundaryLine: IboundaryLine }) {
-    const { t } = useTranslation()
-    const chartRef = useRef<any>(null);
-    const rsiChartRef = useRef<HTMLDivElement>(null);
-    const seriesRef = useRef<any>(null);
+  } = {},
+}: {
+  candleData: IinitialDataCand[];
+  chartRefCandl: any;
+  colors?: any;
+  chartRefCurentRSI: any;
+  setIndicator: any;
+  setDataPeriod: React.Dispatch<React.SetStateAction<IDataPeriod>>;
+  activeTab: any;
+}) {
+  const { t } = useTranslation();
+  const chartRef = useRef<any>(null);
+  const rsiChartRef = useRef<HTMLDivElement>(null);
+  const seriesRef = useRef<any>(null);
 
-    const allData = useRef<BarData[]>([]);
+  const currentData = useRef<any>(null);
 
-    const currentData = useRef<any>(null);
+  const currentDataRsi = useRef<any>(null);
+  const [currentRsi, setCurrentRsi] = useState<any>(null);
 
-    const currentDataRsi = useRef<any>(null);
-    const [currentRsi, setCurrentRsi] = useState<any>(null)
+  const { menu, setMenu } = useRightClickMenu(rsiChartRef);
+  const [openSetup, setOpenSetup] = useState<boolean>(false);
+  const [showADX, setShowADX] = useState<boolean>(false);
+  const [settingADX, setSettingADX] = useState<boolean>(false);
+  const [dataCurrent, setDataCurrent] = useState<ISetupIndicator>(initSetupIndicatorRSI);
 
-    // refs để lưu priceLine instances
-    const priceLinesRef = useRef<{ [key: string]: any[] }>({
-        "80_20": [],
-        "70_30": [],
-        "50": [],
+  const adxLine = useRef<any>(null);
+  const adxPositiveDILine = useRef<any>(null);
+  const adxMinusDILine = useRef<any>(null);
+
+  const currentDataAdx = useRef<any>(null);
+  const [currentAdx, setCurrentAdx] = useState<{
+    adx: number;
+    diMinus: number;
+    diPositive: number;
+  }>({
+    adx: 0,
+    diMinus: 0,
+    diPositive: 0,
+  });
+
+  const addChartLine = (ref: any, chart: any, color: string, isLast: boolean = false) => {
+    return (ref.current = chart.addLineSeries({
+      color: getColorChart(color),
+      lineWidth: 1,
+      priceLineVisible: false,
+      lastValueVisible: isLast,
+      crosshairMarkerVisible: false,
+    }));
+  };
+
+  useEffect(() => {
+    if (!rsiChartRef.current) return;
+
+    // === Chart RSI ===
+    const rsiChart: IChartApi = createChart(rsiChartRef.current, {
+      layout: {
+        background: { type: ColorType.Solid, color: backgroundColor },
+        textColor,
+      },
+      grid: gridColor,
+      height: 120,
+      rightPriceScale: {
+        borderColor: '#00000030',
+      },
+      timeScale: {
+        rightOffset: 5,
+        barSpacing: 10,
+        lockVisibleTimeRangeOnResize: false,
+        rightBarStaysOnScroll: true,
+        borderVisible: true,
+        timeVisible: true,
+        secondsVisible: true,
+        borderColor: '#00000030',
+      },
+      handleScroll: {
+        mouseWheel: true,
+        pressedMouseMove: true,
+        horzTouchDrag: true,
+        vertTouchDrag: true,
+      },
+      handleScale: {
+        axisPressedMouseMove: true,
+        mouseWheel: true,
+        pinch: true,
+      },
+      crosshair: {
+        vertLine: { labelBackgroundColor: getColorChart() },
+        horzLine: { labelBackgroundColor: lineColor },
+      },
+      localization: {
+        locale: 'vi-VN',
+        timeFormatter: (time: any) => formatVietnamTimeSmart(time, true),
+      },
     });
 
-    useEffect(() => {
-        if (!rsiChartRef.current) return;
+    addChartLine(seriesRef, rsiChart, '--color-background-atr', true);
+    addChartLine(adxLine, rsiChart, '--color-background-adx');
+    addChartLine(adxPositiveDILine, rsiChart, '--color-background-adx-positive-di');
+    addChartLine(adxMinusDILine, rsiChart, '--color-background-adx-minus-di');
 
-        // === Chart RSI ===
-        const rsiChart: IChartApi = createChart(rsiChartRef.current, {
-            layout: {
-                background: { type: ColorType.Solid, color: backgroundColor },
-                textColor,
-            },
-            grid: gridColor,
-            height: 120,
-            rightPriceScale: {
-                borderColor: '#00000030'
-            },
-            timeScale: {
-                rightOffset: 5,
-                barSpacing: 10,
-                lockVisibleTimeRangeOnResize: false,
-                rightBarStaysOnScroll: true,
-                borderVisible: true,
-                timeVisible: true,
-                secondsVisible: true,
-                borderColor: '#00000030'
-            },
-            handleScroll: {
-                mouseWheel: true,
-                pressedMouseMove: true,
-                horzTouchDrag: true,
-                vertTouchDrag: true,
-            },
-            handleScale: {
-                axisPressedMouseMove: true,
-                mouseWheel: true,
-                pinch: true,
-            },
-            crosshair: {
-                vertLine: { labelBackgroundColor: getColorChart() },
-                horzLine: { labelBackgroundColor: getColorChart() },
-            },
-            localization: {
-                locale: 'vi-VN',
-                timeFormatter: (time: any) => formatVietnamTimeSmart(time, true),
-            },
-        });
+    chartRef.current = rsiChart;
+    chartRefCurentRSI.current = rsiChart;
 
-        const rsiSeries = rsiChart.addLineSeries({
-            color: lineColor,
-            lineWidth: 1,
-            priceLineVisible: false,
-        });
+    return () => {
+      rsiChart.remove();
+      chartRef.current = null;
+      seriesRef.current = null;
+      chartRefCurentRSI.current = null;
+      adxLine.current = null;
+      adxPositiveDILine.current = null;
+      adxMinusDILine.current = null;
+    };
+  }, []);
 
-        seriesRef.current = rsiSeries;
-        chartRef.current = rsiChart;
-        chartRefCurentRSI.current = rsiChart;
+  useEffect(() => {
+    const candleChart = chartRefCandl.current;
+    const rsiChart = chartRef.current;
 
-        return () => {
-            rsiChart.remove();
-            chartRef.current = null
-            seriesRef.current = null
-            chartRefCurentRSI.current = null
-        };
-    }, []);
+    if (!candleChart || !rsiChart) return; // tránh null
 
-    useEffect(() => {
-        if (!seriesRef.current) return;
+    const unsubCandle = candleChart.timeScale().subscribeVisibleLogicalRangeChange((range: any) => {
+      if (range) {
+        rsiChart.timeScale().setVisibleLogicalRange(range);
+      }
+    });
 
-        // Clear trước mỗi lần render lại
-        Object.values(priceLinesRef.current).flat().forEach(line => {
-            seriesRef.current.removePriceLine(line);
-        });
-        priceLinesRef.current = { "80_20": [], "70_30": [], "50": [] };
+    const unsubRsi = rsiChart.timeScale().subscribeVisibleLogicalRangeChange((range: any) => {
+      if (range) {
+        candleChart.timeScale().setVisibleLogicalRange(range);
+      }
+    });
 
-        // 80-20 đỏ
-        if (boundaryLine.is80_20) {
-            const line80 = seriesRef.current.createPriceLine({
-                price: 80,
-                color: 'red',
-                lineWidth: 1,
-                // lineStyle: 1,
-                lineStyle: LineStyle.Solid,
-                axisLabelVisible: true,
-            });
-            const line20 = seriesRef.current.createPriceLine({
-                price: 20,
-                color: 'red',
-                lineWidth: 1,
-                // lineStyle: 1,
-                lineStyle: LineStyle.Solid,
-                axisLabelVisible: true,
-            });
-            priceLinesRef.current["80_20"].push(line80, line20);
+    const unsubCrosshair = candleChart.subscribeCrosshairMove((param: any) => {
+      if (param.time) {
+        const rsiPoint = currentData.current.find((p: any) => p.time === param.time);
+        const data = currentDataRsi.current.find((p: any) => p.time === param.time);
+        setCurrentRsi(data);
+
+        if (currentDataAdx.current) {
+          const dataCurrentADX = currentDataAdx.current
+          const adx = dataCurrentADX.adx.find((p: any) => p.time === param.time)?.value ?? 0;
+          const adxMinus = dataCurrentADX.minusDI.find((p: any) => p.time === param.time)?.value ?? 0;
+          const adxPositive = dataCurrentADX.plusDI.find((p: any) => p.time === param.time)?.value ?? 0;
+          setCurrentAdx({ adx, diMinus: adxMinus, diPositive: adxPositive });
         }
-
-        // 70-30 xanh
-        if (boundaryLine.is70_30) {
-            const line70 = seriesRef.current.createPriceLine({
-                price: 70,
-                color: 'green',
-                lineWidth: 1,
-                // lineStyle: 1,
-                lineStyle: LineStyle.Solid,
-                axisLabelVisible: true,
-            });
-            const line30 = seriesRef.current.createPriceLine({
-                price: 30,
-                color: 'green',
-                lineWidth: 1,
-                // lineStyle: 1,
-                lineStyle: LineStyle.Solid,
-                axisLabelVisible: true,
-            });
-            priceLinesRef.current["70_30"].push(line70, line30);
+        if (rsiPoint) {
+          rsiChart.setCrosshairPosition(rsiPoint.value, param.time, seriesRef.current);
         }
+      } else {
+        const adx = currentDataAdx.current.adx[currentDataAdx.current.adx.length - 1].value;
+        const adxMinus = currentDataAdx.current.minusDI[currentDataAdx.current.minusDI.length - 1].value;
+        const adxPositive = currentDataAdx.current.plusDI[currentDataAdx.current.plusDI.length - 1].value;
+        setCurrentAdx({ adx, diMinus: adxMinus, diPositive: adxPositive });
 
-        // 50 vàng
-        if (boundaryLine.is50) {
-            const line50 = seriesRef.current.createPriceLine({
-                price: 50,
-                color: 'gold',
-                lineWidth: 1,
-                // lineStyle: 1,
-                lineStyle: LineStyle.Solid,
-                axisLabelVisible: true,
-            });
-            priceLinesRef.current["50"].push(line50);
-        }
-    }, [boundaryLine])
+        setCurrentRsi(currentDataRsi.current[currentDataRsi.current.length - 1]);
+        rsiChart.clearCrosshairPosition();
+      }
+    });
 
-    useEffect(() => {
-        const candleChart = chartRefCandl.current;
-        const rsiChart = chartRef.current;
+    rsiChart.priceScale('right').applyOptions({ minimumWidth: 70 });
 
-        if (!candleChart || !rsiChart) return; // tránh null
+    // Cleanup khi component unmount
+    return () => {
+      unsubCandle?.();
+      unsubRsi?.();
+      unsubCrosshair?.();
+    };
+  }, [chartRefCandl.current, activeTab]);
 
-        const unsubCandle = candleChart.timeScale().subscribeVisibleLogicalRangeChange((range: any) => {
-            if (range) {
-                rsiChart.timeScale().setVisibleLogicalRange(range);
-            }
-        });
+  useEffect(() => {
+    const rsiData = calculateRSI(candleData, dataCurrent.period);
+    const adxData = calculateADX(candleData, dataCurrent.periodADX);
+    currentDataAdx.current = adxData;
 
-        const unsubRsi = rsiChart.timeScale().subscribeVisibleLogicalRangeChange((range: any) => {
-            if (range) {
-                candleChart.timeScale().setVisibleLogicalRange(range);
-            }
-        });
+    setCurrentRsi(rsiData[rsiData.length - 1]);
+    currentData.current = rsiData;
+    currentDataRsi.current = rsiData;
 
-        const unsubCrosshair = candleChart.subscribeCrosshairMove((param: any) => {
-            if (param.time) {
-                const rsiPoint = currentData.current.find((p: any) => p.time === param.time);
-                const data = currentDataRsi.current.find((p: any) => p.time === param.time);
-                setCurrentRsi(data);
+    const adx = adxData.adx[adxData.adx.length - 1].value;
+    const adxMinus = adxData.minusDI[adxData.minusDI.length - 1].value;
+    const adxPositive = adxData.plusDI[adxData.plusDI.length - 1].value;
+    setCurrentAdx({ adx, diMinus: adxMinus, diPositive: adxPositive });
 
-                if (rsiPoint) {
-                    rsiChart.setCrosshairPosition(
-                        rsiPoint.value,
-                        param.time,
-                        seriesRef.current
-                    );
-                }
-            } else {
-                rsiChart.clearCrosshairPosition();
-                setCurrentRsi(currentDataRsi.current[currentDataRsi.current.length - 1])
-            }
-        });
+    seriesRef.current.setData(rsiData);
 
-        // Đồng bộ chiều rộng
-        const width = candleChart?.getWidth?.(); // Nếu chart có hàm getWidth, không dùng _private__
-        if (width) {
-            rsiChart.applyOptions({ width });
-        }
+    adxLine.current.setData(adxData.adx);
+    adxMinusDILine.current.setData(adxData.minusDI);
+    adxPositiveDILine.current.setData(adxData.plusDI);
+  }, [candleData, dataCurrent.period, dataCurrent.periodADX]);
 
-        rsiChart.priceScale("right").applyOptions({ minimumWidth: 58 });
+  useEffect(() => {
+    setDataPeriod((prev: any) => ({ ...prev, periodRSI: dataCurrent.period ?? 14 }));
+  }, [dataCurrent.period]);
 
-        // Cleanup khi component unmount
-        return () => {
-            unsubCandle?.();
-            unsubRsi?.();
-            unsubCrosshair?.();
-        };
-    }, []); // chỉ chạy 1 lần sau mount
-
-    const renderData = (data: any) => {
-        let time = undefined
-        if (currentRange) {
-            time = timeOptions.filter((i) => i.label === currentRange)[0].seconds
-        }
-        return aggregateCandlesByInterval(data, time)
+  useEffect(() => {
+    if (adxLine.current && adxMinusDILine.current && adxPositiveDILine.current) {
+      adxLine.current.applyOptions({ visible: showADX });
+      adxMinusDILine.current.applyOptions({ visible: showADX });
+      adxPositiveDILine.current.applyOptions({ visible: showADX });
     }
+  }, [showADX]);
 
-    useEffect(() => {
-        if (!seriesRef.current || !candleData?.length) return;
-
-        allData.current = []
-        const fixed = normalizeChartData(candleData).sort((a: any, b: any) => a.time - b.time);
-        const existing = allData.current;
-
-        const unique = fixed.filter(d => !existing.some(e => e.time === d.time));
-        if (!unique.length) return;
-
-        const merged = [...existing];
-        for (const d of unique) {
-            const index = merged.findIndex(item => item.time === d.time);
-            if (index !== -1) {
-                merged[index] = d;
-            } else {
-                merged.push(d);
+  const menuSetup: IMenuSub[] = [
+    {
+      label: 'Cài đặt chỉ báo ADX',
+      value: 'ADX setting',
+      onClick: () => setSettingADX(!settingADX),
+    },
+    {
+      label: 'Bật thêm chỉ báo ADX',
+      value: 'ADX actiave',
+      onClick: () => setShowADX(!showADX),
+    },
+    {
+      label: 'Cài đặt chỉ báo',
+      value: 'RSI',
+      onClick: () => setOpenSetup(true),
+    },
+    {
+      label: 'Bật/tắt đường tiệm cận',
+      value: 'activate',
+      onClick: () => setDataCurrent((prev) => ({ ...prev, isOpen: !prev.isOpen })),
+    },
+    {
+      label: 'Tắt chỉ báo',
+      value: 'indication',
+      onClick: () => {
+        setIndicator((prev: Iindicator[]) =>
+          prev.map((i: Iindicator) => {
+            if (i.value === 'rsi') {
+              return {
+                ...i,
+                active: false,
+              };
             }
-        }
+            return i;
+          }),
+        );
+      },
+    },
+  ];
 
-        allData.current = merged.sort((a: any, b: any) => a.time - b.time);
-        const data = renderData(allData.current)
-        const rsiData = calculateRSI(data, 14);
+  usePriceLines(seriesRef, dataCurrent);
 
-        currentData.current = data
-        currentDataRsi.current = rsiData
+  return (
+    <>
+      <div ref={rsiChartRef} style={{ position: 'relative', marginTop: '4px' }}>
+        <div className="absolute w-[calc(100%-70px)] h-[120px] bg-[var(--color-background-atr-1)] left-0 right-0 top-0" />
 
-        seriesRef.current.setData(rsiData);
-    }, [candleData, currentRange]);
+        <div className="absolute left-4 top-1 text-[12px] flex justify-start items-center">
+          <div className="">
+            {t('Chỉ báo hội tụ RSI')} <span className="text-gray-400">{dataCurrent.period} close</span>{' '}
+            <span className="text-[var(--color-background)] ml-2">{currentRsi && currentRsi.value.toFixed(2)}</span>
+          </div>
 
-    useEffect(() => {
-        if (!latestData || !Array.isArray(latestData) || !latestData.length || !seriesRef.current) return;
+          {showADX && (
+            <div className="">
+              ; ADX <span className="text-gray-400">TR</span> {dataCurrent.periodADX}
+              <span className="text-[var(--color-background-adx)] ml-2">
+                adx: {currentAdx && currentAdx.adx.toFixed(2)}
+              </span>
+              <span className="text-[var(--color-background-adx-minus-di)] ml-2">
+                -di: {currentAdx && currentAdx.diMinus.toFixed(2)}
+              </span>
+              <span className="text-[var(--color-background-adx-positive-di)] ml-2">
+                +di: {currentAdx && currentAdx.diPositive.toFixed(2)}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+      {menu && (
+        <MenuSetupIndicator
+          x={menu.x}
+          y={menu.y}
+          onClose={() => setMenu(null)}
+          dataMenu={menuSetup}
+          activate={dataCurrent.isOpen}
+          activateSub={showADX}
+        />
+      )}
 
-        const fixed = normalizeChartData(latestData);
-        if (!fixed.length) return;
+      <SetupIndicator
+        title="rsi"
+        open={openSetup}
+        setOpen={setOpenSetup}
+        data={dataCurrent}
+        setDataCurrent={setDataCurrent}
+      />
 
-        let updated = [...allData.current];
-        let hasNew = false;
-
-        for (const point of fixed) {
-            const idx = updated.findIndex(p => Number(p.time) === Number(point.time));
-            if (idx !== -1) {
-                updated[idx] = point;
-            } else {
-                updated.push(point);
-                hasNew = true;
-            }
-        }
-
-        if (hasNew) updated.sort((a: any, b: any) => a.time - b.time);
-        allData.current = updated;
-
-        const data = renderData(allData.current)
-        const rsiData = calculateRSI(data, 14);
-
-        currentData.current = data
-        currentDataRsi.current = rsiData
-
-        seriesRef.current.setData(rsiData);
-    }, [latestData]);
-
-    return <div ref={rsiChartRef} style={{ position: "relative" }}>
-        <div className="absolute w-[calc(100%-58px)] h-[120px] bg-[var(--color-background-opacity-1)] left-0 right-0 bottom-0" />
-
-        <div className="absolute left-4 top-0 text-[12px]">{t("Chỉ báo hội tụ RSI")} <span className='text-gray-400'>14 close</span> <span className='text-[var(--color-background)] ml-2'>{currentRsi && currentRsi.value.toFixed(2)}</span></div>
-    </div>
+      <SetupIndicatorADX
+        title="adx"
+        open={settingADX}
+        setOpen={setSettingADX}
+        data={dataCurrent}
+        setDataCurrent={setDataCurrent}
+      />
+    </>
+  );
 }

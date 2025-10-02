@@ -32,6 +32,11 @@ import IconMoreV2 from './icons/IconMoreV2.svg?react';
 import IconWatchStatus from './icons/IconWatchStatus.svg?react';
 import IconHelp from './icons/IconHelp.svg?react';
 import IconRefresh from './icons/IconRefresh.svg?react';
+import IconNotification from './icons/IconNotification.svg?react';
+import IconBb from './icons/IconBb.svg?react';
+import IconSidebarRight from './icons/IconSidebarRight.svg?react';
+import IconQuantitative from './icons/IconQuantitative.svg?react';
+import IconIndicationChart from './icons/IconIndicationChart.svg?react';
 
 export default function Icon(props: any) {
     switch (props?.name?.toLowerCase()) {
@@ -103,6 +108,16 @@ export default function Icon(props: any) {
             return <IconHelp {...props} />;
         case 'icon-refresh':
             return <IconRefresh {...props} />;
+        case 'icon-notification':
+            return <IconNotification {...props} />;
+        case 'icon-bb':
+            return <IconBb {...props} />;
+        case 'icon-sidebar-right':
+            return <IconSidebarRight {...props} />;
+        case 'icon-quantitative':
+            return <IconQuantitative {...props} />;
+        case 'icon-indication-chart':
+            return <IconIndicationChart {...props} />;
         default:
             return null;
     }

@@ -1,3 +1,5 @@
+import type { Option } from "../History/type";
+
 export type EMO = "Xuoi_Limit" | "Nguoc_Limit" | "Xuoi_Stop" | "Nguoc_Stop" | "Lenh_thi_truong";
 
 export interface IActivateTypetransaction {
@@ -99,6 +101,8 @@ export interface IOrderTransaction {
     status?: EMO,
     type?: "CLOSE" | "RUNNING",
     status_sl_tp?: IStatus_sl_tp,
+    IsUSD?: boolean,
+    usd?: number,
     by_symbol?: {
         current_price: number,
         symbol: string,
@@ -120,3 +124,41 @@ export const titleSatusLot = (data: IStatus_sl_tp) => {
             return "Lệnh thị trường"
     }
 }
+
+export interface IOptionTypeAcc extends Option<string> {
+    actiavte: boolean,
+    title: string
+}
+
+export const dataSelectTypeAcc: IOptionTypeAcc[] = [
+    {
+        actiavte: true,
+        label: "Quỹ",
+        value: "QUY",
+        title: "Tài khoản giao dịch quỹ"
+    },
+    {
+        actiavte: false,
+        label: "USD",
+        value: "USD",
+        title: "Tài khoản giao dịch usd"
+    },
+    {
+        actiavte: false,
+        label: "COPY",
+        value: "COPY",
+        title: "Tài khoản giao dịch copy"
+    },
+    {
+        actiavte: false,
+        label: "Ký gửi",
+        value: "DEPOSIT",
+        title: "Tài khoản giao dịch ký gửi"
+    },
+    {
+        actiavte: false,
+        label: "COM",
+        value: "COM",
+        title: "Tài khoản giao dịch com"
+    },
+]

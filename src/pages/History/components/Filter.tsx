@@ -73,16 +73,16 @@ export default function Filter({ setFilter, filter, subButton, isStatus, isStatu
                         </div>
 
                         <div className="flex justify-end items-center gap-2 w-full">
-                            <Button onClick={handleToggle} className="cursor-pointer text-[var(--color-background)] px-3 py-2 border border-gray-300 border-solid shadow-md shadow-gray-300">{t("Hủy")}</Button>
+                            <Button onClick={handleToggle} className="cursor-pointer md:h-[36px] h-[30px] flex justify-center items-center text-[var(--color-background)] px-3 py-2 border border-gray-300 border-solid shadow-md shadow-gray-300">{t("Hủy")}</Button>
                             <Button onClick={() => {
                                 setFilter(initFilter)
                                 handleFilter && handleFilter(initFilter)
                             }
-                            } className="cursor-pointer bg-[var(--color-background)] px-3 py-2 shadow-md shadow-gray-300">{t("Làm mới")}</Button>
+                            } className="cursor-pointer md:h-[36px] h-[30px] flex justify-center items-center bg-[var(--color-background)] px-3 py-2 shadow-md shadow-gray-300">{t("Làm mới")}</Button>
                             <Button onClick={() => {
                                 handleFilter && handleFilter(filter)
                                 handleToggle()
-                            }} className="cursor-pointer bg-[var(--color-background)] px-3 py-2 shadow-md shadow-gray-300">{t("Lọc")}</Button>
+                            }} className="cursor-pointer md:h-[36px] h-[30px] flex justify-center items-center bg-[var(--color-background)] px-3 py-2 shadow-md shadow-gray-300">{t("Lọc")}</Button>
                         </div>
                     </div>
                 )}
@@ -91,9 +91,9 @@ export default function Filter({ setFilter, filter, subButton, isStatus, isStatu
             <div className="flex justify-between items-center gap-4 mr-2 text-[12px] md:text-sm">
                 <TooltipNavigate disabled={query?.page === 1} handle={() => { setQuery && setQuery((prev) => ({ ...prev, page: query?.page === 1 ? 1 : (prev.page ?? 0) - 1 })) }} iconName='icon-left' path='#' title='Trang trước' className="w-[30px] md:w-[36px] h-[30px] md:h-[36px] p-0 flex justify-center items-center" />
                 <div className="flex justify-between items-center gap-1">
-                    <div className="w-[30px] md:w-[36px] h-[30px] md:h-[36px] shadow-md shadow-gray-500 flex justify-center items-center rounded-lg">{query?.page}</div>
+                    <div className="font-semibold w-[30px] md:w-[36px] h-[30px] md:h-[36px] shadow-md shadow-gray-500 flex justify-center items-center rounded-lg">{query?.page}</div>
                     <div className="">/</div>
-                    <div className="w-[30px] md:w-[36px] h-[30px] md:h-[36px] shadow-md shadow-gray-500 flex justify-center items-center rounded-lg">{query?.totalPage ?? 0}</div>
+                    <div className="font-semibold w-[30px] md:w-[36px] h-[30px] md:h-[36px] shadow-md shadow-gray-500 flex justify-center items-center rounded-lg">{query?.totalPage ?? 0}</div>
                 </div>
                 <TooltipNavigate disabled={query?.page === query?.totalPage || query?.totalPage === 0} handle={() => { setQuery && setQuery((prev) => ({ ...prev, page: query?.page === query?.totalPage ? prev.page : (prev.page ?? 0) + 1 })) }} iconName='icon-right' path='#' title='Trang sau' className="w-[30px] md:w-[36px] h-[30px] md:h-[36px] p-0 flex justify-center items-center" />
                 <div className="h-[36px] px-2 ml-2 shadow-md shadow-gray-500 flex justify-center items-center rounded-lg font-semibold">{t("Tổng số bản")}: {query?.total ?? 0}</div>
