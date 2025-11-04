@@ -37,6 +37,8 @@ import IconBb from './icons/IconBb.svg?react';
 import IconSidebarRight from './icons/IconSidebarRight.svg?react';
 import IconQuantitative from './icons/IconQuantitative.svg?react';
 import IconIndicationChart from './icons/IconIndicationChart.svg?react';
+import IconNote from './icons/IconNote.svg?react';
+import IconCompare from './icons/IconCompare.svg?react';
 
 export default function Icon(props: any) {
     switch (props?.name?.toLowerCase()) {
@@ -118,6 +120,10 @@ export default function Icon(props: any) {
             return <IconQuantitative {...props} />;
         case 'icon-indication-chart':
             return <IconIndicationChart {...props} />;
+        case 'icon-note':
+            return <IconNote {...props} />;
+        case 'icon-compare':
+            return <IconCompare {...props} />;
         default:
             return null;
     }

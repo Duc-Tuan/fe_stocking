@@ -1,12 +1,12 @@
-import React, { useEffect, useState, type Dispatch, type SetStateAction } from 'react';
+import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react';
+import { useEffect, useState, type Dispatch, type SetStateAction } from 'react';
+import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+import { closeOddOrder } from '../../api/oddOrder';
 import TooltipNavigate from '../../layouts/TooltipNavigate';
 import type { ISymbolPosition } from '../../pages/History/type';
 import { Button } from '../button';
-import { useTranslation } from 'react-i18next';
-import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react';
 import InputNumber from '../input';
-import { closeOddOrder } from '../../api/oddOrder';
-import toast from 'react-hot-toast';
 
 function CloseOrderOdd({
   data,

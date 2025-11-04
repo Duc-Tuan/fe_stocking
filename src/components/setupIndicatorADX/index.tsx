@@ -1,7 +1,6 @@
 import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react';
 import { useEffect, useState, type Dispatch, type SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
-import Icon from '../../assets/icon';
 import { initSetupIndicator, type ISetupIndicator } from '../../types/global';
 import { Button } from '../button';
 import InputNumber from '../input';

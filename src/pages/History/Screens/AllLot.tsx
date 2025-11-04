@@ -168,7 +168,7 @@ export default function AllLot() {
                       />
                     )}
                   </div>
-                  <span className="text-[13px] font-bold">
+                  <span className="text-[12px] font-bold text-end">
                     {dayjs.utc(a.time).tz('Asia/Ho_Chi_Minh').format('YYYY-MM-DD HH:mm:ss')}
                   </span>
                 </div>

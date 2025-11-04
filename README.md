@@ -1,4 +1,7 @@
 # React + TypeScript + Vite
+# xem web-log: pm2 monit
+# restart web-log: pm2 restart ecosystem.config.cjs
+# delete web-log: pm2 delete 0
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 

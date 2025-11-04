@@ -1,5 +1,6 @@
 import { type IChartApi, type Time, type UTCTimestamp } from 'lightweight-charts';
 import { normalizeChartData } from '../components/candlestickSeries/options';
+import dayjs from 'dayjs';
 
 export function toTime(unixTimestamp: number): Time {
     return unixTimestamp as Time;
@@ -88,4 +89,8 @@ export const getColorChart = (t: string = '--color-background') => {
 
 export const getTime = (date: any) => {
     return date ? (new Date(date)).getTime() : undefined
+}
+
+export const convertTimeDayjs = (time: any) => {
+    return dayjs.utc(time).tz('Asia/Ho_Chi_Minh').format('YYYY-MM-DD HH:mm:ss')
 }

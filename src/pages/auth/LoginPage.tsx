@@ -16,7 +16,7 @@ export default function LoginPage() {
   const { t } = useTranslation();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [isOpen, toggleOpen, setOpen] = useToggle(false);
+  const [isOpen, toggleOpen] = useToggle(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate(); // ⬅️ bạn bị thiếu dòng này

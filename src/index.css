@@ -36,6 +36,12 @@
   --color-background-wma: #32CD32;
   --color-background-rma: #800080;
 
+  /* ["#4FC3F7", "#FF6F61", "#2ECC71", "#8E44AD", "#F1C40F", "#2C3E50","#ECF0F1", "#E67E22", "#C0392B", "#1ABC9C"] */
+  --color-background-lineCompare1: #4FC3F7;
+  --color-background-lineCompare2: #FF6F61;
+  --color-background-lineCompare3: #8E44AD;
+  --color-background-lineCompare4: #F1C40F;
+
   --color-background-adx: #FFD700;
   --color-background-adx-positive-di: #00FF7F;
   --color-background-adx-minus-di: #FF4500;

@@ -1,29 +1,26 @@
 import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '../button';
-import InputNumber from '../input';
 import {
-  dataCurrentIndication,
   dataIndicatorChart,
   dataPeriodDefault,
-  type IdataCurrentIndication,
-  type IDataPeriod,
-  type Iindicator,
+  type Iindicator
 } from '../../pages/Home/type';
+import { Button } from '../button';
+import InputNumber from '../input';
 
 export default function SetupIndicatorAll({
   open,
   data,
   setDataCurrent,
   close,
-  setDataPeriod,
+  // setDataPeriod,
 }: {
   open: boolean;
   close: any;
   data: Iindicator[];
   setDataCurrent: React.Dispatch<React.SetStateAction<Iindicator[]>>;
-  setDataPeriod: React.Dispatch<React.SetStateAction<IDataPeriod>>;
+  // setDataPeriod: React.Dispatch<React.SetStateAction<IDataPeriod>>;
 }) {
   const { t } = useTranslation();
   const [value, setValue] = useState<Iindicator[]>(dataIndicatorChart(dataPeriodDefault));
@@ -109,7 +106,7 @@ export default function SetupIndicatorAll({
                   <div className="mt-1">
                     <div className="grid grid-cols-2 gap-2">
                       <div className="">
-                        <div className="text-[12px] md:text-[16px] text-left mb-1">{t('Cài đặt cho sma')}:</div>
+                        <div className="text-[12px] md:text-[16px] text-left mb-1  font-bold">{t('Cài đặt cho sma')}:</div>
                         <InputNumber
                           type="number"
                           placeholder={t('Nhập vào...')}
@@ -131,7 +128,7 @@ export default function SetupIndicatorAll({
                         />
                       </div>
                       <div className="">
-                        <div className="text-[12px] md:text-[16px] text-left mb-1">{t('Cài đặt cho ema')}:</div>
+                        <div className="text-[12px] md:text-[16px] text-left mb-1  font-bold">{t('Cài đặt cho ema')}:</div>
                         <InputNumber
                           type="number"
                           placeholder={t('Nhập vào...')}
@@ -157,7 +154,7 @@ export default function SetupIndicatorAll({
                   <div className="mt-1">
                     <div className="grid grid-cols-2 gap-2">
                       <div className="">
-                        <div className="text-[12px] md:text-[16px] text-left mb-1">{t('Cài đặt cho rma')}:</div>
+                        <div className="text-[12px] md:text-[16px] text-left mb-1  font-bold">{t('Cài đặt cho rma')}:</div>
                         <InputNumber
                           type="number"
                           placeholder={t('Nhập vào...')}
@@ -180,7 +177,7 @@ export default function SetupIndicatorAll({
                       </div>
 
                       <div className="">
-                        <div className="text-[12px] md:text-[16px] text-left mb-1">{t('Cài đặt cho wma')}:</div>
+                        <div className="text-[12px] md:text-[16px] text-left mb-1  font-bold">{t('Cài đặt cho wma')}:</div>
                         <InputNumber
                           type="number"
                           placeholder={t('Nhập vào...')}

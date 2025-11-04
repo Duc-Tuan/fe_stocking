@@ -205,10 +205,12 @@ export default function Rsi({
     currentData.current = rsiData;
     currentDataRsi.current = rsiData;
 
-    const adx = adxData.adx[adxData.adx.length - 1].value;
-    const adxMinus = adxData.minusDI[adxData.minusDI.length - 1].value;
-    const adxPositive = adxData.plusDI[adxData.plusDI.length - 1].value;
-    setCurrentAdx({ adx, diMinus: adxMinus, diPositive: adxPositive });
+    if (adxData) {
+      const adx = adxData.adx[adxData.adx.length - 1].value;
+      const adxMinus = adxData.minusDI[adxData.minusDI.length - 1].value;
+      const adxPositive = adxData.plusDI[adxData.plusDI.length - 1].value;
+      setCurrentAdx({ adx, diMinus: adxMinus, diPositive: adxPositive });
+    }
 
     seriesRef.current.setData(rsiData);
 
@@ -283,8 +285,8 @@ export default function Rsi({
           </div>
 
           {showADX && (
-            <div className="">
-              ; ADX <span className="text-gray-400">TR</span> {dataCurrent.periodADX}
+            <div className="ml-4">
+              ADX <span className="text-gray-400">TR {dataCurrent.periodADX}</span>
               <span className="text-[var(--color-background-adx)] ml-2">
                 adx: {currentAdx && currentAdx.adx.toFixed(2)}
               </span>

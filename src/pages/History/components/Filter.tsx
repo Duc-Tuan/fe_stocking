@@ -88,7 +88,7 @@ export default function Filter({ setFilter, filter, subButton, isStatus, isStatu
                 )}
             </div>
 
-            <div className="flex justify-between items-center gap-4 mr-2 text-[12px] md:text-sm">
+            <div className="flex justify-between items-center gap-2 mr-2 text-[12px] md:text-sm">
                 <TooltipNavigate disabled={query?.page === 1} handle={() => { setQuery && setQuery((prev) => ({ ...prev, page: query?.page === 1 ? 1 : (prev.page ?? 0) - 1 })) }} iconName='icon-left' path='#' title='Trang trước' className="w-[30px] md:w-[36px] h-[30px] md:h-[36px] p-0 flex justify-center items-center" />
                 <div className="flex justify-between items-center gap-1">
                     <div className="font-semibold w-[30px] md:w-[36px] h-[30px] md:h-[36px] shadow-md shadow-gray-500 flex justify-center items-center rounded-lg">{query?.page}</div>
@@ -125,9 +125,9 @@ const FilterStatus = ({ setFilter, filter }: { setFilter: Dispatch<SetStateActio
     }, visible);
 
 
-    return <div ref={popupFilterStatusRef} className="col-span-1 w-fit z-10 font-semibold rounded-md text-sm p-2 relative">
+    return <div ref={popupFilterStatusRef} className="col-span-1  z-10 font-semibold rounded-md text-sm p-2 relative w-full">
         <div className="text-[12px] md:text-sm">{t("Trạng thái lô")}:</div>
-        <Button onClick={handleToggle} className="flex justify-between items-center gap-4 text-black px-2 cursor-pointer z-50 min-w-46 ">
+        <Button onClick={handleToggle} className="flex justify-between items-center gap-4 text-black px-2 cursor-pointer z-50 w-full">
             <div className="text-[12px] md:text-sm">{t(dataStatusAllLot.find((a) => a.value === filter.status)?.label ?? "Chọn")}</div>
             <div className=""><Icon name="icon-up" width={14} height={14} className={`transition-transform duration-200 ${open ? 'rotate-180' : 'rotate-0'}`} /></div>
         </Button>
@@ -170,9 +170,9 @@ const FilterStatusSymbol = ({ setFilter, filter }: { setFilter: Dispatch<SetStat
     }, visible);
 
 
-    return <div ref={popupFilterStatusRef} className="col-span-1 w-fit z-10 font-semibold rounded-md text-sm p-2 relative">
+    return <div ref={popupFilterStatusRef} className="col-span-1  z-10 font-semibold rounded-md text-sm p-2 relative w-full">
         <div className="text-[12px] md:text-sm">{t("Trạng thái cặp tiền")}:</div>
-        <Button onClick={handleToggle} className="flex justify-between items-center gap-4 text-black px-2 cursor-pointer z-50 min-w-46">
+        <Button onClick={handleToggle} className="flex justify-between items-center gap-4 text-black px-2 cursor-pointer z-50 w-full">
             <div className="text-[12px] md:text-sm">{t(dataStatusSymbol.find((a) => a.value === filter.status)?.label ?? "Chọn")}</div>
             <div className=""><Icon name="icon-up" width={14} height={14} className={`transition-transform duration-200 ${open ? 'rotate-180' : 'rotate-0'}`} /></div>
         </Button>
@@ -215,9 +215,9 @@ const FilterType = ({ setFilter, filter }: { setFilter: Dispatch<SetStateAction<
     }, visible);
 
 
-    return <div ref={popupFilterStatusRef} className="col-span-1 w-fit z-10 font-semibold rounded-md text-sm p-2 relative">
+    return <div ref={popupFilterStatusRef} className="col-span-1  z-10 font-semibold rounded-md text-sm p-2 relative w-full">
         <div className="text-[12px] md:text-sm">{t("Trạng thái")}:</div>
-        <Button onClick={handleToggle} className="flex justify-between items-center gap-4 text-black px-2 cursor-pointer z-50 min-w-46">
+        <Button onClick={handleToggle} className="flex justify-between items-center gap-4 text-black px-2 cursor-pointer z-50 w-full">
             <div className="text-[12px] md:text-sm">{t(dataType.find((a) => a.value === filter.type)?.label ?? "Chọn")}</div>
             <div className=""><Icon name="icon-up" width={14} height={14} className={`transition-transform duration-200 ${open ? 'rotate-180' : 'rotate-0'}`} /></div>
         </Button>
@@ -262,9 +262,9 @@ const FilterAccTransaction = ({ setFilter, filter }: { setFilter: Dispatch<SetSt
     }, visible);
 
 
-    return <div ref={popupFilterStatusRef} className="col-span-1 w-fit z-10 font-semibold rounded-md text-sm p-2 relative">
+    return <div ref={popupFilterStatusRef} className="col-span-1  z-10 font-semibold rounded-md text-sm p-2 relative w-full">
         <div className="text-[12px] md:text-sm">{t("Tài khoản giao dịch")}:</div>
-        <Button onClick={handleToggle} className="flex justify-between items-center gap-4 text-black px-2 cursor-pointer z-50 min-w-46">
+        <Button onClick={handleToggle} className="flex justify-between items-center gap-4 text-black px-2 cursor-pointer z-50 w-full">
             <div className="text-[12px] md:text-sm">{dataServerTransaction.find((a) => Number(a.username) === filter.accTransaction)?.username ?? t("Chọn")}</div>
             <div className=""><Icon name="icon-up" width={14} height={14} className={`transition-transform duration-200 ${open ? 'rotate-180' : 'rotate-0'}`} /></div>
         </Button>
@@ -287,7 +287,7 @@ const FilterAccTransaction = ({ setFilter, filter }: { setFilter: Dispatch<SetSt
 
 const FilterTime = ({ setFilter, filter }: { setFilter: Dispatch<SetStateAction<IFilterAllLot>>, filter: IFilterAllLot }) => {
     const { t } = useTranslation()
-    const changeTime = (dates: (dayjs.Dayjs | null)[] | null, dateStrings: any[]) => {
+    const changeTime = (dates: (dayjs.Dayjs | null)[] | null, _dateStrings: any[]) => {
         if (dates) {
             const dataDate = [dates[0], dates[1]]
             setFilter((prev) => ({ ...prev, toFrom: dataDate as [start: Dayjs | null | undefined, end: Dayjs | null | undefined] }))

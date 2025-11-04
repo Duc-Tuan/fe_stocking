@@ -32,7 +32,7 @@ export default function TooltipNavigate({
   return (
     <Tooltip
       content={
-        <div className="text-[var(--color-text)] bg-[var(--color-background)] rounded-lg py-1 px-2 text-[12px] md:text-sm">{t(title)}</div>
+        <div className="text-[var(--color-text)] bg-[var(--color-background)] rounded-sm py-1 px-2 text-[12px] md:text-sm">{t(title)}</div>
       }
       className="z-100 bg-transparent"
     >
@@ -44,7 +44,7 @@ export default function TooltipNavigate({
         disabled={disabled}
         className={`${
           disabled ? 'text-black bg-gray-200' : 'text-[var(--color-text)] bg-[var(--color-background)]'
-        } cursor-pointer  p-2 rounded-lg active shadow-md shadow-gray-500 ${className} md:w-[36px] md:h-[36px] w-[28px] h-[28px] flex justify-center items-center ${classSub}`}
+        } cursor-pointer  p-2 rounded-lg active shadow-md shadow-gray-500 ${className} md:w-[36px] md:h-[36px] w-[32px] h-[32px] flex justify-center items-center ${classSub}`}
         aria-current="page"
       >
         <Icon name={iconName} width={w} height={h} />

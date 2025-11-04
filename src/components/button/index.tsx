@@ -9,5 +9,5 @@ interface IProps {
 
 export const Button = (props: IProps) => {
     const { children, isLoading, ...rest } = props
-    return <ButtonCustom {...rest}>{!isLoading ? children : <LoadingOnly />}</ButtonCustom>
+    return <ButtonCustom {...(rest as any)}>{!isLoading ? children : <LoadingOnly />}</ButtonCustom>
 }

@@ -19,6 +19,7 @@ export function useSocket(
   const [dataBoot, setDataBoot] = useState<any>()
   const [dataBootAcc, setDataBootAcc] = useState<any>()
   const [dataNotification, setDataNotification] = useState<any>()
+  const [dataCompareSocket, setDataCompareSocket] = useState<any[]>()
 
   useEffect(() => {
     if (id_symbol) {
@@ -61,7 +62,7 @@ export function useSocket(
       const handleAccTransaction = (data: any) => setDataCurrentAccTransaction(data);
       const handleBoot = (data: any) => setDataBoot(data)
       const handleBootAcc = (data: any) => setDataBootAcc(data)
-
+      const handleCompare = (data: any) => setDataCompareSocket(data)
       const handleNotification = (data: any) => setDataNotification(data)
 
       // Đăng ký listener theo "listen"
@@ -71,9 +72,9 @@ export function useSocket(
       if (listen === "acc_transaction_message") socket.on("acc_transaction_message", handleAccTransaction);
       if (listen === "boot_opposition") socket.on("boot_opposition", handleBoot);
       if (listen === "boot_monitor_acc") socket.on("boot_monitor_acc", handleBootAcc);
-
+      if (listen === "data_compare_socket") socket.on("data_compare_socket", handleCompare);
       if (listen === "notification_message") socket.on("notification_message", handleNotification);
-      
+
       return () => {
         if (listen === "order_filled") socket.off("order_filled", handleOrderFilled);
         if (listen === "chat_message") socket.off("chat_message", handleChat);
@@ -82,7 +83,7 @@ export function useSocket(
         if (listen === "boot_opposition") socket.off("boot_opposition", handleBoot);
         if (listen === "boot_monitor_acc") socket.off("boot_monitor_acc", handleBootAcc);
         if (listen === "notification_message") socket.off("notification_message", handleNotification);
-
+        if (listen === "data_compare_socket") socket.off("data_compare_socket", handleCompare);
         socket.disconnect();
       };
     }
@@ -95,6 +96,7 @@ export function useSocket(
     dataOrder,
     dataBoot,
     dataBootAcc,
-    dataNotification
+    dataNotification,
+    dataCompareSocket
   }
 }

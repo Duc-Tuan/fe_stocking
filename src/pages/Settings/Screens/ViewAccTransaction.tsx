@@ -1,19 +1,19 @@
-import React, { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react';
-import type { IServerTransaction } from '../../../types/global';
-import { Button } from '../../../components/button';
-import { dataTypeAccTransaction, type IChangColor, type IOptionAccTransaction } from '../type';
-import { useTranslation } from 'react-i18next';
-import { useClickOutside } from '../../../hooks/useClickOutside';
-import Icon from '../../../assets/icon';
-import type { Option } from '../../History/type';
 import { Dialog, DialogBackdrop, DialogPanel } from '@headlessui/react';
-import InputNumber from '../../../components/input';
+import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 import toast from 'react-hot-toast';
-import { updateTransactionApi } from '../../../api/serverSymbol';
+import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
+import { updateTransactionApi } from '../../../api/serverSymbol';
+import Icon from '../../../assets/icon';
+import { Button } from '../../../components/button';
+import InputNumber from '../../../components/input';
+import { useAppInfo } from '../../../hooks/useAppInfo';
+import { useClickOutside } from '../../../hooks/useClickOutside';
 import type { AppDispatch } from '../../../store';
 import { setDataAccTransaction } from '../../../store/transaction/transactionSlice';
-import { useAppInfo } from '../../../hooks/useAppInfo';
+import type { IServerTransaction } from '../../../types/global';
+import type { Option } from '../../History/type';
+import { dataTypeAccTransaction, type IChangColor, type IOptionAccTransaction } from '../type';
 
 function ViewAccTransaction({
   data,
@@ -29,7 +29,7 @@ function ViewAccTransaction({
     if (d.isFake) {
       return (
         <div
-          className="col-span-1 border border-dashed border-gray-300 p-2 opacity-50 min-h-[176px] shadow-sm shadow-gray-200 rounded-sm flex justify-center items-center"
+          className="md:col-span-1 col-span-2 border border-dashed border-gray-300 p-2 opacity-50 min-h-[176px] shadow-sm shadow-gray-200 rounded-sm flex justify-center items-center"
           key={`fake-${index}`}
         >
           <div className="text-[10px] md:text-sm text-gray-400">{t('Đang chờ tài khoản')}...</div>
@@ -39,7 +39,7 @@ function ViewAccTransaction({
 
     return (
       <div
-        className="bg-[var(--color-background-opacity-1)] w-full p-2 shadow-sm shadow-gray-200 rounded-sm relative"
+        className="bg-[var(--color-background-opacity-1)] md:col-span-1 col-span-2 p-2 shadow-sm shadow-gray-200 rounded-sm relative"
         key={d.id}
       >
         <More dataSelect={dataRisk} init={d} dataDailtRisk={dataDailtRisk} />
@@ -230,9 +230,9 @@ const More = ({
                     </div>
 
                     <div className="">
-                      <label htmlFor="exness-price" className="text-[12px] md:text-[16px]">
+                      <div className="text-[14px] md:text-base">
                         {t('Loại quỹ')} (USD):
-                      </label>
+                      </div>
                       <InputNumber
                         id="exness-price"
                         type="number"

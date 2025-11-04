@@ -175,3 +175,28 @@ div.animate {
   height: 50%;
   background-color: rgba(0, 0, 0, 0.2);
 }
+
+@media (max-width: 480px) {
+  :where(.css-dev-only-do-not-override-q7uqvy).ant-picker-dropdown .ant-picker-range-wrapper{
+    transform: scale(0.5) translateX(50%) translateY(190%);
+  }
+}
+
+.ck-powered-by {
+  display: none !important;
+}
+
+.ck-rounded-corners .ck.ck-editor__main>.ck-editor__editable, .ck.ck-editor__main>.ck-editor__editable.ck-rounded-corners{
+  overflow-y: scroll;
+  width: 100% !important;
+  height: 60vh;
+  max-height: 60vh;
+}
+.ck-rounded-corners .ck.ck-editor__main>.ck-editor__editable, .ck.ck-editor__main>.ck-editor__editable.ck-rounded-corners::-webkit-scrollbar {
+  /* width: 4px; */
+  width: 0; /* độ rộng thanh cuộn */
+}
+
+#chart.crosshair {
+  cursor: crosshair; /* dấu + cơ bản */
+}

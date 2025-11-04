@@ -4,9 +4,10 @@ import type { IPagination } from "../types/global";
 export const symbolApi = async (pagination: IPagination, id_symbol: number) => {
     const data = await axiosClient.get('/symbols', {
         params: {
-            last_id: pagination.last_time,
+            page: pagination.page,
             limit: pagination.limit,
-            id_symbol
+            id_symbol,
+            timeframe: pagination.timeframe
         },
     })
 
@@ -18,6 +19,14 @@ export const symbolApi = async (pagination: IPagination, id_symbol: number) => {
 
 export const getSwapApi = async () => {
     const data = await axiosClient.get('/swaps')
+    return data
+}
+export const getStatistical = async (login_id: number) => {
+    const data = await axiosClient.get('/statistical', {
+        params: {
+            login_id,
+        },
+    })
     return data
 }
 

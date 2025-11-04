@@ -1,11 +1,12 @@
 import { Dialog, DialogBackdrop, DialogPanel } from '@headlessui/react';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react';
+import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getPositionTransaction } from '../../../api/historys';
 import Icon from '../../../assets/icon';
 import { Button } from '../../../components/button';
+import CloseOrderOdd from '../../../components/closeOrderOdd';
 import { Loading } from '../../../components/loading';
 import { useAppInfo } from '../../../hooks/useAppInfo';
 import { useClickOutside } from '../../../hooks/useClickOutside';
@@ -15,7 +16,6 @@ import type { IServerTransaction, QueryLots } from '../../../types/global';
 import { getTime } from '../../../utils/timeRange';
 import Filter from '../components/Filter';
 import { initFilter, type IFilterAllLot, type ISymbolPosition } from '../type';
-import CloseOrderOdd from '../../../components/closeOrderOdd';
 
 const initPara: QueryLots = {
   page: 1,

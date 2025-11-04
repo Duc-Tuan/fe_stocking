@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { usePriceLines } from '../../hooks/usePriceLines';
 import { useRightClickMenu } from '../../hooks/useRightClick';
 import type { IDataPeriod, Iindicator } from '../../pages/Home/type';
-import { initSetupIndicatorROC, initSetupIndicatorROLLING, type ISetupIndicator } from '../../types/global';
+import { initSetupIndicatorROLLING, type ISetupIndicator } from '../../types/global';
 import { getColorChart } from '../../utils/timeRange';
 import { formatVietnamTimeSmart, gridColor } from '../line/formatTime';
 import MenuSetupIndicator from '../menuSetupIndicator';

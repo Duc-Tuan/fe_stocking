@@ -159,7 +159,7 @@ export function calculateADX(candles: any, period: number = 14) {
     const minusDI = smTR.map((v: any, i: any) => (v === 0 ? 0 : (smMinusDM[i] / v) * 100));
 
     // DX
-    const dx = plusDI.map((v: any, i: any) =>
+    const dx = plusDI.map((_iv: any, i: any) =>
         plusDI[i] + minusDI[i] === 0 ? 0 : (Math.abs(plusDI[i] - minusDI[i]) / (plusDI[i] + minusDI[i])) * 100
     );
 

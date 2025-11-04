@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@ckeditor/ckeditor5-build-classic": "^41.4.2",
+    "@ckeditor/ckeditor5-react": "^11.0.0",
     "@headlessui/react": "^2.2.4",
     "@heroicons/react": "^2.2.0",
     "@material-tailwind/react": "^2.1.10",
@@ -19,16 +21,26 @@
     "axios": "^1.10.0",
     "dayjs": "^1.11.13",
     "i18next": "^25.3.2",
+    "katex": "^0.16.25",
     "lightweight-charts": "^4.2.3",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-hot-toast": "^2.5.2",
     "react-i18next": "^15.6.1",
     "react-lightweight-charts": "^0.1.0",
+    "react-markdown": "^10.1.0",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.6.3",
     "react-toastify": "^11.0.5",
-    "socket.io-client": "^4.8.1"
+    "rehype-katex": "^7.0.1",
+    "rehype-mathjax": "^7.1.0",
+    "rehype-stringify": "^10.0.1",
+    "remark-gfm": "^4.0.1",
+    "remark-math": "^6.0.0",
+    "remark-parse": "^11.0.0",
+    "remark-rehype": "^11.1.2",
+    "socket.io-client": "^4.8.1",
+    "unified": "^11.0.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.29.0",

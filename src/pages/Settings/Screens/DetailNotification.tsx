@@ -71,7 +71,7 @@ export default function DetailNotification({
       />
 
       <div className="p-2">
-        <div className="shadow mt-2 p-2 bg-[var(--color-background-opacity-1)] grid grid-cols-3 gap-1">
+        <div className="shadow mt-2 p-2 bg-[var(--color-background-opacity-1)] grid grid-cols-2 md:grid-cols-3 gap-1">
           <div className="col-span-1">
             <div className="text-[12px] md:text-[16px]">{t('Cặp tiền')}:</div>
             <div className="text-[12px] md:text-[16px] font-bold text-[var(--color-background)]">{data?.symbol}</div>
@@ -161,7 +161,7 @@ export default function DetailNotification({
                   >
                     {i.profit}
                   </div>
-                  <div className="text-sm">
+                  <div className="text-sm text-right">
                     {i.account_id} | {dayjs.utc(i.open_time).tz('Asia/Ho_Chi_Minh').format('YYYY-MM-DD HH:mm:ss')}
                   </div>
                 </div>

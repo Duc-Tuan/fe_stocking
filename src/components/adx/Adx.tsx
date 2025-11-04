@@ -152,10 +152,13 @@ export default function Adx({
       if (param.time) {
         const rsiPoint = currentData.current.adx.find((p: any) => p.time === param.time);
 
-        const adx = currentDataAdx.current.adx.find((p: any) => p.time === param.time).value;
-        const adxMinus = currentDataAdx.current.minusDI.find((p: any) => p.time === param.time).value;
-        const adxPositive = currentDataAdx.current.plusDI.find((p: any) => p.time === param.time).value;
-        setCurrentAdx({ adx, diMinus: adxMinus, diPositive: adxPositive });
+        if (currentDataAdx.current) {
+          const dataAdx = currentDataAdx.current
+          const adx = dataAdx.adx.find((p: any) => p.time === param.time)?.value ?? 0;
+          const adxMinus = dataAdx.minusDI.find((p: any) => p.time === param.time)?.value ?? 0;
+          const adxPositive = dataAdx.plusDI.find((p: any) => p.time === param.time)?.value ?? 0;
+          setCurrentAdx({ adx, diMinus: adxMinus, diPositive: adxPositive });
+        }
         if (rsiPoint) {
           adrChart.setCrosshairPosition(rsiPoint.value, param.time, adxLine.current);
         }

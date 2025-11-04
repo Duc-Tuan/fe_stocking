@@ -6,9 +6,9 @@ import {
   type ISeriesApi,
   type UTCTimestamp,
 } from 'lightweight-charts';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useBollingerBands } from '../../hooks/useBollingerBands';
-import { adjustToUTCPlus_7, timeOptions } from '../../pages/Home/options';
+import { adjustToUTCPlus_7, convertDataCandline, timeOptions, type IDataCandCompare } from '../../pages/Home/options';
 import { indicationBB } from '../../pages/Home/type';
 import { aggregateCandlesByInterval, getColorChart } from '../../utils/timeRange';
 import { calculateEMA, calculateRMA, calculateSMA, calculateWMA } from '../../utils/typeRecipe';
@@ -28,7 +28,10 @@ export const CandlestickSeriesComponent = (props: any) => {
     isOpen,
     indicatorChart,
     setMenu,
-    // dataCurrent,
+    symbolsCandCompare,
+    serverId,
+    symbolsCandCompareSocket,
+    applyNumberCandle,
     colors: {
       backgroundColor = 'transparent',
       textColor = 'black',
@@ -52,9 +55,16 @@ export const CandlestickSeriesComponent = (props: any) => {
   const lineWMA = useRef<ISeriesApi<'Line'> | null>(null);
   const lineRMA = useRef<ISeriesApi<'Line'> | null>(null);
 
+  const lineCompare1 = useRef<ISeriesApi<'Line'> | null>(null);
+  const lineCompare2 = useRef<ISeriesApi<'Line'> | null>(null);
+  const lineCompare3 = useRef<ISeriesApi<'Line'> | null>(null);
+  const lineCompare4 = useRef<ISeriesApi<'Line'> | null>(null);
+
   const tooltipRef = useRef<HTMLDivElement>(null);
   const allData = useRef<BarData[]>([]);
   const hasRequestedNextPage = useRef(false);
+
+  const allDataCompare = useRef<IDataCandCompare[]>([]);
 
   // ✅ Vẽ vạch phân cách ngày bằng overlay div
   const drawDaySeparators = (chart: IChartApi, data: BarData[]) => {
@@ -84,19 +94,24 @@ export const CandlestickSeriesComponent = (props: any) => {
       timestampsAt7UTC.push(t7);
     }
 
+    const widthScreen = container!.clientWidth - 70;
+
     // ✅ Vẽ vạch
     for (const timestamp of timestampsAt7UTC) {
       const x = timeScale.timeToCoordinate(timestamp as UTCTimestamp);
       if (x === null) continue;
 
+      // ✅ Chỉ vẽ nếu vạch nằm trong vùng hiển thị
+      if (x < 0 || x > widthScreen) continue;
+
       const line = document.createElement('div');
       line.className = 'day-separator';
       line.style.cssText = `
                 position: absolute;
-                top: 0;
+                top: 10px;
                 left: ${x + 8}px;
                 width: 0;
-                height: 94%;
+                height: ${widthScreen < 500 ? 360 - 28 + 'px' : '93%'};
                 border-left: 1px dashed rgba(0, 0, 0, 0.2);
                 pointer-events: none;
                 z-index: 2;
@@ -115,8 +130,20 @@ export const CandlestickSeriesComponent = (props: any) => {
     });
   };
 
+  const addChartLine = (ref: any, chart: any, color: string, lastValueVisible: boolean = false) => {
+    return (ref.current = chart.addLineSeries({
+      color: getColorChart(color),
+      lineWidth: 1,
+      priceLineVisible: false,
+      lastValueVisible,
+      crosshairMarkerVisible: false,
+    }));
+  };
+
   useEffect(() => {
     if (!chartContainerRef.current) return;
+
+    const widthScreen = chartContainerRef.current!.clientWidth;
 
     const chart: IChartApi = createChart(chartContainerRef.current, {
       layout: {
@@ -125,7 +152,8 @@ export const CandlestickSeriesComponent = (props: any) => {
       },
       grid: gridColor,
       width: chartContainerRef.current.clientWidth,
-      height: 620,
+      height: widthScreen < 700 ? 360 : 630,
+      crosshair: { mode: 0 },
       rightPriceScale: {
         borderColor: '#00000030',
       },
@@ -172,34 +200,16 @@ export const CandlestickSeriesComponent = (props: any) => {
     });
     pLineSeriesRef.current = pLineSeries;
 
-    lineSMA.current = chart.addLineSeries({
-      color: getColorChart('--color-background-sma'),
-      lineWidth: 1,
-      crosshairMarkerVisible: false,
-      priceLineVisible: false,
-      lastValueVisible: false,
-    });
-    lineEMA.current = chart.addLineSeries({
-      color: getColorChart('--color-background-ema'),
-      lineWidth: 1,
-      priceLineVisible: false,
-      crosshairMarkerVisible: false,
-      lastValueVisible: false,
-    });
-    lineWMA.current = chart.addLineSeries({
-      color: getColorChart('--color-background-wma'),
-      lineWidth: 1,
-      priceLineVisible: false,
-      crosshairMarkerVisible: false,
-      lastValueVisible: false,
-    });
-    lineRMA.current = chart.addLineSeries({
-      color: getColorChart('--color-background-rma'),
-      lineWidth: 1,
-      priceLineVisible: false,
-      crosshairMarkerVisible: false,
-      lastValueVisible: false,
-    });
+    addChartLine(lineSMA, chart, '--color-background-sma');
+    addChartLine(lineEMA, chart, '--color-background-ema');
+    addChartLine(lineWMA, chart, '--color-background-wma');
+    addChartLine(lineRMA, chart, '--color-background-rma');
+    addChartLine(lineSMA, chart, '--color-background-sma');
+
+    addChartLine(lineCompare1, chart, '--color-background-lineCompare1', true);
+    addChartLine(lineCompare2, chart, '--color-background-lineCompare2', true);
+    addChartLine(lineCompare3, chart, '--color-background-lineCompare3', true);
+    addChartLine(lineCompare4, chart, '--color-background-lineCompare4', true);
 
     indicationBB(chart, maLine, upperLine, lowerLine);
     const handleRightClick = (e: MouseEvent) => {
@@ -280,7 +290,7 @@ export const CandlestickSeriesComponent = (props: any) => {
       }
 
       if (isAtLeftEdge) {
-        setPagination((prev: any) => ({ ...prev, page: prev.page + 1 }));
+        setPagination((prev: any) => prev + 1);
       }
     });
 
@@ -293,12 +303,12 @@ export const CandlestickSeriesComponent = (props: any) => {
       if (!container) return;
 
       const width = container.clientWidth;
-      const heights = container.clientHeight;
-      const isMobile = window.innerWidth < 480;
+      // const heights = container.clientHeight;
+      // const isMobile = window.innerWidth < 480;
 
       chart.applyOptions({
         width,
-        height: isMobile ? 540 : heights,
+        // height: isMobile ? 540 : heights,
         layout: {
           fontSize: width < 480 ? 10 : 12, // 👈 nhỏ hơn ở màn hình nhỏ
         },
@@ -320,13 +330,18 @@ export const CandlestickSeriesComponent = (props: any) => {
       chartRefCurent.current = null;
       candleSeriesRef.current = null;
       pLineSeriesRef.current = null;
-      lineSMA.current = null;
       maLine.current = null;
       upperLine.current = null;
       lowerLine.current = null;
       lineEMA.current = null;
+      lineSMA.current = null;
       lineWMA.current = null;
       lineRMA.current = null;
+      lineCompare1.current = null;
+      lineCompare2.current = null;
+      lineCompare3.current = null;
+      lineCompare4.current = null;
+      allData.current = [];
     };
   }, []);
 
@@ -349,8 +364,90 @@ export const CandlestickSeriesComponent = (props: any) => {
     pLineSeriesRef.current.setData(pData);
   };
 
+  const getDataCompare = (data: any, originalData: any) => {
+    allDataCompare.current = data;
+    if (allDataCompare.current.filter((i) => i.sever !== serverId).length === 0) {
+      [lineCompare1, lineCompare2, lineCompare3, lineCompare4].map((i) => {
+        i.current?.setData([]);
+        i.current?.applyOptions({ visible: false });
+      });
+      candleSeriesRef.current.applyOptions({
+        title: '',
+        priceFormat: { type: 'price' },
+      });
+    } else {
+      const priceFormatter = (price: number) => `${price.toFixed(2)}%`; // vì giờ đã là % rồi
+
+      const baseA = originalData[0]?.close;
+
+      const performanceCandlesA = originalData.map((c: any) => {
+        const low = ((c.low - baseA) / baseA) * 100;
+        const high = ((c.high - baseA) / baseA) * 100;
+        const close = ((c.close - baseA) / baseA) * 100;
+
+        return {
+          time: c.time,
+          open: ((c.open - baseA) / baseA) * 100,
+          high,
+          low,
+          close,
+          P: (low + high + close) / 3,
+        };
+      });
+
+      candleSeriesRef.current.setData(performanceCandlesA);
+      pLineSeriesRef.current?.setData(performanceCandlesA.map((i: any) => ({ time: i.time, value: i.P })));
+
+      // Vẽ biểu đồ chính
+      candleSeriesRef.current.applyOptions({
+        title: serverId,
+        priceFormat: { type: 'custom', formatter: priceFormatter },
+      });
+
+      // So sánh các cặp khác
+      allDataCompare.current
+        .filter((i: any) => Number(i.sever) !== Number(serverId))
+        .map((i: IDataCandCompare, idx: number) => {
+          const dataNew = i.data.slice(-applyNumberCandle)
+          const baseB = dataNew[0]?.close; // t0 của B
+          const lineData = dataNew.map((c: any) => {
+            const value = ((c.close - baseB) / baseB) * 100; // % thay đổi
+            return {
+              time: c.time,
+              value: value === -0 ? 0 : value, // % thay đổi
+            };
+          });
+
+          [lineCompare1, lineCompare2, lineCompare3, lineCompare4][idx].current?.setData(lineData as any);
+
+          [lineCompare1, lineCompare2, lineCompare3, lineCompare4][idx].current?.applyOptions({
+            title: String(i.sever),
+            visible: true,
+          });
+        });
+    }
+  };
+
+  useEffect(() => {
+    if (symbolsCandCompareSocket?.length === 0) return;
+    allDataCompare.current = allDataCompare.current.map((i) => {
+      const dataCheck = symbolsCandCompareSocket.find((d: any) => Number(d.login) === Number(i.sever));
+      if (Number(i.sever) === Number(dataCheck?.login)) {
+        const aaa = mergeLatestData(i.data, convertDataCandline(dataCheck), currentRange).sort(
+          (a, b) => a.time - b.time,
+        );
+        return {
+          ...i,
+          data: aaa,
+        };
+      }
+      return i;
+    });
+  }, [symbolsCandCompareSocket, allDataCompare, currentRange]);
+
   const getDataChart = (data: any) => {
     allData.current = data;
+    candleSeriesRef.current.setData([]);
     const dataSMA = calculateSMA(data, indicatorChart.find((i: any) => i.value === 'sma').period);
     const dataEMA = calculateEMA(data, indicatorChart.find((i: any) => i.value === 'ema').period);
     const dataWMA = calculateWMA(data, indicatorChart.find((i: any) => i.value === 'wma').period);
@@ -375,8 +472,16 @@ export const CandlestickSeriesComponent = (props: any) => {
   }, [latestData, allData, currentRange]);
 
   useEffect(() => {
-    getDataChart(allData.current)
-  }, [allData.current])
+    getDataChart(allData.current);
+  }, [allData.current]);
+
+  useEffect(() => {
+    getDataCompare(symbolsCandCompare, allData.current);
+  }, [symbolsCandCompare, allData, serverId]);
+
+  useEffect(() => {
+    getDataCompare(allDataCompare.current, allData.current);
+  }, [allDataCompare.current, allData.current]);
 
   useEffect(() => {
     if (pLineSeriesRef.current) {
@@ -385,7 +490,7 @@ export const CandlestickSeriesComponent = (props: any) => {
   }, [isOpen]);
 
   useBollingerBands({
-    dataOld: allData.current,
+    dataOld: allData.current.length === 0 ? dataOld : allData.current,
     dataCurrent: indicatorChart.find((i: any) => i.value === 'bb'),
     maLine,
     upperLine,

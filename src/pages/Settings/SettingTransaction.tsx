@@ -104,8 +104,8 @@ export default function SettingTransaction() {
   }, [href]);
 
   return (
-    <div className="grid grid-cols-5 gap-2 h-[calc(100vh-65px)] md:h-[calc(100vh-80px)]">
-      <div className="col-span-1 lg:col-span-1 shadow-md shadow-gray-500 rounded-lg p-2 relative" ref={containerRef}>
+    <div className="grid grid-cols-5 gap-2">
+      <div className="col-span-5 md:col-span-1 shadow-md shadow-gray-500 rounded-lg p-2 relative" ref={containerRef}>
         <div
           className="animate absolute left-2 w-[calc(100%-16px)] text-[var(--color-text)] bg-[var(--color-background)] rounded-md transition-all duration-300 -z-10 shadow-md shadow-gray-300"
           style={{
@@ -128,7 +128,8 @@ export default function SettingTransaction() {
           );
         })}
       </div>
-      <div className="col-span-4 lg:col-span-4 shadow-md shadow-gray-500 rounded-lg overflow-y-scroll my-scroll">
+      {/* h-[calc(100vh-65px)] */}
+      <div className="col-span-5 lg:col-span-4 shadow-md shadow-gray-500 rounded-lg overflow-y-scroll my-scroll h-[calc(60vh)] md:h-[calc(100vh-80px)]">
         {screen}
       </div>
     </div>

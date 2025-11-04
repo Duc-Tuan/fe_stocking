@@ -1,5 +1,4 @@
 import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react';
-import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import React, { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -9,6 +8,8 @@ import { Button } from '../../components/button';
 import TooltipCustom from '../../components/tooltip';
 import { useAppInfo } from '../../hooks/useAppInfo';
 import { useCurrentPnl } from '../../hooks/useCurrentPnl';
+import type { IServerTransaction } from '../../types/global';
+import ConditionUSD from './ConditionUSD';
 import PopupAcc from './PopupAcc';
 import {
   dataActivateTypetransaction,
@@ -19,8 +20,6 @@ import {
   type IStatus_sl_tp,
 } from './type';
 import Volume from './Volume';
-import type { IServerTransaction } from '../../types/global';
-import ConditionUSD from './ConditionUSD';
 
 const init: IOrderTransaction = {
   account_monitor_id: undefined,
@@ -149,7 +148,7 @@ export default function TransactionPage() {
 
   return (
     <div className="flex justify-center items-center mt-0 md:mt-20 ">
-      <div className="absolute top-18 md:top-16 left-10 md:left-4 grid grid-cols-5 gap-2">
+      <div className="absolute top-2 left-4 md:left-8 xl:left-4 grid grid-cols-5 gap-2">
         {selectTypeAcc.map((i) => (
           <TooltipCustom
             key={i.value}
@@ -170,7 +169,7 @@ export default function TransactionPage() {
         ))}
       </div>
 
-      <div className="w-full max-w-4xl p-4 space-y-4">
+      <div className="w-full max-w-4xl p-0 md:p-4 space-y-4 mt-10 md:mt-0">
         {/* Header */}
         <div className="text-center shadow-xs shadow-gray-500 rounded-lg py-2 mb-4 text-[12px] md:text-[16px]">
           <div className="font-bold">
@@ -186,7 +185,7 @@ export default function TransactionPage() {
 
         {/* Giá và Lệnh */}
         <div className="grid grid-cols-4 gap-1">
-          <div className="col-span-1 shadow-xs shadow-gray-500 rounded-lg p-3 h-full">
+          <div className="row-start-1 md:row-start-1 col-span-2 md:col-span-1 shadow-xs shadow-gray-500 rounded-lg p-3 h-full">
             <div className="flex flex-col justify-between h-full">
               {currentPnl?.by_symbol.map((item, index) => (
                 <div
@@ -206,7 +205,7 @@ export default function TransactionPage() {
           </div>
 
           {/* Bảng Giá */}
-          <div className="col-span-2 shadow-xs shadow-gray-500 rounded-lg p-3 space-y-2">
+          <div className="row-start-2 md:row-start-1 col-span-4 md:col-span-2 shadow-xs shadow-gray-500 rounded-lg p-3 space-y-2">
             {/* Nút +/- */}
             <div className="flex justify-between text-blue-600 text-sm font-semibold mb-2 border-b border-b-gray-300 border-solid">
               <Volume setData={setData} />
@@ -296,14 +295,14 @@ export default function TransactionPage() {
           </div>
 
           {/* Lệnh */}
-          <div className="col-span-1 shadow-xs shadow-gray-500 rounded-lg p-3 space-y-2">
+          <div className="row-start-1 md:row-start-1 col-span-2 md:col-span-1 shadow-xs shadow-gray-500 rounded-lg p-3 space-y-2">
             {activateTypetransaction.map((a: IActivateTypetransaction, i: number) => {
               return (
                 <React.Fragment key={i}>
                   <TooltipCustom
                     isButton
                     titleTooltip={<p style={{ whiteSpace: 'pre-line' }}>{a.subTitle}</p>}
-                    placement="right-end"
+                    placement="top"
                   >
                     <Button
                       onClick={() => handlClickActive(a.type)}
@@ -333,12 +332,12 @@ export default function TransactionPage() {
               <span className="text-[14px] md:text-lg">{currentPnl?.total_pnl.toFixed(3)}</span>
             </div>
           </div>
-          <div className={`${isCheckOrther ? 'col-span-1' : 'col-span-2'}`}>
+          <div className={`${isCheckOrther ? 'md:col-span-1 col-span-2' : 'col-span-2'}`}>
             <PopupAcc setDataSubmit={setData} dataAccTransaction={dataAccTransaction} />
           </div>
 
           {isCheckOrther && (
-            <div className="">
+            <div className="col-span-3 md:col-span-1 mt-2 md:mt-0">
               <ConditionUSD init={data} setData={setData} />
             </div>
           )}

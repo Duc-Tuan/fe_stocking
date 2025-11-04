@@ -19,6 +19,7 @@ import { useSocket } from '../../../hooks/useWebSocket';
 import { postOpenOrderBoot } from '../../../api/boot';
 import toast from 'react-hot-toast';
 import { useAppInfo } from '../../../hooks/useAppInfo';
+import SelectAcc from './SelectAcc';
 
 const initData: IOrderSend[] = [
   {
@@ -91,45 +92,8 @@ export default function BootTransaction() {
   const [open, setOpen] = useState<boolean>(false);
   const [serverId, setServerId] = useState<number | null>(null);
 
-  useEffect(() => {
-    const dataAccTransaction = dataServerTransaction.filter((i) => i.type_acc === 'RECIPROCAL');
-    // .map((i, idx) => {
-    //   if (idx === 1) {
-    //     return {
-    //       ...i,
-    //       server: 'WeMasterTrade-Virtual',
-    //     };
-    //   }
-    //   return i;
-    // });
-    const dataExness = dataAccTransaction.find((i) => i.server.includes('Exness'));
-    const dataFunc = dataAccTransaction.find((i) => i.server.includes('WeMasterTrade'));
-
-    setData((prev) =>
-      prev.map((i, idx) => {
-        if (idx === 0) {
-          return {
-            ...i,
-            type: 'EXNESS',
-            username: Number(dataExness?.username),
-          };
-        }
-        return {
-          ...i,
-          type: 'FUND',
-          username: Number(dataFunc?.username),
-        };
-      }),
-    );
-  }, [dataServerTransaction]);
-
   const isSubmit = useMemo(() => {
     const dataa = data[0].data;
-    // if (dataa.type === 0 || dataa.type === 1) {
-    //   return dataa.price && dataa.sl && dataa.symbol && dataa.tp && dataa.volume;
-    // } else {
-    //   return dataa.price && dataa.sl && dataa.symbol && dataa.tp && dataa.volume;
-    // }
     return (
       dataa.price &&
       dataa.sl &&
@@ -276,11 +240,11 @@ export default function BootTransaction() {
     'text-[12px] md:text-sm border border-gray-300 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none p-1 rounded w-full h-10 pl-2 shadow-sm shadow-gray-200 focus:outline-none focus:border-[var(--color-background)]';
   return (
     <div className="relative pb-2">
-      <h1 className="text-center font-bold  text-[14px] md:text-lg text-shadow-sm">
+      <h1 className="text-center font-bold  text-[14px] md:text-lg text-shadow-sm mt-3">
         <span className="border-b border-b-gray-500">{t('Boot vào lệnh đối ứng')}</span>
       </h1>
 
-      <div className="grid grid-cols-3 gap-4 w-sm md:w-lg mx-auto mt-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 w-full px-10 md:px-0 md:w-lg mx-auto mt-2">
         <div className="col-span-1">
           <InputNumber
             type="number"
@@ -337,8 +301,7 @@ export default function BootTransaction() {
           />
           <h2 className="text-[12px] md:text-sm text-center text-gray-500 mt-1">{t('Hệ số nhân volume')}</h2>
         </div>
-
-        <div className="col-span-1">
+        <div className="col-span-2 md:col-span-1">
           <InputNumber
             type="number"
             placeholder={t('Nhập số pip...')}
@@ -398,14 +361,25 @@ export default function BootTransaction() {
       </div>
 
       <div className="grid grid-cols-2 mt-4 gap-2 px-0 md:px-2">
-        <div className="col-span-1 shadow shadow-gray-300 p-0 md:p-2 rounded">
-          <h1 className="text-center text-[12px] md:text-[16px]">
-            <span className="border-b border-b-gray-500">
-              {t('Vào lệnh cho tài khoản tham chiếu')}
-              {data.find((i) => i.type === 'EXNESS')?.username ? `(Exness: ${data[0].username})` : `(${t('Trống')})`}
-            </span>
-          </h1>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 my-4 px-2 md:px-4">
+        <div className="col-span-2 md:col-span-1 shadow shadow-gray-300 mx-2 p-2 rounded">
+          <div className="flex justify-center items-center flex-col gap-2">
+            <h1 className="text-center text-[12px] md:text-[16px]">
+              <span className="border-b border-b-gray-500">{t('Vào lệnh cho tài khoản tham chiếu')}</span>
+            </h1>
+            <div className="flex justify-start items-center gap-2 text-[12px] md:text-[16px]">
+              {t('Exness')}:
+              <SelectAcc
+                dataAccTransaction={dataServerTransaction.filter(
+                  (i) => i.type_acc === 'RECIPROCAL' && i.server.includes('Exness'),
+                )}
+                setDataSubmit={setData}
+                dataSelect={data.find((i) => i.type === 'EXNESS')}
+                title="EXNESS"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 my-4 px-2 md:px-4">
             <div className="flex flex-col justify-center items-start gap-1 col-span-1">
               <label htmlFor="exness-symbol" className="text-[12px] md:text-[16px]">
                 {t('Cặp tiền')} (
@@ -549,15 +523,25 @@ export default function BootTransaction() {
           </div>
         </div>
 
-        <div className="col-span-1 shadow shadow-gray-300 p-0 md:p-2 rounded">
-          <h1 className="text-center text-[12px] md:text-[16px]">
-            <span className="border-b border-b-gray-500">
-              {t('Vào lệnh cho tài khoản đối ứng của')}
-              {data.find((i) => i.type === 'FUND')?.username ? `(${t('Quỹ')}: ${data[1].username})` : `(${t('Trống')})`}
-            </span>
-          </h1>
+        <div className="col-span-2 md:col-span-1 shadow shadow-gray-300 mx-2 p-2 rounded">
+          <div className="flex justify-center items-center flex-col gap-2">
+            <h1 className="text-center text-[12px] md:text-[16px]">
+              <span className="border-b border-b-gray-500">{t('Vào lệnh cho tài khoản đối ứng của')}</span>
+            </h1>
+            <div className="flex justify-start items-center gap-2 text-[12px] md:text-[16px]">
+              {t('Quỹ')}:
+              <SelectAcc
+                dataAccTransaction={dataServerTransaction.filter(
+                  (i) => i.type_acc === 'RECIPROCAL' && !i.server.includes('Exness'),
+                )}
+                setDataSubmit={setData}
+                dataSelect={data.find((i) => i.type === 'FUND')}
+                title="FUND"
+              />
+            </div>
+          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 my-4 px-2 md:px-4">
+          <div className="grid grid-cols-2 gap-2 my-4 px-2 md:px-4">
             <div className="flex flex-col justify-center items-start gap-1 col-span-1">
               <label htmlFor="exness-symbol" className="text-[12px] md:text-[16px]">
                 {t('Cặp tiền')} (
@@ -663,7 +647,7 @@ export default function BootTransaction() {
         <Button
           className={`${
             isSubmit ? 'bg-[var(--color-background)]' : 'bg-gray-300'
-          } px-10 py-2 rounded cursor-pointer mt-2 md:mt-6 md:mr-2 text-[12px] md:text-[16px]`}
+          } px-10 py-2 rounded cursor-pointer mt-2 md:mt-4 mr-2 text-[12px] md:text-[16px]`}
           onClick={() => {
             isSubmit && setOpen(true);
           }}
@@ -866,7 +850,7 @@ const Modal = ({
 }: {
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
-  dataCurrent: any[];
+  dataCurrent: IOrderSend[];
 }) => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState<boolean>(false);
@@ -882,7 +866,6 @@ const Modal = ({
         } else {
           toast.error(`Gửi lệnh thất bại`);
         }
-        console.log(data);
       })
       .catch(() => setLoading(false));
   };
@@ -902,10 +885,10 @@ const Modal = ({
           >
             <div className="bg-white p-3">
               <div className="mt-3 text-center sm:mt-0 sm:text-left">
-                <DialogTitle as="h1" className="text-lg font-semibold text-gray-900 text-center">
+                <DialogTitle as="h1" className="text-lg font-semibold text-gray-900 text-center text-[16px]">
                   {t('Bạn xác nhận muốn mở lệnh')}
                 </DialogTitle>
-                <div className="mt-4 grid grid-cols-2">
+                <div className="mt-4 grid grid-cols-2 text-[12px] md:text-[16px]">
                   {dataCurrent.map((item, idx) => {
                     const data = item.data;
                     return (
@@ -913,17 +896,19 @@ const Modal = ({
                         className={`col-span-1 border-r border-r-gray-300 ${idx === 1 ? 'border-none' : ''}`}
                         key={idx}
                       >
-                        <h1 className="text-center border-b border-b-gray-300 border-t border-t-gray-300 p-1">
+                        <h1 className="text-center border border-gray-300  p-1">
                           {t(item.type === 'EXNESS' ? 'Vào lệnh cho tài khoản exness' : 'Vào lệnh cho tài khoản quỹ')}
+                          <br />
+                          {t('Tài khoản:')} {item.username}
                         </h1>
-                        <div className="pl-4 py-2 border-b border-b-gray-300">
+                        <div className="pl-4 py-2 border border-gray-300">
                           <div className="flex justify-start items-center gap-2">
                             <label htmlFor="exness-tp">{t('Cặp tiền')}:</label>
                             <div className="font-semibold">{data.symbol}</div>
                           </div>
                           <div className="flex justify-start items-center gap-2">
                             <label htmlFor="exness-tp">{t('Kiểu lệnh')}:</label>
-                            <div className="font-semibold">{paretypeOrder(data.type)}</div>
+                            <div className={`font-semibold ${paretypeOrder(data.type) === 'SELL' ? 'text-red-500' : 'text-blue-500'}`}>{paretypeOrder(data.type)}</div>
                           </div>
                           <div className="flex justify-start items-center gap-2">
                             <label htmlFor="exness-tp">{t('Volume')}:</label>
@@ -931,15 +916,15 @@ const Modal = ({
                           </div>
                           <div className="flex justify-start items-center gap-2">
                             <label htmlFor="exness-tp">{t('Giá vào')}:</label>
-                            <div className="font-semibold">{data.price?.toFixed(7)}</div>
+                            <div className="font-semibold">{data.price?.toFixed(5)}</div>
                           </div>
                           <div className="flex justify-start items-center gap-2">
                             <label htmlFor="exness-tp">{t('Cắt lỗ (SL)')}:</label>
-                            <div className="font-semibold">{data.sl?.toFixed(7)}</div>
+                            <div className="font-semibold">{data.sl?.toFixed(5)}</div>
                           </div>
                           <div className="flex justify-start items-center gap-2">
                             <label htmlFor="exness-tp">{t('Chốt lời (TP)')}:</label>
-                            <div className="font-semibold">{data.tp?.toFixed(7)}</div>
+                            <div className="font-semibold">{data.tp?.toFixed(5)}</div>
                           </div>
                         </div>
                       </div>

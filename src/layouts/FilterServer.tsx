@@ -43,7 +43,7 @@ export default function FilterServer() {
             <TooltipNavigate handle={handleToggle} iconName='icon-server' path='#' title='Tài khoản theo dõi' />
 
             {visible && (
-                <div className={`flex flex-row justify-center items-start gap-1 transition-all duration-200 absolute top-full -left-24 mt-2 bg-white shadow-sm shadow-gray-300 rounded-lg border border-gray-300 p-2 ${open ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
+                <div className={`transition-all duration-200 absolute top-full -left-52 md:-left-24 mt-2 bg-white shadow-sm shadow-gray-300 rounded-lg border border-gray-300 p-2 ${open ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
                     <TabsServer />
                 </div>
             )}

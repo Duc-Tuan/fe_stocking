@@ -6,8 +6,7 @@ export interface IDataSymbols {
     page: number;
     limit: number;
     total: number;
-    next_cursor: string;
-    has_more: boolean
+    is_last_page: boolean;
 }
 
 export function normalizeChartData(data: any[], typeTime?: string): BarData[] {
@@ -67,6 +66,15 @@ export function floorTimeToResolution(timestamp: number, resolution: string) {
     let floored: number;
 
     switch (resolution) {
+        case "MN":
+            // tháng hơi phức tạp → tạm lấy ngày đầu tháng
+            const d = new Date(timestamp * 1000);
+            const monthStart = new Date(d.getUTCFullYear(), d.getUTCMonth(), 1).getTime() / 1000;
+            floored = monthStart;
+            break;
+        case "W":
+            floored = Math.floor(date.getTime() / (3600000 * 24 * 7)) * 3600;
+            break;
         case "M1":
             floored = Math.floor(date.getTime() / 60000) * 60; // từng phút
             break;
@@ -79,26 +87,26 @@ export function floorTimeToResolution(timestamp: number, resolution: string) {
         case "M15":
             floored = Math.floor(date.getTime() / (60000 * 15)) * (60 * 15);
             break;
-        case "1H":
+        case "H1":
             floored = Math.floor(date.getTime() / (3600000)) * 3600;
             break;
-        case "2H":
+        case "H2":
             floored = Math.floor(date.getTime() / (3600000 * 2)) * 3600;
             break;
-        case "4H":
+        case "H4":
             floored = Math.floor(date.getTime() / (3600000 * 4)) * 3600;
             break;
-        case "1D":
+        case "H6":
+            floored = Math.floor(date.getTime() / (3600000 * 6)) * 3600;
+            break;
+        case "H8":
+            floored = Math.floor(date.getTime() / (3600000 * 8)) * 3600;
+            break;
+        case "H12":
+            floored = Math.floor(date.getTime() / (3600000 * 12)) * 3600;
+            break;
+        case "D":
             floored = Math.floor(date.getTime() / (3600000 * 24)) * 3600;
-            break;
-        case "1W":
-            floored = Math.floor(date.getTime() / (3600000 * 24 * 7)) * 3600;
-            break;
-        case "MN":
-            // tháng hơi phức tạp → tạm lấy ngày đầu tháng
-            const d = new Date(timestamp * 1000);
-            const monthStart = new Date(d.getUTCFullYear(), d.getUTCMonth(), 1).getTime() / 1000;
-            floored = monthStart;
             break;
         default:
             floored = Math.floor(date.getTime() / 60000) * 60; // mặc định M1

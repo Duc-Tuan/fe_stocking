@@ -67,14 +67,14 @@ export function drawLabelWithBackground(ctx: CanvasRenderingContext2D, text: str
 
     const paddingX = 4;
     const paddingY = 3;
-    const textWidth = 50;
+    const textWidth = 70;
     const textHeight = 12;
 
     ctx.fillStyle = getCssVar("--color-background");
-    ctx.fillRect(x - textWidth / 2 - paddingX, y - textHeight / 2 - paddingY, textWidth + paddingX * 2, textHeight + paddingY);
+    ctx.fillRect(x - textWidth / 2 , y - textHeight / 2 - paddingY, textWidth + paddingX * 2, textHeight + paddingY);
 
     ctx.fillStyle = "white";
-    ctx.fillText(text, x, y);
+    ctx.fillText(text, x - 14, y);
 }
 
 // helper: label thời gian
@@ -136,6 +136,14 @@ export const dataIndicator: (data: IDataPeriod) => Iindicator[] = (data: IDataPe
             k: 1.5,
             period: data.periodADX,
             titleSub: "Sức mạnh trend"
+        },
+        {
+            label: "Đường trung bình hội tụ – phân kỳ",
+            value: "macd",
+            active: false,
+            k: 1.5,
+            period: data.periodMACD,
+            titleSub: "macd"
         },
         {
             label: "Tốc độ thay đổi ROC",
@@ -524,6 +532,7 @@ export interface IDataPeriod {
     periodWMA: number;
     periodRMA: number;
     periodADX: number;
+    periodMACD: number;
 }
 
 export const dataPeriodDefault: IDataPeriod = {
@@ -539,7 +548,8 @@ export const dataPeriodDefault: IDataPeriod = {
     periodEMA: 14,
     periodWMA: 14,
     periodRMA: 14,
-    periodADX: 14
+    periodADX: 14,
+    periodMACD: 25,
 }
 
 export interface IdataCurrentIndication {
@@ -600,7 +610,7 @@ export const dataCurrentIndication: IdataCurrentIndication = {
 
 
 
-export type TF = 'M1' | 'M5' | 'M10' | 'M15' | 'M30' | '1H' | '4H' | '2H' | '1W' | 'MN';
+export type TF = 'M1' | 'M5' | 'M10' | 'M15' | 'M30' | 'H1' | 'H2' | 'H4' | 'W' | 'MN';
 
 interface Item {
   id: number;
@@ -616,10 +626,10 @@ const tfToMs = (tf: TF): number => {
     case 'M10': return 10 * 60 * 1000;
     case 'M15': return 15 * 60 * 1000;
     case 'M30': return 30 * 60 * 1000;
-    case '1H': return 60 * 60 * 1000;
-    case '2H': return 2 * 60 * 60 * 1000;
-    case '4H': return 4 * 60 * 60 * 1000;
-    case '1W': return 7 * 24 * 60 * 60 * 1000;
+    case 'H1': return 60 * 60 * 1000;
+    case 'H2': return 2 * 60 * 60 * 1000;
+    case 'H4': return 4 * 60 * 60 * 1000;
+    case 'W': return 7 * 24 * 60 * 60 * 1000;
     case 'MN': return 30 * 24 * 60 * 60 * 1000; // tạm coi 30 ngày
     default: return 60 * 1000;
   }
@@ -655,3 +665,5 @@ export function groupToCandles(data: Item[], tf: TF): IinitialDataCand[] {
 
   return candles;
 }
+
+export const colorLineCompare: string[] = ["#4FC3F7", "#FF6F61", "#2ECC71", "#8E44AD", "#F1C40F", "#2C3E50","#ECF0F1", "#E67E22", "#C0392B", "#1ABC9C"]

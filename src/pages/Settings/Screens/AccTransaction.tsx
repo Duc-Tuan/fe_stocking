@@ -111,6 +111,15 @@ export default function AccTransaction() {
           />
         );
         break;
+      case 'RECIPROCAL_ACC':
+        content = (
+          <ViewAccTransaction
+            data={dataServerTransaction.filter((i) => i.type_acc === 'RECIPROCAL_ACC')}
+            dataRisk={dataRisk}
+            dataDailtRisk={dataDailtRisk}
+          />
+        );
+        break;
       case 'COM':
         content = (
           <ViewAccTransaction
@@ -133,6 +142,15 @@ export default function AccTransaction() {
         content = (
           <ViewAccTransaction
             data={dataServerTransaction.filter((i) => i.type_acc === 'VAY')}
+            dataRisk={dataRisk}
+            dataDailtRisk={dataDailtRisk}
+          />
+        );
+        break;
+      case 'DEMO':
+        content = (
+          <ViewAccTransaction
+            data={dataServerTransaction.filter((i) => i.type_acc === 'DEMO')}
             dataRisk={dataRisk}
             dataDailtRisk={dataDailtRisk}
           />
@@ -170,10 +188,14 @@ export default function AccTransaction() {
         return dataServerTransaction.filter((i) => i.type_acc === 'COM').length;
       case 'RECIPROCAL':
         return dataServerTransaction.filter((i) => i.type_acc === 'RECIPROCAL').length;
+      case 'RECIPROCAL_ACC':
+        return dataServerTransaction.filter((i) => i.type_acc === 'RECIPROCAL_ACC').length;
       case 'VAY':
         return dataServerTransaction.filter((i) => i.type_acc === 'VAY').length;
       case 'SWWING':
         return dataServerTransaction.filter((i) => i.type_acc === 'SWWING').length;
+      case 'DEMO':
+        return dataServerTransaction.filter((i) => i.type_acc === 'DEMO').length;
       default:
         return 0;
     }
@@ -181,7 +203,7 @@ export default function AccTransaction() {
 
   return (
     <div className="">
-      <div className="flex justify-start items-center p-2 pb-0 sticky top-0 bg-white z-20 shadow" ref={containerRef}>
+      <div className="flex justify-start items-center p-2 pb-0 sticky top-0 bg-white z-20 shadow overflow-x-auto" ref={containerRef}>
         {tabs.map((d, idx) => {
           return (
             <Button
@@ -190,7 +212,7 @@ export default function AccTransaction() {
               key={d.value}
               className={`${idx !== tabs.length && idx !== 0 ? 'right-line' : ''} ${
                 d.active ? 'text-[var(--color-background)]' : 'text-black hover:text-[var(--color-background)]'
-              } hover:bg-[var(--color-background-opacity-2)] cursor-pointer shadow-none px-3 py-1 md:px-6 md:py-3 text-[10px] md:text-[14px] text-center rounded-none flex justify-center items-center gap-1`}
+              } hover:bg-[var(--color-background-opacity-2)] cursor-pointer shadow-none px-3 py-1 md:px-4 md:py-3 text-[10px] md:text-[14px] text-center rounded-none flex justify-center items-center gap-1 min-w-[140px] md:min-w-auto min-h-[40px] md:min-h-auto`}
             >
               {t(d.label)}
               <span

@@ -150,7 +150,7 @@ export default function SetupIndicator({
                       </div>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className={`grid ${title === "macd" ? "grid-cols-3": "grid-cols-2"} gap-2`}>
                     <div className="col-span-1">
                       <div className="flex justify-start items-center gap-1">
                         <div className="text-[12px] md:text-[16px] text-left mb-1">{t('Đường lẻ')}:</div>
@@ -195,6 +195,24 @@ export default function SetupIndicator({
                           setValue((prev) => ({
                             ...prev,
                             period: Number(e.target.value),
+                          }));
+                        }}
+                        className={classInputBorder}
+                      />
+                    </div>
+                    <div className="col-span-1">
+                      <div className="flex justify-start items-center gap-1">
+                        <div className="text-[12px] md:text-[16px] text-left mb-1">{t('Period EMA')}:</div>
+                      </div>
+
+                      <InputNumber
+                        type="number"
+                        placeholder={t('Nhập vào...')}
+                        value={String(value.periodEMA ?? '')}
+                        onChange={(e) => {
+                          setValue((prev) => ({
+                            ...prev,
+                            periodEMA: Number(e.target.value),
                           }));
                         }}
                         className={classInputBorder}

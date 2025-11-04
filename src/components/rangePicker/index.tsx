@@ -34,7 +34,7 @@ const RangePickerCustom = ({ onRangeChange, value }: IProps) => {
     }, [])
 
     return (
-        <Space direction="vertical" size={50}>
+        <Space direction="vertical" size={50} className='w-full'>
             <ConfigProvider
                 locale={antdLocale}
                 theme={{
@@ -52,6 +52,7 @@ const RangePickerCustom = ({ onRangeChange, value }: IProps) => {
                     onChange={onRangeChange}
                     format="HH:mm:ss DD/MM/YYYY"
                     placeholder={[t("Ngày bắt đầu"), t("Ngày kết thúc")]}
+                    className='w-full'
                 />
             </ConfigProvider>
         </Space>

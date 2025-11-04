@@ -1,22 +1,21 @@
-import { ColorType, createChart, type BarData } from 'lightweight-charts';
+import { ColorType, createChart } from 'lightweight-charts';
 import { useEffect, useRef, useState } from 'react';
-import { type IinitialDataCand } from '../../pages/Home/options';
-import { getColorChart } from '../../utils/timeRange';
-import { normalizeChartData } from '../candlestickSeries/options';
-import { formatVietnamTimeSmart, gridColor } from '../line/formatTime';
-import { calculateATR } from './type';
-import type { IMenuSub } from '../setupIndicator/type';
+import { usePriceLines } from '../../hooks/usePriceLines';
 import { useRightClickMenu } from '../../hooks/useRightClick';
+import { type IinitialDataCand } from '../../pages/Home/options';
+import type { IDataPeriod, Iindicator } from '../../pages/Home/type';
 import { initSetupIndicatorADR, type ISetupIndicator } from '../../types/global';
+import { getColorChart } from '../../utils/timeRange';
+import { formatVietnamTimeSmart, gridColor } from '../line/formatTime';
 import MenuSetupIndicator from '../menuSetupIndicator';
 import SetupIndicator from '../setupIndicator';
-import { usePriceLines } from '../../hooks/usePriceLines';
-import type { IDataPeriod, Iindicator } from '../../pages/Home/type';
+import type { IMenuSub } from '../setupIndicator/type';
+import { calculateATR } from './type';
 
 export default function Atr({
   candleData,
   chartRefCandl,
-  currentRange,
+  // currentRange,
   chartRefCurentATR,
   setIndicator,
   setDataPeriod,
@@ -40,7 +39,6 @@ export default function Atr({
   const chartAtr = useRef<any>(null);
 
   const seriesRef = useRef<any>(null);
-  const allData = useRef<BarData[]>([]);
 
   const currentData = useRef<any>(null);
 

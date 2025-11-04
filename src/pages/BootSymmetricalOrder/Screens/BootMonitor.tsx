@@ -1,169 +1,170 @@
 import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react';
-import dayjs from 'dayjs';
 import { useEffect, useState, type Dispatch, type SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
-import Icon from '../../../assets/icon';
+import { useNavigate } from 'react-router-dom';
+import { getCloseOrderBoot, postCloseOrderBoot } from '../../../api/boot';
 import { Button } from '../../../components/button';
-import { Loading } from '../../../components/loading';
-import { useSocket } from '../../../hooks/useWebSocket';
-import TooltipNavigate from '../../../layouts/TooltipNavigate';
-import type { ISymbolPosition } from '../../History/type';
-import { type IBootAcc } from '../type';
-import { postCloseOrderBoot } from '../../../api/boot';
+import { PathName } from '../../../routes/path';
+import type { QueryLots } from '../../../types/global';
+import { convertTimeDayjs } from '../../../utils/timeRange';
+import { getNotificationId } from '../../Settings/type';
+import { pathBoot, type IBootAcc } from '../type';
+import DetailMonitorBoot from './DetailMonitorBoot';
 import toast from 'react-hot-toast';
+
+const initPara: QueryLots = {
+  page: 1,
+  limit: 10,
+  status: undefined,
+  acc_transaction: undefined,
+  end_time: undefined,
+  start_time: undefined,
+};
 
 export default function BootMonitor() {
   const { t } = useTranslation();
+  const [isDetail, setIsDetail] = useState<boolean>(false);
   const [data, setData] = useState<IBootAcc[]>([]);
-  const [position, setPosition] = useState<ISymbolPosition[]>([]);
   const [open, setOpen] = useState(false);
-  const [dataCurrent, setDataCurrent] = useState<ISymbolPosition[]>([]);
-  // boot_monitor_acc
+  const [dataCurrent, setDataCurrent] = useState<IBootAcc>();
+  const navigate = useNavigate();
 
-  const { dataBootAcc } = useSocket(import.meta.env.VITE_URL_API, 'boot_monitor_acc', 1234234);
+  const [query, setQuery] = useState<QueryLots>(initPara);
+  const href = window.location.pathname;
+  useEffect(() => {
+    const fetch = async () => {
+      const resp = await getCloseOrderBoot(query);
+      setData(resp.data);
+      setQuery((prev) => ({ ...prev, totalPage: resp.total }));
+    };
+    fetch();
+  }, [query.page, query.limit]);
 
   useEffect(() => {
-    if (dataBootAcc) {
-      setData(dataBootAcc.acc);
-      setPosition(dataBootAcc.position);
+    const id = getNotificationId(href, PathName.BOOT_ORDER_DETAIL());
+
+    switch (href) {
+      case PathName.BOOT_ORDER_DETAIL(Number(id)):
+        setIsDetail(true);
+        break;
+      case pathBoot(PathName.MONITOR_BOOT):
+        setIsDetail(false);
+        break;
     }
-  }, [dataBootAcc]);
+  }, [href]);
 
   return (
-    <div className="grid grid-cols-2 h-full gap-2">
-      {data.length === 0 ? (
-        <div className="col-span-2 w-full">
-          <Loading />{' '}
-        </div>
+    <>
+      {isDetail ? (
+        <DetailMonitorBoot setDataCurrent={setData}/>
       ) : (
-        data.map((item, idx) => {
-          return (
-            <div key={idx} className="col-span-1 shadow rounded">
-              <div className="flex justify-between flex-col items-center gap-2 h-full">
-                <div className="flex-1 w-full p-2">
-                  {position.length !== 0 ? (
-                    position
-                      .filter((d) => Number(d.username) === item.username)
-                      .map((a, id) => (
-                        <div
-                          key={id}
-                          className="flex justify-between items-center w-full shadow-sm shadow-gray-300 p-2 rounded-sm"
-                        >
-                          <div className="">
-                            <div className="font-bold flex gap-1 md:gap-2 justify-start items-center text-[12px] md:text-sm">
-                              {a.symbol}{' '}
-                              <span
-                                className={`font-semibold ${
-                                  a.position_type === '1' ? 'text-red-500' : 'text-blue-500'
-                                }`}
-                              >
-                                {a.position_type === '1' ? 'SELL' : 'BUY'} {a.volume}
-                              </span>
-                              {idx === 0 && (
-                                <TooltipNavigate
-                                  handle={() => {
-                                    setOpen(true);
-                                    setDataCurrent(position);
-                                  }}
-                                  className="shadow-sm md:w-[24px] w-[20px] md:h-[24px] h-[20px] p-0 flex justify-center items-center"
-                                  iconName="icon-close-transaction"
-                                  path="#"
-                                  title="Đóng lệnh nhanh"
-                                />
-                              )}
-                            </div>
-                            <div className="text-[12px] md:text-sm flex justify-start items-center gap-1">
-                              {a.open_price.toFixed(4)} <Icon name="icon-right-v2" width={14} height={14} /> {a.current_price.toFixed(4)}
-                            </div>
-                          </div>
-                          <div className="">
-                            <div
-                              className={`text-right ${
-                                a.profit > 0 ? 'text-blue-700' : a.profit === 0 ? 'text-gray-400' : 'text-red-500'
-                              } font-semibold text-[14px] md:text-sm`}
-                            >
-                              {a.profit}
-                            </div>
-                            <div className="text-[12px] md:text-sm md:text-inherit text-right">
-                              {a.username} | <span className='md:w-auto w-full md:inline block'>{dayjs.utc(a.time).tz('Asia/Ho_Chi_Minh').format('YYYY-MM-DD HH:mm:ss')}</span>
-                            </div>
-                          </div>
-                        </div>
-                      ))
-                  ) : (
-                    <div className="text-gray-300 flex justify-center items-center flex-1 w-full h-full">
-                      {t('Hiện không có lệnh nào đang mở')}
-                    </div>
-                  )}
-                </div>
-                <div className="w-full border-t border-t-gray-200 p-2">
-                  <div className="text-[14px] md:text-md w-full">
-                    <div className="font-semibold text-center w-full mr-2">
-                      {t(idx === 0 ? 'Tài khoản exness' : 'Tài khoản quỹ')}
-                    </div>
-                  </div>
-
-                  <div className="flex justify-between items-center">
-                    <div className="text-[12px] md:text-sm">
-                      <span className="font-bold mr-2">{t('Tài khoản')}: </span>
-                      {item.name}
-                    </div>
-                  </div>
-                  <div className="text-[12px] md:text-sm">
-                    <span className="font-bold mr-2">{t('Máy chủ')}: </span>
-                    {item.server}
-                  </div>
-                  <div className="text-[12px] md:text-sm">
-                    <span className="font-bold mr-2">{t('Số dư')}: </span>
-                    {item.balance}
-                  </div>
-                  <div className="text-[12px] md:text-sm">
-                    <span className="font-bold mr-2">{t('Vốn')}: </span>
-                    {item.equity}
-                  </div>
-                  <div className="text-[12px] md:text-sm">
-                    <span className="font-bold mr-2">{t('Ký quỹ')}: </span>
-                    {item.margin}
-                  </div>
-                  <div className="text-[12px] md:text-sm">
-                    <span className="font-bold mr-2">{t('Ký quỹ khả dụng')}: </span>
-                    {item.free_margin}
-                  </div>
-                  <div className="text-[12px] md:text-sm">
-                    <span className="font-bold mr-2">{t('Đòn bẩy')}: </span>
-                    {item.leverage}
-                  </div>
-                </div>
-              </div>
+        <div className={`flex justify-start flex-col items-start gap-2 h-full p-2`}>
+          {data.length === 0 ? (
+            <div className="col-span-2 w-full flex justify-center items-center h-full text-gray-400">
+              {t('Hiện đang không có dữ liệu')}
             </div>
-          );
-        })
-      )}
+          ) : (
+            data.map((item: IBootAcc, idx) => {
+              return (
+                <div key={idx} className="shadow rounded flex justify-start flex-col gap-2 items-start w-full p-2">
+                  <div className="flex justify-between items-center gap-2 w-full">
+                    <div className="flex justify-start items-center gap-2">
+                      <div className="text-[12px] md:text-sm">
+                        <span className="font-bold">{t('Mã')}: </span>
+                        {idx + 1}
+                      </div>
 
-      <Modal open={open} setOpen={setOpen} dataCurrent={dataCurrent} />
-    </div>
+                      {item.type === 'CLOSE' ? (
+                        <span className="font-semibold text-[12px] md:text-sm bg-red-600 py-0.5 px-2 rounded-md text-white">
+                          {t('Đã đóng lệnh')}
+                        </span>
+                      ) : (
+                        <span className="font-semibold text-[12px] md:text-sm bg-[#00ff24] py-0.5 px-2 rounded-md text-white">
+                          {t('Lệnh đang được mở')}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="text-sm">{convertTimeDayjs(item.time)}</div>
+                  </div>
+
+                  <div className="flex justify-between md:items-end items-start gap-2 w-full">
+                    <div className="">
+                      <div className="text-[12px] md:text-sm">
+                        <span className="font-bold mr-2">{t('Tài khoản tham chiếu (exness)')}: </span>
+                        {item.acc_reference}
+                      </div>
+                      <div className="text-[12px] md:text-sm">
+                        <span className="font-bold mr-2">{t('Tài khoản đối ứng (exness)')}: </span>
+                        {item.acc_reciprocal}
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end items-center flex-col md:flex-row gap-2">
+                      {item?.type === 'RUNNING' && (
+                        <Button
+                          onClick={() => {
+                            setDataCurrent(item);
+                            setOpen((prev: any) => !prev);
+                          }}
+                          className="bg-[var(--color-background)] cursor-pointer shadow-sm shadow-gray-400 rounded-sm py-0.5 px-4 text-[12px] md:text-[14px]"
+                        >
+                          {t('Đóng lệnh')}
+                        </Button>
+                      )}
+                      <Button
+                        onClick={() => {
+                          setIsDetail(true);
+                          navigate(PathName.BOOT_ORDER_DETAIL(item.id));
+                        }}
+                        className="bg-white cursor-pointer text-[var(--color-background)] shadow-sm shadow-gray-400 rounded-sm py-0.5 px-2 text-[12px] md:text-[14px]"
+                      >
+                        {t('Xem chi tiết')}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+
+          <Modal open={open} setOpen={setOpen} dataCurrent={dataCurrent} setDataCurrent={setData} />
+        </div>
+      )}
+    </>
   );
 }
 
-const Modal = ({
+export const Modal = ({
   open,
   setOpen,
   dataCurrent,
+  setDataCurrent,
+  setData,
 }: {
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
-  dataCurrent: ISymbolPosition[];
+  dataCurrent?: IBootAcc;
+  setDataCurrent?: Dispatch<SetStateAction<IBootAcc[]>>;
+  setData?: React.Dispatch<React.SetStateAction<IBootAcc | undefined>>;
 }) => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState<boolean>(false);
 
   const handleClick = async () => {
+    if (!dataCurrent?.id) return;
     setLoading(true);
-    const dataNew: any = dataCurrent.map((i) => {
-      return { id: i.id_transaction, serverName: i.username };
-    });
-    await postCloseOrderBoot(dataNew)
+    await postCloseOrderBoot({ id: dataCurrent?.id })
       .then((data) => {
+        setData && setData((prev) => ({ ...prev, type: 'CLOSE' } as any));
+        setDataCurrent &&
+          setDataCurrent((prev: any) =>
+            prev.map((i: any) => {
+              if (i.id) {
+                return { ...i, type: 'CLOSE' };
+              }
+            }),
+          );
         setLoading(false);
         if (data.data.status === 'success') {
           setOpen(false);
@@ -190,17 +191,27 @@ const Modal = ({
             className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in sm:my-8 sm:w-full sm:max-w-lg data-closed:sm:translate-y-0 data-closed:sm:scale-95"
           >
             <div className="bg-white p-3">
-              <div className="sm:flex sm:items-start">
-                <div className="mt-3 text-center sm:mt-0 sm:text-left">
-                  <DialogTitle as="h3" className="text-base font-semibold text-gray-900">
-                    {t('Bạn xác nhận muốn đóng lệnh')} {dataCurrent[0]?.symbol}
-                  </DialogTitle>
-                  <div className="mt-2">
-                    <p className="text-[12px] md:text-sm text-gray-500">
-                      {t(
-                        'Nếu bạn xác nhận đóng lệnh của các cặp tiền này thì sẽ không thể nào mở lại được tại thời điểm này nữa. Bạn vẫn muốn xác nhận chứ!',
-                      )}
-                    </p>
+              <div className="mt-3 text-center sm:mt-0 sm:text-left">
+                <DialogTitle as="h3" className="text-base font-semibold text-gray-900">
+                  {t('Bạn xác nhận muốn đóng cặp có mã')} {dataCurrent?.id}
+                </DialogTitle>
+                <div className="mt-2">
+                  <div className="text-[12px] md:text-[16px]">
+                    <div className="text-center font-bold">{t('Tài khoản')}</div>
+                    <div className="grid grid-cols-2 gap-1">
+                      <div className="flex justify-start items-center gap-1">
+                        <div className="font-semibold">{t('Đối ứng (exness)')}:</div>
+                        <div className="font-bold">{dataCurrent?.acc_reference}</div>
+                      </div>
+                      <div className="flex justify-start items-center gap-1">
+                        <div className="font-semibold">{t('Tham chiếu (quỹ)')}:</div>
+                        <div className="font-bold">{dataCurrent?.acc_reciprocal}</div>
+                      </div>
+                    </div>
+                    <div className="flex justify-start items-center gap-1">
+                      <div className="font-semibold">{t('Cặp tiền')}:</div>
+                      <div className="font-bold">{dataCurrent?.dataOrder[0].symbol}</div>
+                    </div>
                   </div>
                 </div>
               </div>

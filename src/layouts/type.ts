@@ -2,6 +2,7 @@ import dayjs from "dayjs"
 import { PathName } from "../routes/path"
 import { t } from "i18next"
 import type { ISymbol, Option } from "../pages/History/type"
+import type { IinitialDataCand } from "../pages/Home/options"
 
 interface IDataHeader {
     nameIcon: string,
@@ -385,3 +386,40 @@ export const dataSymbolCloseNotification: ISymbolNotification[] = [
         volume: 0.01
     },
 ]
+
+// Hàm tính mode (giá trị xuất hiện nhiều nhất)
+const calculateMode = (data: number[]): number | null => {
+  if (data.length === 0) return null;
+
+  const counts: Record<number, number> = {};
+
+  for (const value of data) {
+    counts[value] = (counts[value] || 0) + 1;
+  }
+
+  let mode: number | null = null;
+  let maxCount = 0;
+
+  for (const [value, count] of Object.entries(counts)) {
+    if (count > maxCount) {
+      maxCount = count;
+      mode = Number(value);
+    }
+  }
+
+  return mode;
+};
+
+// Gom 5 cây nến 1 nhóm rồi tính mode theo close
+export const groupCandlesAndFindMode = (candles: IinitialDataCand[], groupSize = 5) => {
+  const result: { groupIndex: number; modeClose: number | null }[] = [];
+
+  for (let i = 0; i < candles.length; i += groupSize) {
+    const group = candles.slice(i, i + groupSize);
+    const closes = group.map(c => c.close);
+    const modeClose = calculateMode(closes);
+    result.push({ groupIndex: i / groupSize, modeClose });
+  }
+
+  return result;
+};

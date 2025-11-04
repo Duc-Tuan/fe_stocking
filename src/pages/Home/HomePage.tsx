@@ -2,7 +2,7 @@ import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/re
 import type { IChartApi, UTCTimestamp } from 'lightweight-charts';
 import React, { useEffect, useMemo, useRef, useState, type Dispatch, type JSX, type SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
-import { getSwapApi, symbolApi } from '../../api/symbol';
+import { getStatistical, symbolApi } from '../../api/symbol';
 import Icon from '../../assets/icon';
 import Adr from '../../components/adr/Adr';
 import Adx from '../../components/adx/Adx';
@@ -12,6 +12,7 @@ import { CandlestickSeriesComponent } from '../../components/candlestickSeries';
 import { mergeLatestData, type IDataSymbols } from '../../components/candlestickSeries/options';
 import { ChartComponent } from '../../components/line';
 import { Loading } from '../../components/loading';
+import Macd from '../../components/macd/Macd';
 import MenuSetupIndicator from '../../components/menuSetupIndicator';
 import type { IMenuSub } from '../../components/menuSetupIndicator/type';
 import Roc from '../../components/roc/Roc';
@@ -29,11 +30,20 @@ import { useAppInfo } from '../../hooks/useAppInfo';
 import { useClickOutside } from '../../hooks/useClickOutside';
 import { useCurrentPnl } from '../../hooks/useCurrentPnl';
 import { useToggle } from '../../hooks/useToggle';
-import type { IDataRequest, IOptionsTabsCharts, IPagination } from '../../types/global';
+import { useSocket } from '../../hooks/useWebSocket';
+import type { IDataRequest, IOptions, IOptionsTabsCharts, IPagination, IStatistical } from '../../types/global';
 import { getColorChart } from '../../utils/timeRange';
 import { calculateEMA, calculateRMA, calculateSMA, calculateWMA } from '../../utils/typeRecipe';
+import CompareCurrencyPair from './CompareCurrencyPair';
 import { VolumeProfileOverlay } from './VolumeProfileOverlay';
-import { convertDataCandline, optionsTabsCharts, timeOptions, type IinitialDataCand } from './options';
+import {
+  adjustToUTCPlus7,
+  convertDataCandline,
+  optionsTabsCharts,
+  timeOptions,
+  type IDataCandCompare,
+  type IinitialDataCand,
+} from './options';
 import {
   dataIndicator,
   dataIndicatorChart,
@@ -46,7 +56,6 @@ import {
   findStrokeAt,
   formatDateLabel,
   getCssVar,
-  groupToCandles,
   isPointNearLine,
   redraw,
   type FibBlock,
@@ -54,7 +63,7 @@ import {
   type IDataRealTime,
   type Iindicator,
   type TF,
-  type Trendline
+  type Trendline,
 } from './type';
 
 // Khoảng thời gian 1 nến (M5 = 300 giây)
@@ -73,6 +82,7 @@ export default function HomePage() {
   const chartRefCurentROLLING = useRef<any>(null);
   const chartRefCurentZSCORE = useRef<any>(null);
   const chartRefCurentADX = useRef<any>(null);
+  const chartRefCurentMACD = useRef<any>(null);
 
   const chartRefCurent = useRef<any>(null);
   const chartContainerRef = useRef<HTMLDivElement>(null);
@@ -88,18 +98,21 @@ export default function HomePage() {
   const [candleIndicator, setCandleIndicator] = useState<IinitialDataCand[]>([]);
 
   const [symbolsCand, setSymbolsCand] = useState<IinitialDataCand[]>([]);
+
+  const [symbolsCandCompare, setSymbolsCandCompare] = useState<IDataCandCompare[]>([]);
+  const [symbolsCandCompareSocket, setSymbolsCandCompareSocket] = useState<IDataCandCompare[]>([]);
+
   const [symbolsCandSocket, setSymbolsCandSocket] = useState<IinitialDataCand[]>([]);
 
   const [activeTab, setActiveTab] = useState<IOptionsTabsCharts[]>(optionsTabsCharts);
   const [pagination, setPagination] = useState<IPagination>({
-    limit: 10000,
+    limit: 100,
     page: 1,
     total: 100,
     totalPage: 1,
-    last_time: undefined,
-    has_more: false,
+    is_last_page: false,
   });
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, _setLoading] = useState<boolean>(false);
 
   const isFetchingRef = useRef<any>(false);
 
@@ -119,6 +132,8 @@ export default function HomePage() {
 
   const [fibBlocks, setFibBlocks] = useState<FibBlock[]>([]);
   const [activeFibId, setActiveFibId] = useState<string | null>(null);
+
+  const refUtilities = useRef<any>(null);
 
   const overlayRef = useRef<any>(null);
   const isDraggingRef = useRef(false);
@@ -159,6 +174,7 @@ export default function HomePage() {
   const [utilities, setUtilities] = useState<boolean>(false);
 
   const [dataRealTime, setDataRealTime] = useState<IDataRealTime[]>([]);
+  const [statistical, setStatistical] = useState<IStatistical>();
 
   const [dataPeriod, setDataPeriod] = useState<IDataPeriod>(dataPeriodDefault);
 
@@ -166,7 +182,11 @@ export default function HomePage() {
 
   const [indicatorChart, setIndicatorChart] = useState<Iindicator[]>(dataIndicatorChart(dataPeriodDefault));
 
-  const [dataReq, setDataReq] = useState<any>([])
+  const [dataReq, setDataReq] = useState<any[]>([]);
+  const [dataCompare, setDataCompare] = useState<IOptions<string>[]>([]);
+
+  const [pageChart, setPageChart] = useState<number>(1)
+  const [applyNumberCandle, setApplyNumberCandle] = useState<number>(100)
 
   useEffect(() => {
     setIndicator((prev) =>
@@ -178,85 +198,109 @@ export default function HomePage() {
   }, [dataPeriod]);
 
   // Gọi api khi page thay đổi
-  const getSymbolApi = async (idServer: number) => {
+  const getSymbolApi = async (idServer: number, page: number) => {
     try {
       const res: IDataRequest<IDataSymbols> = await symbolApi(
-        { last_time: pagination.last_time, limit: pagination.limit },
+        { page: page, limit: pagination.limit, timeframe: currentRange },
         idServer,
       );
-
+      // res.data.data.shift();
       setPagination((prev) => ({
         ...prev,
         total: res.data.total,
         totalPage: Math.ceil(res.data.total / res.data.limit),
-        last_time: res.data.next_cursor,
-        has_more: res.data.has_more,
+        is_last_page: res.data.is_last_page,
       }));
+      if (idServer === serverId) {
+        setDataReq((prev: any) => [...res.data.data, ...prev]);
+      } else {
+        setSymbolsCandCompare((prev) => {
+          return prev
+            .filter((i) => Number(i.sever) !== serverId)
+            .map((i) => {
+              const convertDataReq: IinitialDataCand[] = [...res.data.data].map((i: IinitialDataCand) => ({
+                ...i,
+                time: adjustToUTCPlus7(Math.floor(new Date(i.time).getTime() / 1000)),
+              }));
 
-      setDataReq((prev: any) => [...res.data.data, ...prev])
+              const dataNew: IinitialDataCand[] = [...convertDataReq, ...i.data].sort(
+                (a: any, b: any) => a.time - b.time,
+              );
+
+              if (Number(i.sever) === Number(idServer)) {
+                return {
+                  ...i,
+                  data: dataNew,
+                };
+              }
+              return i;
+            });
+        });
+      }
     } catch (err) {
       console.error('Failed to fetch symbols:', err);
     }
   };
 
-  // gọi api khi serverId đổi
-  const getSymbolApiServerId = async (serverId: number) => {
-    setLoading(true);
-    try {
-      const res: IDataRequest<IDataSymbols> = await symbolApi(
-        { last_time: undefined, limit: pagination.limit },
-        serverId,
-      );
-
-      setPagination((prev) => ({
-        ...prev,
-        total: res.data.total,
-        totalPage: Math.ceil(res.data.total / res.data.limit),
-        has_more: res.data.has_more,
-        last_time: res.data.next_cursor,
-      }));
-
-      setDataReq(res.data.data)
-    } catch (error) {
-      console.error('Failed to fetch symbols:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
     if (dataReq) {
-      const dataNew = groupToCandles(dataReq, currentRange)
+      const dataNew: IinitialDataCand[] = dataReq
+        .map((i: IinitialDataCand) => ({ ...i, time: adjustToUTCPlus7(Math.floor(new Date(i.time).getTime() / 1000)) }))
+        .sort((a: any, b: any) => a.time - b.time);
       setSymbolsCand(dataNew);
-      setCandleIndicator(dataNew)
+      setCandleIndicator(dataNew);
     }
-  }, [dataReq, currentRange])
-  
+  }, [dataReq]);
+
   useEffect(() => {
     if (currentPnl) {
+      setStatistical(currentPnl?.statistical[0]);
       setDataRealTime(currentPnl.by_symbol as IDataRealTime[]);
       setSymbolsCandSocket(convertDataCandline(currentPnl));
     }
   }, [currentPnl]);
 
+  const { dataCompareSocket } = useSocket(import.meta.env.VITE_URL_API, 'data_compare_socket', symbolsCandCompare[0]?.sever);
+
+  useEffect(() => {
+    if (dataCompareSocket) {
+      setSymbolsCandCompareSocket(dataCompareSocket)
+    }
+  }, [dataCompareSocket]);
+
   useEffect(() => {
     const dataNew = mergeLatestData(candleIndicator, symbolsCandSocket, currentRange).sort((a, b) => a.time - b.time);
     setCandleIndicator(dataNew);
-    setSymbolsCand(dataNew)
+    setSymbolsCand(dataNew);
   }, [symbolsCandSocket]);
+
+  const pagePrev = useRef<number>(1)
+
+  const resetPagePrev = () => {
+    pagePrev.current = 1 
+  }
 
   useEffect(() => {
     let ignore = false;
-
-    if (serverMonitorActive?.value && pagination.has_more && !isFetchingRef.current) {
+    if (serverMonitorActive?.value && !pagination.is_last_page && !isFetchingRef.current) {
       (async () => {
-        isFetchingRef.current = true; // đánh dấu đang gọi API
+        isFetchingRef.current = true;
         try {
           if (!ignore) {
-            await getSymbolApi(Number(serverMonitorActive?.value));
+            if (symbolsCandCompare.length === 0) {
+              await getSymbolApi(Number(serverMonitorActive?.value), pagePrev.current);
+            } else {
+              const promises1 =  getSymbolApi(Number(serverMonitorActive?.value), pagePrev.current);
+              const promises2 = symbolsCandCompare
+              .filter((i) => i.sever !== Number(serverMonitorActive?.value))
+              .map((i) => getSymbolApi(Number(i.sever), pagePrev.current));
+              // ✅ Đợi tất cả Promise trong cùng một mảng
+              await Promise.all([promises1, ...promises2]);
+            }
           }
         } finally {
-          isFetchingRef.current = false; // gọi xong thì reset lại
+          pagePrev.current +=1 
+          isFetchingRef.current = false;
         }
       })();
     }
@@ -264,7 +308,7 @@ export default function HomePage() {
     return () => {
       ignore = true;
     };
-  }, [pagination.page]);
+  }, [pageChart]);
 
   function reset() {
     setlinesRef([]);
@@ -276,8 +320,7 @@ export default function HomePage() {
     setActiveFibId(null);
     setIsDrawingMode(false);
     setIsCheckFibonacci(false);
-    // setIndicator(dataIndicator(dataPeriodDefault));
-    // setCandleIndicator([]);
+    setSymbolsCandCompareSocket([])
     if (canvasRef.current) {
       canvasRef.current.style.pointerEvents = 'none';
     }
@@ -323,22 +366,29 @@ export default function HomePage() {
     }
   }
 
+  const fetchStatistical = async (id: number) => {
+    const req = await getStatistical(id);
+    setStatistical(req.data[0]);
+  };
+
   useEffect(() => {
     if (serverId) {
-      setPagination((prev) => ({ ...prev, last_time: undefined }));
-      getSymbolApiServerId(serverId);
+      fetchStatistical(serverId);
+
+      setDataReq([])
+      setPagination((prev) => ({ ...prev, is_last_page: false, page: 1 }));
+      resetPagePrev()
+      setPageChart((prev) => prev+1)
+
       setSymbolsCand([]);
       setSymbolsCandSocket([]);
       setCandleIndicator([]);
+      setIndicator(dataIndicator(dataPeriodDefault));
+      setSymbolsCandCompare([]);
+      setDataCompare((prev) => prev.map((i) => ({ ...i, active: false })));
       reset();
     }
   }, [serverId]);
-
-  // useEffect(() => {
-  //   const dataNew: IinitialDataCand[] = dataChart.map((i) => ({ ...i, P: (i.low + i.high + i.close) / 3 }));
-  //   setSymbolsCand(dataNew);
-  //   setCandleIndicator(dataNew);
-  // }, []);
 
   const handleClick = (selected: IOptionsTabsCharts) => {
     const updated = activeTab.map((tab) => ({
@@ -354,6 +404,21 @@ export default function HomePage() {
   };
 
   const handleRangeChange = (label: TF) => {
+    setCandleIndicator([]);
+    setSymbolsCand([]);
+    setIndicator((prev) => prev.map(i => ({...i, active: false})))
+
+    setDataReq([])
+    setSymbolsCandCompare((prev) => prev.map((i) => ({...i, data: []})))
+    resetPagePrev()
+    setPageChart((prev) => prev+1)
+
+    setPagination((prev) => ({
+      ...prev,
+      is_last_page: false,
+      page: 1,
+    }));
+
     setCurrentRange(label);
   };
 
@@ -503,7 +568,6 @@ export default function HomePage() {
   useEffect(() => {
     if (!chartRef.current) return;
     widthCharRef.current = chartRef.current.timeScale().width();
-    getSwapApi();
   }, []);
 
   const drawFib = () => {
@@ -519,7 +583,7 @@ export default function HomePage() {
     const chartH =
       canvasH -
       28 -
-      (indicator.filter((a) => a.active).length > 1 ? 238 : indicator.filter((a) => a.active).length === 1 ? 115 : 0); // chừa time-axis bên dưới
+      (indicator.filter((a) => a.active).length > 1 ? 245 : indicator.filter((a) => a.active).length === 1 ? 120 : 0); // chừa time-axis bên dưới
 
     ctx.clearRect(0, 0, canvasW, canvasH);
 
@@ -529,7 +593,7 @@ export default function HomePage() {
     ctx.rect(0, 0, chartW, chartH);
     ctx.clip();
 
-    fibBlocks.forEach((block, id) => {
+    fibBlocks.forEach((block, _id) => {
       const { anchorA, anchorB } = block;
       if (!anchorA || !anchorB) return;
 
@@ -902,6 +966,11 @@ export default function HomePage() {
     const setCursor = (cursor: string) => {
       container.style.cursor = cursor;
     };
+
+    if (!isCheckFibonacci){
+      setCursor('crosshair');
+    }
+
     const getXY = (e: MouseEvent) => {
       const rect = canvas.getBoundingClientRect();
       return { x: e.clientX - rect.left, y: e.clientY - rect.top };
@@ -1172,9 +1241,7 @@ export default function HomePage() {
     }
   };
 
-  useEffect(() => {
-    if (!chartRefCurent.current) return;
-    const width = chartContainerRef.current!.clientWidth;
+  const setWidthIndicator = (width: number) => {
     if (chartRefCurentADR.current) {
       chartRefCurentADR.current.applyOptions({ width: width });
     }
@@ -1199,17 +1266,49 @@ export default function HomePage() {
     if (chartRefCurentADX.current) {
       chartRefCurentADX.current.applyOptions({ width: width });
     }
+    if (chartRefCurentMACD.current) {
+      chartRefCurentMACD.current.applyOptions({ width: width });
+    }
+  };
+
+  useEffect(() => {
+    if (!chartRefCurent.current) return;
+    const width = chartContainerRef.current!.clientWidth;
+
+    if (utilities && refUtilities.current) {
+      const widthUtilities = refUtilities.current.clientWidth + 6;
+      canvasRef.current.width -= widthUtilities;
+      overlayRef.current.width -= widthUtilities;
+      canvasStrokes.current.width -= widthUtilities;
+      canvasTrendLine.current.width -= widthUtilities;
+    } else {
+      canvasRef.current.width = width;
+      overlayRef.current.width = width;
+      canvasStrokes.current.width = width - 70;
+      canvasTrendLine.current.width = width - 70;
+    }
+
+    setWidthIndicator(width);
+
+    return () => {
+      refUtilities.current = null;
+    };
   }, [utilities]);
 
   useEffect(() => {
     if (!chartRefCurent.current) return;
     const dataActiveTab: Iindicator[] = indicator.filter((a) => a.active);
 
+    const widthScreen = chartContainerRef.current!.clientWidth;
+
+    const heightCustom =
+      widthScreen < 700 ? 360 : indicator.some((a) => a.active) ? (dataActiveTab.length === 2 ? 355 : 480) : 630;
+
     chartRefCurent.current.applyOptions({
       timeScale: {
         visible: !indicator.some((a) => a.active),
       },
-      height: indicator.some((a) => a.active) ? (dataActiveTab.length === 2 ? 430 : 480) : 620,
+      height: heightCustom,
     });
 
     const height = chartContainerRef.current!.clientHeight;
@@ -1219,21 +1318,18 @@ export default function HomePage() {
         overlayRef.current.height = height - 70;
         canvasTrendLine.current.height = height - 70;
         canvasStrokes.current.height = height - 70;
-        canvasRef.current.height = 628;
-        chartRefCurent.current.applyOptions({
-          height: 356,
-        });
+        canvasRef.current.height = 630;
         break;
       case 1:
         overlayRef.current.height = height;
         canvasStrokes.current.height = height;
         canvasTrendLine.current.height = height;
-        canvasRef.current.height = 625;
+        canvasRef.current.height = 630;
         break;
       default:
-        overlayRef.current.height = height - 28;
-        canvasStrokes.current.height = height - 28;
-        canvasTrendLine.current.height = height - 28;
+        overlayRef.current.height = height - 30;
+        canvasStrokes.current.height = height - 30;
+        canvasTrendLine.current.height = height - 30;
         canvasRef.current.height = height;
         break;
     }
@@ -1256,6 +1352,8 @@ export default function HomePage() {
           return chartRefCurentZSCORE;
         case 'adx':
           return chartRefCurentADX;
+        case 'macd':
+          return chartRefCurentMACD;
         default:
           return chartRefCurentRSI;
       }
@@ -1855,6 +1953,16 @@ export default function HomePage() {
         activeTab={props.activeTab}
       />
     ),
+    macd: (props) => (
+      <Macd
+        candleData={props.candleIndicator}
+        chartRefCandl={props.chartRef}
+        chartRefCurentMACD={props.chartRefCurentMACD}
+        setIndicator={props.setIndicator}
+        setDataPeriod={props.setDataPeriod}
+        activeTab={props.activeTab}
+      />
+    ),
   };
 
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
@@ -1870,17 +1978,9 @@ export default function HomePage() {
       label: 'Tắt tất cả chỉ báo',
       value: 'activate',
       onClick: () => {
-        // setIndicatorChart((prev) =>
-        //   prev.map((i) => {
-        //     if (i.value === 'bb') {
-        //       return {
-        //         ...i,
-        //         active: false,
-        //       };
-        //     }
-        //     return i;
-        //   }),
-        // );
+        setIndicatorChart((prev) => {
+          return prev.map((i) => ({ ...i, active: false }));
+        });
       },
     },
   ];
@@ -1908,18 +2008,40 @@ export default function HomePage() {
     };
   }, [candleIndicator, dataPeriod, indicatorChart]);
 
+  const handleGetCompare = (data: IOptions<string>[], applyCandle: number) => {
+    setApplyNumberCandle(applyCandle);
+    setSymbolsCandCompare([]);
+    setIndicator(prev => prev.map(i => ({...i, active: false})))
+    if (data.length !== 0) {
+      reset();
+      setDataReq([])
+      resetPagePrev()
+      setPageChart((prev) => prev+1)
+      setPagination((prev) => ({ ...prev, is_last_page: false, page: 1 }));
+      const dataNew = data.map(i => ({ sever: Number(i.value), data: []}))
+      setSymbolsCandCompare(dataNew)
+    }
+  };
+
   return (
     <div className="text-center">
       <div className="flex flex-wrap justify-between">
         <div className="flex flex-wrap gap-2">
           <div className="flex flex-wrap text-sm font-medium text-center text-gray-500 dark:text-gray-400 gap-2">
+            <CompareCurrencyPair
+              serverIdCurrent={serverId}
+              handleGetCompare={handleGetCompare}
+              setDataCompare={setDataCompare}
+              dataCompare={dataCompare}
+            />
+
             {activeTab.map((item) => (
               <React.Fragment key={item.tabsName}>
                 <TooltipCustom isButton titleTooltip={item.tabsName}>
                   <Button
-                    disabled={loading}
+                    // disabled={loading}
                     onClick={() => handleClick(item)}
-                    isLoading={loading}
+                    // isLoading={loading}
                     className={`flex justify-center items-center md:w-[40px] md:h-[40px] w-[32px] h-[32px] rounded-lg p-0 ${
                       item.active
                         ? 'text-[var(--color-text)] bg-[var(--color-background)] active'
@@ -1939,7 +2061,7 @@ export default function HomePage() {
               handleClick={() => {
                 setUtilities((prev) => !prev);
               }}
-              titleTooltip={`${utilities ? t('Mở') : t('Đóng')} ${t('tiện ích')}`}
+              titleTooltip={`${!utilities ? t('Mở') : t('Đóng')} ${t('tiện ích')}`}
               classNameButton={`${
                 utilities ? 'bg-[var(--color-background)] text-white' : 'text-black bg-gray-200'
               }  md:w-[40px] md:h-[40px] w-[32px] h-[32px]`}
@@ -1953,25 +2075,24 @@ export default function HomePage() {
               nameTitle="Chỉ báo biểu đồ"
               indicator={indicatorChart}
               setIndicator={setIndicatorChart}
-              className="z-[42]"
             />
 
             <CompIndicator
               indicator={indicator}
-              dataView={indicator.filter((_, i) => i < 4)}
+              dataView={indicator.filter((_, i) => i < 5)}
               setIndicator={setIndicator}
-              className="z-40"
               iconName="icon-rsi"
               nameTitle="Các chỉ báo"
             />
 
             <CompIndicator
               indicator={indicator}
-              dataView={indicator.filter((_, i) => i > 3)}
+              dataView={indicator.filter((_, i) => i > 4)}
               setIndicator={setIndicator}
               className="z-30"
               iconName="icon-quantitative"
               nameTitle="Các chỉ báo định lượng"
+              classNameIcon="w-[30px] h-[30px]"
             />
           </div>
 
@@ -2079,10 +2200,10 @@ export default function HomePage() {
       <div className="grid grid-cols-4 mt-3 gap-1">
         <div
           className={`${
-            utilities ? 'col-span-3' : 'col-span-4'
+            utilities ? 'md:col-span-3 col-span-4' : 'col-span-4'
           } p-2 border border-gray-200  overflow-hidden rounded-lg shadow-xl relative`}
         >
-          <div ref={chartContainerRef}>
+          <div ref={chartContainerRef} className="crosshair" id="chart">
             {indicatorChart.find((i) => i.value === 'volume')?.active && (
               <VolumeProfileOverlay
                 chartRef={chartRef}
@@ -2093,7 +2214,7 @@ export default function HomePage() {
               />
             )}
             {indicatorChart.filter((i) => i.active).length !== 0 && (
-              <div className="absolute top-1 left-2 z-10 text-gray-500 text-sm">
+              <div className="absolute top-1 left-2 z-10 text-gray-500 text-sm md:max-w-auto max-w-[300px] text-left">
                 {t('Hiển thị')}: {indicatorChart.filter((i) => i.active).map((i) => i.titleSub + ' ' + i.period + '; ')}
               </div>
             )}
@@ -2109,11 +2230,15 @@ export default function HomePage() {
                       chartRefCurent={chartRefCurent}
                       seriesRef={seriesRef}
                       dataOld={symbolsCand}
-                      setPagination={setPagination}
+                      setPagination={setPageChart}
                       latestData={symbolsCandSocket}
                       currentRange={currentRange}
                       indicatorChart={indicatorChart}
                       setMenu={setMenu}
+                      symbolsCandCompare={symbolsCandCompare}
+                      serverId={serverId}
+                      symbolsCandCompareSocket={symbolsCandCompareSocket}
+                      applyNumberCandle={applyNumberCandle}
                     />
                   ) : (
                     <CandlestickSeriesComponent
@@ -2122,12 +2247,16 @@ export default function HomePage() {
                       chartRefCurent={chartRefCurent}
                       candleSeriesRef={candleSeriesRef}
                       dataOld={symbolsCand}
-                      setPagination={setPagination}
+                      setPagination={setPageChart}
                       isOpen={isOpen}
                       latestData={symbolsCandSocket}
                       currentRange={currentRange}
                       indicatorChart={indicatorChart}
                       setMenu={setMenu}
+                      symbolsCandCompare={symbolsCandCompare}
+                      serverId={serverId}
+                      symbolsCandCompareSocket={symbolsCandCompareSocket}
+                      applyNumberCandle={applyNumberCandle}
                     />
                   ))}
               </React.Fragment>
@@ -2148,6 +2277,7 @@ export default function HomePage() {
                   chartRefCurentROLLING,
                   chartRefCurentZSCORE,
                   chartRefCurentADX,
+                  chartRefCurentMACD,
                   activeTab,
                   setDataPeriod,
                   setIndicator,
@@ -2157,13 +2287,13 @@ export default function HomePage() {
         </div>
 
         {utilities && (
-          <div className="col-span-1 p-2 border border-gray-200 rounded-lg shadow-xl relative">
-            <div className="grid grid-cols-2 gap-1">
-              <TooltipCustom
-                titleTooltip={'Tốc độ thay đổi'}
-                classNameButton="md:w-auto w-auto rounded-sm shadow-sm shadow-gray-500 rounded-sm bg-[var(--color-background-roc)]"
-                placement="top"
-              >
+          <div
+            className="col-span-4 md:col-span-1 border my-scroll max-h-[647.6px] border-gray-200 rounded-lg shadow-xl relative"
+            ref={refUtilities}
+          >
+            <div className="grid grid-cols-2 xl:grid-cols-2 sm:grid-cols-3 gap-2 p-2 pb-0">
+              <div className="p-2 rounded-sm shadow-sm shadow-gray-500 bg-[var(--color-background-roc)] text-white font-semibold">
+                <div className="text-left">{t('Tốc độ thay đổi')}</div>
                 <div className="flex justify-start items-center gap-1">
                   <div className="text-left">
                     roc<sub>t</sub>
@@ -2171,12 +2301,9 @@ export default function HomePage() {
                   </div>
                   <div className="">{roc.dataRoc ?? '...'}%</div>
                 </div>
-              </TooltipCustom>
-              <TooltipCustom
-                titleTooltip={'Độ dốc hồi quy tuyến tính'}
-                classNameButton="md:w-auto w-auto rounded-sm shadow-sm shadow-gray-500 rounded-sm bg-[var(--color-background-slope)]"
-                placement="top"
-              >
+              </div>
+              <div className="p-2 rounded-sm shadow-sm shadow-gray-500 bg-[var(--color-background-slope)] text-white font-semibold">
+                <div className="text-left">{t('Hồi quy tuyến tính')}</div>
                 <div className="flex justify-start items-center gap-1">
                   <div className="text-left">
                     slope<sub>t</sub>
@@ -2184,12 +2311,9 @@ export default function HomePage() {
                   </div>
                   <div className="">{roc.dataSlope !== 'NaN' ? roc.dataSlope : '...'}</div>
                 </div>
-              </TooltipCustom>
-              <TooltipCustom
-                placement="top"
-                titleTooltip={'Độ lệnh chuẩn cuộn'}
-                classNameButton="md:w-auto w-auto rounded-sm shadow-sm shadow-gray-500 rounded-sm bg-[var(--color-background-rolling)]"
-              >
+              </div>
+              <div className="p-2 rounded-sm shadow-sm shadow-gray-500 bg-[var(--color-background-rolling)] text-white font-semibold">
+                <div className="text-left">{t('Độ lệnh chuẩn cuộn')}</div>
                 <div className="flex justify-start items-center gap-1">
                   <div className="text-left">
                     σ<sub>t</sub>
@@ -2197,12 +2321,9 @@ export default function HomePage() {
                   </div>
                   <div className="">{roc.rolling !== 'NaN' ? roc.rolling : '...'}</div>
                 </div>
-              </TooltipCustom>
-              <TooltipCustom
-                placement="top"
-                titleTooltip={'Z-score'}
-                classNameButton="md:w-auto w-auto rounded-sm shadow-sm shadow-gray-500 rounded-sm bg-[var(--color-background-zScore)]"
-              >
+              </div>
+              <div className="p-2 rounded-sm shadow-sm shadow-gray-500 bg-[var(--color-background-zScore)] text-white font-semibold">
+                <div className="text-left">{t('Z-score')}</div>
                 <div className="flex justify-start items-center gap-1">
                   <div className="text-left">
                     Z<sub>t</sub>
@@ -2210,57 +2331,151 @@ export default function HomePage() {
                   </div>
                   <div className="">{roc.zScore !== 'NaN' ? roc.zScore : '...'}</div>
                 </div>
-              </TooltipCustom>
-              <TooltipCustom
-                placement="top"
-                titleTooltip={'Trung bình động đơn giản SMA'}
-                classNameButton="md:w-auto w-auto rounded-sm shadow-sm shadow-gray-500 rounded-sm bg-[var(--color-background-zScore)]"
-              >
+              </div>
+              <div className="p-2 rounded-sm shadow-sm shadow-gray-500 bg-[var(--color-background-zScore)] text-white font-semibold">
+                <div className="text-left">{t('Trung bình SMA')}</div>
                 <div className="flex justify-start items-center gap-1">
                   <div className="text-left">
                     sma<sup>({indicatorChart.find((i) => i.value === 'sma')?.period})</sup>:
                   </div>
                   <div className="">{roc.sma ?? '...'}</div>
                 </div>
-              </TooltipCustom>
-              <TooltipCustom
-                placement="top"
-                titleTooltip={'Trung bình động hàm mũ EMA'}
-                classNameButton="md:w-auto w-auto rounded-sm shadow-sm shadow-gray-500 rounded-sm bg-[var(--color-background-ema)]"
-              >
+              </div>
+              <div className="p-2 rounded-sm shadow-sm shadow-gray-500 bg-[var(--color-background-ema)] text-white font-semibold">
+                <div className="text-left">{t('Trung bình EMA')}</div>
                 <div className="flex justify-start items-center gap-1">
                   <div className="text-left">
                     ema<sup>({indicatorChart.find((i) => i.value === 'ema')?.period})</sup>:
                   </div>
                   <div className="">{roc.ema ?? '...'}</div>
                 </div>
-              </TooltipCustom>
-              <TooltipCustom
-                placement="top"
-                titleTooltip={'Trung bình động có trọng số WMA'}
-                classNameButton="md:w-auto w-auto rounded-sm shadow-sm shadow-gray-500 rounded-sm bg-[var(--color-background-wma)]"
-              >
+              </div>
+              <div className="p-2 rounded-sm shadow-sm shadow-gray-500 bg-[var(--color-background-wma)] text-white font-semibold">
+                <div className="text-left">{t('Trung bình WMA')}</div>
                 <div className="flex justify-start items-center gap-1">
                   <div className="text-left">
                     wma<sup>({indicatorChart.find((i) => i.value === 'wma')?.period})</sup>:
                   </div>
                   <div className="">{roc.wma ?? '...'}</div>
                 </div>
-              </TooltipCustom>
-              <TooltipCustom
-                placement="top"
-                titleTooltip={'Đường trung bình động của Wilder RMA'}
-                classNameButton="md:w-auto w-auto rounded-sm shadow-sm shadow-gray-500 rounded-sm bg-[var(--color-background-rma)]"
-              >
+              </div>
+              <div className="p-2 rounded-sm shadow-sm shadow-gray-500 bg-[var(--color-background-rma)] text-white font-semibold">
+                <div className="text-left">{t('Trung bình RMA')}</div>
                 <div className="flex justify-start items-center gap-1">
                   <div className="text-left">
                     rma<sup>({indicatorChart.find((i) => i.value === 'rma')?.period})</sup>:
                   </div>
                   <div className="">{roc.rma ?? '...'}</div>
                 </div>
-              </TooltipCustom>
+              </div>
             </div>
-            <div className="absolute bottom-2 left-0 right-0 p-2 pb-0">
+
+            <div className="grid grid-cols-2 xl:grid-cols-2 sm:grid-cols-3 gap-1 mt-2 text-sm p-2 pt-0 font-semibold">
+              <div className="p-2 rounded-sm  bg-[var(--color-background)] text-white shadow-sm shadow-gray-400">
+                <div className="text-left text-[14px] md:text-[16px]">
+                  {t('Ngày')} {t('tăng nhiều')}:
+                </div>
+                <div className="flex justify-between items-center gap-1">
+                  <div className="">{t('Thời gian')}:</div>
+                  <div className="font-bold">{statistical?.best_day ?? '...'}</div>
+                </div>
+                <div className="flex justify-between items-center gap-1">
+                  <div className="">{t('Số điểm')}:</div>
+                  <div className="font-bold">{statistical?.best_day_change.toFixed(2) ?? '...'}</div>
+                </div>
+                <div className="flex justify-between items-center gap-1">
+                  <div className="">{t('PNL')}:</div>
+                  <div className="font-bold">{statistical?.day_max.toFixed(2) ?? '...'}</div>
+                </div>
+              </div>
+              <div className="p-2 rounded-sm  bg-[var(--color-background)] text-white shadow-sm shadow-gray-400">
+                <div className="text-left text-[14px] md:text-[16px]">
+                  {t('Ngày')} {t('giảm nhiều')}:
+                </div>
+                <div className="flex justify-between items-center gap-1">
+                  <div className="">{t('Thời gian')}:</div>
+                  <div className="font-bold">{statistical?.worst_day ?? '...'}</div>
+                </div>
+                <div className="flex justify-between items-center gap-1">
+                  <div className="">{t('Số điểm')}:</div>
+                  <div className="font-bold">{statistical?.worst_day_change.toFixed(2) ?? '...'}</div>
+                </div>
+                <div className="flex justify-between items-center gap-1">
+                  <div className="">{t('PNL')}:</div>
+                  <div className="font-bold">{statistical?.day_min.toFixed(2) ?? '...'}</div>
+                </div>
+              </div>
+              <div className="p-2 rounded-sm  bg-[var(--color-background)] text-white shadow-sm shadow-gray-400">
+                <div className="text-left text-[14px] md:text-[16px]">
+                  {t('Tuần')} {t('tăng nhiều')}:
+                </div>
+                <div className="flex justify-between items-center gap-1">
+                  <div className="">{t('Thời gian')}:</div>
+                  <div className="font-bold">{statistical?.best_week ?? '...'}</div>
+                </div>
+                <div className="flex justify-between items-center gap-1">
+                  <div className="">{t('Số điểm')}:</div>
+                  <div className="font-bold">{statistical?.best_day_change.toFixed(2) ?? '...'}</div>
+                </div>
+                <div className="flex justify-between items-center gap-1">
+                  <div className="">{t('PNL')}:</div>
+                  <div className="font-bold">{statistical?.week_max.toFixed(2) ?? '...'}</div>
+                </div>
+              </div>
+              <div className="p-2 rounded-sm  bg-[var(--color-background)] text-white shadow-sm shadow-gray-400">
+                <div className="text-left text-[14px] md:text-[16px]">
+                  {t('Tuần')} {t('giảm nhiều')}:
+                </div>
+                <div className="flex justify-between items-center gap-1">
+                  <div className="">{t('Thời gian')}:</div>
+                  <div className="font-bold">{statistical?.worst_week ?? '...'}</div>
+                </div>
+                <div className="flex justify-between items-center gap-1">
+                  <div className="">{t('Số điểm')}:</div>
+                  <div className="font-bold">{statistical?.worst_week_change.toFixed(2) ?? '...'}</div>
+                </div>
+                <div className="flex justify-between items-center gap-1">
+                  <div className="">{t('PNL')}:</div>
+                  <div className="font-bold">{statistical?.week_min.toFixed(2) ?? '...'}</div>
+                </div>
+              </div>
+              <div className="p-2 rounded-sm  bg-[var(--color-background)] text-white shadow-sm shadow-gray-400">
+                <div className="text-left text-[14px] md:text-[16px]">
+                  {t('Tháng')} {t('tăng nhiều')}:
+                </div>
+                <div className="flex justify-between items-center gap-1">
+                  <div className="">{t('Thời gian')}:</div>
+                  <div className="font-bold">{statistical?.best_month ?? '...'}</div>
+                </div>
+                <div className="flex justify-between items-center gap-1">
+                  <div className="">{t('Số điểm')}:</div>
+                  <div className="font-bold">{statistical?.best_month_change.toFixed(2) ?? '...'}</div>
+                </div>
+                <div className="flex justify-between items-center gap-1">
+                  <div className="">{t('PNL')}:</div>
+                  <div className="font-bold">{statistical?.month_max.toFixed(2) ?? '...'}</div>
+                </div>
+              </div>
+              <div className="p-2 rounded-sm bg-[var(--color-background)] text-white shadow-sm shadow-gray-400">
+                <div className="text-left text-[14px] md:text-[16px]">
+                  {t('Tháng')} {t('giảm nhiều')}:
+                </div>
+                <div className="flex justify-between items-center gap-1">
+                  <div className="">{t('Thời gian')}:</div>
+                  <div className="font-bold">{statistical?.worst_month ?? '...'}</div>
+                </div>
+                <div className="flex justify-between items-center gap-1">
+                  <div className="">{t('Số điểm')}:</div>
+                  <div className="font-bold">{statistical?.worst_month_change.toFixed(2) ?? '...'}</div>
+                </div>
+                <div className="flex justify-between items-center gap-1">
+                  <div className="">{t('PNL')}:</div>
+                  <div className="font-bold">{statistical?.month_min.toFixed(2) ?? '...'}</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="sticky bottom-0 left-0 right-0 p-2 bg-white">
               <div className="grid grid-cols-3 font-bold text-[14px]">
                 <span className="border border-gray-200 py-1">{t('Cặp tiền')}</span>
                 <span className="border border-gray-200 py-1">{t('Giá hiện tại')}</span>
@@ -2301,7 +2516,7 @@ export default function HomePage() {
         open={showSetting}
         data={indicatorChart}
         setDataCurrent={setIndicatorChart}
-        setDataPeriod={setDataPeriod}
+        // setDataPeriod={setDataPeriod}
       />
     </div>
   );
@@ -2340,7 +2555,7 @@ const Filter = ({ handleClick, currentRange }: any) => {
 
       {visible && (
         <div
-          className={`grid grid-cols-5 sm:grid-cols-11 gap-2 w-[300px] sm:w-[600px] transition-all duration-200 absolute -top-3 -left-24 mt-2 bg-white shadow-sm shadow-gray-300 rounded-lg border border-gray-200 p-2 ${
+          className={`grid grid-cols-5 sm:grid-cols-11 gap-2 w-[300px] sm:w-[600px] transition-all duration-200 absolute -top-3 -left-20 md:-left-24 mt-2 bg-white shadow-sm shadow-gray-300 rounded-lg border border-gray-200 p-2 ${
             open ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'
           }`}
         >
@@ -2432,7 +2647,7 @@ const DeleteFibonacci = ({
       {(data.length !== 0 || linesRef.length !== 0 || trendlinesRef.length !== 0 || strokes.length !== 0) &&
         visible && (
           <div
-            className={`ml-2 transition-all duration-200 absolute w-[460px] max-h-[50vh] overflow-y-scroll my-scroll -top-2 left-full mt-2 bg-white shadow-sm shadow-gray-300 rounded-lg border border-gray-300 p-2 pb-0 ${
+            className={`ml-1 transition-all duration-200 absolute w-[320px] md:w-[460px] max-h-[50vh] overflow-y-scroll my-scroll -top-2 z-12 -left-31 md:left-full mt-2 bg-white shadow-sm shadow-gray-300 rounded-lg border border-gray-300 p-2 pb-0 ${
               open ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-2'
             }`}
           >
@@ -2501,6 +2716,7 @@ const CompIndicator = ({
   className,
   iconName,
   nameTitle,
+  classNameIcon,
 }: {
   indicator: Iindicator[];
   dataView: Iindicator[];
@@ -2508,6 +2724,7 @@ const CompIndicator = ({
   className?: string;
   iconName: string;
   nameTitle: string;
+  classNameIcon?: string;
 }) => {
   const { t } = useTranslation();
   const popupRef: any = useRef(null);
@@ -2555,7 +2772,7 @@ const CompIndicator = ({
 
   return (
     <>
-      <div ref={popupRef} className={`relative ${className}`}>
+      <div ref={popupRef} className={`relative ${className} ${visible ? 'z-[50]' : ''}`}>
         <TooltipCustom
           handleClick={handleToggle}
           titleTooltip={nameTitle}
@@ -2563,12 +2780,12 @@ const CompIndicator = ({
             dataView.find((a) => a.active) ? 'bg-[var(--color-background)] text-white' : 'text-black bg-gray-200'
           }  md:w-[40px] md:h-[40px] w-[32px] h-[32px]`}
         >
-          <Icon name={`${iconName}`} width={24} height={24} />
+          <Icon name={`${iconName}`} width={24} height={24} className={classNameIcon} />
         </TooltipCustom>
 
         {visible && (
           <div
-            className={`ml-1 transition-all duration-200 absolute -top-2 left-full mt-2 bg-white shadow-sm shadow-gray-300 rounded-lg border border-gray-300 p-2 ${
+            className={`ml-1 transition-all duration-200 absolute -top-2 -left-60 md:left-full mt-2 bg-white shadow-sm shadow-gray-300 rounded-lg border border-gray-300 p-2 ${
               open ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-2'
             } flex flex-col justify-center items-center gap-1`}
           >
@@ -2631,15 +2848,15 @@ const ModupComfimIndicator = ({
           >
             <div className="bg-white px-4 sm:py-6 sm:pt-4">
               <div className="mt-3 text-center sm:mt-0">
-                <DialogTitle as="h1" className="text-[15px] md:text-md font-semibold text-gray-900">
+                <DialogTitle as="h1" className="text-[15px] md:text-[16px] font-semibold text-gray-900">
                   {t('Để đảm bảo về trải nghiệm')} <br />
-                  {t('chúng tôi chỉ cho phép hiển thị tối đa 2 chỉ báo cùng lúc')}
+                  {t('chúng tôi chỉ cho phép hiển thị tối đa')} {max} {t('chỉ báo cùng lúc')}
                 </DialogTitle>
 
                 <div className="grid grid-cols-1 gap-4 mt-6">
                   {data.filter((i) => i.active).length !== 0 && (
-                    <div className="grid grid-cols-6 gap-1">
-                      <div className="col-span-6 text-left font-semibold text-[14px] md:text-[16px]">
+                    <div className="grid grid-cols-5 gap-1">
+                      <div className="col-span-5 text-left font-semibold text-[14px] md:text-[16px]">
                         {t('Chỉ báo hiển thị')}:
                       </div>
                       {data
@@ -2668,8 +2885,8 @@ const ModupComfimIndicator = ({
                     </div>
                   )}
 
-                  <div className="grid grid-cols-6 gap-1">
-                    <div className="col-span-6 text-left font-semibold text-[14px] md:text-[16px">
+                  <div className="grid grid-cols-5 gap-1">
+                    <div className="col-span-5 text-left font-semibold text-[14px] md:text-[16px]">
                       {t('Tất cả các chỉ báo')}:
                     </div>
                     {data.map((i) => (
@@ -2698,7 +2915,7 @@ const ModupComfimIndicator = ({
                           });
                           setData(dd);
                         }}
-                        className="text-[14px] md:text-[16px col-span-1 p-1 text-[var(--color-background)] rounded-sm px-0 cursor-pointer hover:bg-[var(--color-background-opacity-2)]"
+                        className="text-[14px] md:text-[16px] col-span-1 p-1 text-[var(--color-background)] rounded-sm px-0 cursor-pointer hover:bg-[var(--color-background-opacity-2)]"
                         key={i.value}
                       >
                         {i.value.toLocaleUpperCase()}
@@ -2796,7 +3013,7 @@ const CompIndicatorChart = ({
 
   return (
     <>
-      <div ref={popupRef} className={`relative ${className}`}>
+      <div ref={popupRef} className={`relative ${className} ${visible ? 'z-[50]' : ''}`}>
         <TooltipCustom
           handleClick={handleToggle}
           titleTooltip={nameTitle}
@@ -2804,12 +3021,12 @@ const CompIndicatorChart = ({
             dataView.find((a) => a.active) ? 'bg-[var(--color-background)] text-white' : 'text-black bg-gray-200'
           }  md:w-[40px] md:h-[40px] w-[32px] h-[32px]`}
         >
-          <Icon name={`${iconName}`} width={24} height={24} />
+          <Icon name={`${iconName}`} width={28} height={28} />
         </TooltipCustom>
 
         {visible && (
           <div
-            className={`ml-1 transition-all duration-200 absolute -top-2 left-full mt-2 bg-white shadow-sm shadow-gray-300 rounded-lg border border-gray-300 p-2 ${
+            className={`ml-1 transition-all duration-200 absolute -top-2 -left-51 md:left-full mt-2 bg-white shadow-sm shadow-gray-300 rounded-lg border border-gray-300 p-2 ${
               open ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-2'
             } flex flex-col justify-center items-center gap-1`}
           >

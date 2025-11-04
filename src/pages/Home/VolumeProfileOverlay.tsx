@@ -25,7 +25,7 @@ export const VolumeProfileOverlay: React.FC<Props> = ({
     const width = chartContainerRef?.current!.clientWidth
 
     const overlay = overlayRef.current;
-    overlay.style.width = `${Number(width) - 80}px`
+    overlay.style.width = `${Number(width) - 52}px`
     const ctx = overlay.getContext('2d')!;
 
     const resizeOverlay = () => {
@@ -165,7 +165,7 @@ export const VolumeProfileOverlay: React.FC<Props> = ({
   return (
     <canvas
       ref={overlayRef}
-      className="absolute top-2 right-20 bottom-0 h-[calc(100%-44px)] w-[94%] pointer-events-none"
+      className="absolute top-2 right-16 bottom-0 h-[calc(100%-44px)] w-[94%] pointer-events-none"
     />
   );
 };

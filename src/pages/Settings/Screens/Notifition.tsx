@@ -1,22 +1,22 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
+import Icon from '../../../assets/icon';
+import { Button } from '../../../components/button';
+import { Loading } from '../../../components/loading';
 import ScreenOrderSend from '../../../components/sendOrder';
+import TooltipCustom from '../../../components/tooltip';
 import { useAppInfo } from '../../../hooks/useAppInfo';
 import ViewNotification from '../../../layouts/screenNotifioction/View';
-import { dataTabsNotification, dataTabsNotificationSp, type INotifi, type INotification } from '../../../layouts/type';
-import type { AppDispatch } from '../../../store';
-import { getNotification, getReadNotifcation, setNotificationView } from '../../../store/notification/notification';
-import type { QueryLots } from '../../../types/global';
 import TooltipNavigate from '../../../layouts/TooltipNavigate';
-import { useTranslation } from 'react-i18next';
-import { Button } from '../../../components/button';
-import Icon from '../../../assets/icon';
-import TooltipCustom from '../../../components/tooltip';
-import type { Option } from '../../History/type';
+import { dataTabsNotification, dataTabsNotificationSp, type INotifi } from '../../../layouts/type';
 import { PathName } from '../../../routes/path';
-import DetailNotification from './DetailNotification';
+import type { AppDispatch } from '../../../store';
+import { getNotification, getReadNotifcation } from '../../../store/notification/notification';
+import type { QueryLots } from '../../../types/global';
+import type { Option } from '../../History/type';
 import { getNotificationId, pathSetting } from '../type';
-import { Loading } from '../../../components/loading';
+import DetailNotification from './DetailNotification';
 
 const initPara: QueryLots = {
   page: 1,
@@ -189,57 +189,66 @@ export default function Notifition() {
               />
             </div>
 
-            <div className="flex justify-center items-center gap-4">
-              <TooltipNavigate
-                disabled={query?.page === 1}
-                handle={() => {
-                  const dataPage = query?.page === 1 ? 1 : (query.page ?? 0) - 1;
-                  dispatch(getNotification({ page: dataPage, limit: query.limit }));
-                }}
-                iconName="icon-left"
-                path="#"
-                title="Trang trước"
-                className="w-[30px] md:w-[36px] h-[30px] md:h-[36px] p-0 flex justify-center items-center"
-              />
-              <div className="flex justify-between items-center gap-1">
-                <div className="font-semibold w-[30px] md:w-[36px] h-[30px] md:h-[36px] shadow-md shadow-gray-500 flex justify-center items-center rounded-lg">
-                  {query?.page}
+            <div className="flex justify-center items-center gap-4 md:flex-row flex-col">
+              <div className="flex justify-center items-center gap-4">
+                <TooltipNavigate
+                  disabled={query?.page === 1}
+                  handle={() => {
+                    const dataPage = query?.page === 1 ? 1 : (query.page ?? 0) - 1;
+                    dispatch(getNotification({ page: dataPage, limit: query.limit }));
+                  }}
+                  iconName="icon-left"
+                  path="#"
+                  title="Trang trước"
+                  className="w-[30px] md:w-[36px] h-[30px] md:h-[36px] p-0 flex justify-center items-center"
+                />
+                <div className="flex justify-between items-center gap-1">
+                  <div className="font-semibold w-[30px] md:w-[36px] h-[30px] md:h-[36px] shadow-md shadow-gray-500 flex justify-center items-center rounded-lg">
+                    {query?.page}
+                  </div>
+                  <div className="">/</div>
+                  <div className="font-semibold w-[30px] md:w-[36px] h-[30px] md:h-[36px] shadow-md shadow-gray-500 flex justify-center items-center rounded-lg">
+                    {query?.totalPage ?? 0}
+                  </div>
                 </div>
-                <div className="">/</div>
-                <div className="font-semibold w-[30px] md:w-[36px] h-[30px] md:h-[36px] shadow-md shadow-gray-500 flex justify-center items-center rounded-lg">
-                  {query?.totalPage ?? 0}
-                </div>
-              </div>
-              <TooltipNavigate
-                disabled={query?.page === query?.totalPage || query?.totalPage === 0}
-                handle={() => {
-                  const dataPage = query?.page === query?.totalPage ? query.page : (query.page ?? 0) + 1;
-                  dispatch(getNotification({ page: dataPage, limit: query.limit }));
-                }}
-                iconName="icon-right"
-                path="#"
-                title="Trang sau"
-                className="w-[30px] md:w-[36px] h-[30px] md:h-[36px] p-0 flex justify-center items-center"
-              />
-              <TooltipCustom titleTooltip={`${t('Tổng số bản ghi trên 1 trang')}: ${query.limit} ${t('bản')}`} isButton>
-                <div className="md:h-[36px] h-[28px] px-2 mx-2 shadow-md shadow-gray-500 flex justify-center items-center rounded-lg font-semibold">
-                  {t('Tổng số bản')}: {query?.total ?? 0}
-                </div>
-              </TooltipCustom>
 
-              <TooltipCustom
-                titleTooltip={`${t('Đọc tất cả')} ${isDataView}`}
-                handleClick={() => {
-                  totalNotifcation !== 0 && hendleView();
-                }}
-                classNameButton={`shadow-md shadow-gray-400 md:w-auto w-auto ${
-                  totalNotifcation !== 0 ? 'bg-[var(--color-background)]' : 'bg-gray-300'
-                } p-1 px-2 cursor-pointer rounded-lg text-[10px] md:text-[14px] flex justify-center items-center gap-1`}
-              >
-                <>
-                  {t('Đọc tất cả')} <Icon name="icon-check" className="h-4 w-4" />
-                </>
-              </TooltipCustom>
+                <TooltipNavigate
+                  disabled={query?.page === query?.totalPage || query?.totalPage === 0}
+                  handle={() => {
+                    const dataPage = query?.page === query?.totalPage ? query.page : (query.page ?? 0) + 1;
+                    dispatch(getNotification({ page: dataPage, limit: query.limit }));
+                  }}
+                  iconName="icon-right"
+                  path="#"
+                  title="Trang sau"
+                  className="w-[30px] md:w-[36px] h-[30px] md:h-[36px] p-0 flex justify-center items-center"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <TooltipCustom
+                  titleTooltip={`${t('Tổng số bản ghi trên 1 trang')}: ${query.limit} ${t('bản')}`}
+                  isButton
+                >
+                  <div className="md:h-[36px] h-[32px] px-2 mx-2 shadow-md shadow-gray-500 flex justify-center items-center rounded-lg font-semibold">
+                    {t('Tổng số bản')}: {query?.total ?? 0}
+                  </div>
+                </TooltipCustom>
+
+                <TooltipCustom
+                  titleTooltip={`${t('Đọc tất cả')} ${isDataView}`}
+                  handleClick={() => {
+                    totalNotifcation !== 0 && hendleView();
+                  }}
+                  classNameButton={`shadow-md shadow-gray-400 md:w-auto w-auto ${
+                    totalNotifcation !== 0 ? 'bg-[var(--color-background)]' : 'bg-gray-300'
+                  } p-1 px-2 cursor-pointer rounded-lg text-[10px] md:text-[14px] flex justify-center items-center gap-1`}
+                >
+                  <>
+                    {t('Đọc tất cả')} <Icon name="icon-check" className="h-4 w-4" />
+                  </>
+                </TooltipCustom>
+              </div>
             </div>
           </div>
 

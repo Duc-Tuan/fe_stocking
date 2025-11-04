@@ -1,27 +1,40 @@
+import { PathName } from "../../routes/path";
 import type { IServerTransaction } from "../../types/global";
-import type { ISymbolPosition, Option } from "../History/type";
+import type { Option } from "../History/type";
 
 export interface IOptionDatafunctionBoot {
     active: boolean;
     title: string;
-    type: "transaction" | "history" | "monitor"
+    type: "transaction" | "monitor_acc_boot" | "monitor" | "transaction_acc_monitor";
+    path: string
 }
+
+export const pathBoot = (path: string) => `/${PathName.SYMMETRICAL_ORDER}/${path}`;
 
 export const datafunctionBoot: IOptionDatafunctionBoot[] = [
     {
         active: true,
-        title: "Giao dịch nhanh",
-        type: "transaction"
+        title: "Giao dịch lẻ",
+        type: "transaction",
+        path: PathName.TRANSACTION_BOOT
+    },
+    {
+        active: false,
+        title: "Giao dịch theo thước",
+        type: "transaction_acc_monitor",
+        path: PathName.TRANSACTION_ACC_MONITOR_BOOT
     },
     {
         active: false,
         title: "Lịch sử giao dịch",
-        type: "history"
+        type: "monitor_acc_boot",
+        path: PathName.MONITOR_ACC_BOOT
     },
     {
         active: false,
         title: "Theo dõi tài khoản",
-        type: "monitor"
+        type: "monitor",
+        path: PathName.MONITOR_BOOT
     },
 ]
 
@@ -50,7 +63,27 @@ export interface IOrderSend {
     }
 }
 
+export interface IOrderSendAcc {
+    type: "EXNESS" | "FUND";
+    username: number | undefined;
+    type_acc?: 0 | 1;
+    tp?: number;
+    volume?: number;
+    acc_monitor?: number;
+    data: {
+        symbol: string;
+        volume: number;
+        price: number;
+        tp: number;
+        sl: number;
+        type: OrderType;
+    }[]
+}
+
 export interface IOrderSendResponse extends Option<"EURUSD" | "GBPUSD" | undefined | String | number> {
+    active: boolean,
+}
+export interface IOrderSendAccResponse extends Option<number> {
     active: boolean,
 }
 
@@ -59,6 +92,11 @@ export const dataSymbols: IOrderSendResponse[] = [
     { value: "GBPUSD", label: "GBPUSD", active: false },
     { value: "XAUUSD", label: "XAUUSD", active: false },
     { value: "USDJPY", label: "USDJPY", active: false },
+];
+
+export const dataTypeAcc: IOrderSendAccResponse[] = [
+    { value: 0, label: "Xuôi", active: false },
+    { value: 1, label: "Ngược", active: false },
 ];
 
 export const dataType: IOrderSendResponse[] = [
@@ -88,8 +126,38 @@ export function calculateTpSl(entryPrice: number, pipDistance: number, pair: str
     }
 }
 
+export interface IOrderBoot {
+    account_id: number
+    account_transaction_id: number
+    id: number
+    id_transaction: number
+    lo_boot_id: number
+    order_type: string
+    type: string
+    price: number
+    profit: number
+    sl: number
+    status: string
+    symbol: "EURUSD" | "GBPUSD" | "XAUUSD" | "USDJPY"
+    time: string
+    tp: number
+    type_acc: "FUND" | "EXNESS"
+    user_id: number
+    volume: number
+    price_market: number
+    price_open: number
+}
+
 export interface IBootAcc extends IServerTransaction {
-    orders: ISymbolPosition[]
+    acc_reciprocal: number //tham chiếu
+    acc_reference: number
+    id: number
+    dataOrder: IOrderBoot[]
+    login_id: number
+    time: string
+    type: "RUNNING" | "CLOSE"
+    reciprocal: IServerTransaction
+    reference: IServerTransaction // tham chiếu
 }
 
 export interface ISymbolBoot {
@@ -106,4 +174,41 @@ export interface ISymbolBoot {
     tp: number
     user_id: number
     volume: number
+}
+
+export interface IMonitorBoot {
+    acc_monitor: number
+    acc_reciprocal: number
+    acc_reference: number
+    id: number
+    login_id: number
+    time: string
+    tp_acc_reciprocal: number
+    tp_acc_reference: number
+    type: "RUNNING" | "CLOSE"
+    type_acc_reciprocal: "NGUOC" | "XUOI"
+    type_acc_reference: "XUOI" | "NGUOC"
+    volume: number
+    dataOrder: IOrderBoot[]
+}
+
+export const convertTp = (data: 0 | 1 | undefined, pnl: number | undefined, pip: number) => {
+    switch (data) {
+        case 0:
+            return (pnl ?? 0) + pip;
+        case 1:
+            return (pnl ?? 0) - pip;
+        default:
+            return (pnl ?? 0);
+    }
+}
+
+export const convertData = (data?: any[], type?: 0 | 1) => {
+    return data ? (type === 1 ? data.map((item) => ({
+        ...item,
+        type: (item.type === 'BUY' ? "SELL" : "BUY"),
+    })) : data.map((item) => ({
+        ...item,
+        type: item.type,
+    }))) : [];
 }

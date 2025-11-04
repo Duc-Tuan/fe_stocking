@@ -13,7 +13,7 @@ const initialState: AuthState = {
 
 export const login = createAsyncThunk(
   'auth/login',
-  async ({ username, password, deviceId }: { username: string; password: string, deviceId: string }, thunkAPI) => {
+  async ({ username, password, deviceId }: { username: string; password: string, deviceId: string }) => {
     const res = await loginApi(username, password, deviceId);
     localStorage.setItem('token', res.data.access_token);
     localStorage.setItem('device_id', res.data.deviceId);

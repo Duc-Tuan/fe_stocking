@@ -16,6 +16,7 @@ import { getServer, getServerTransaction, setCurrentPnl } from './store/transact
 import dayjs from 'dayjs';
 import timezone from 'dayjs/plugin/timezone.js';
 import utc from 'dayjs/plugin/utc.js';
+import { getSwapApi } from './api/symbol';
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -31,6 +32,7 @@ function App() {
       dispatch(getMe());
       dispatch(getServer());
       dispatch(getServerTransaction());
+      getSwapApi();
     }
   }, [dispatch]);
 

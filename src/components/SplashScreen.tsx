@@ -42,7 +42,7 @@ export default function SplashScreen() {
                 transition: 'mask 0.05s linear, -webkit-mask 0.05s linear',
             }}
         >
-            <span className="font-dancing-bold text-5xl text-white text-shadow-[var(--color-text-shadown)]">{t("Chào mừng bạn đến với dịch vụ của chúng tôi!")}</span>
+            <span className="font-dancing-bold text-white text-shadow-[var(--color-text-shadown)] md:text-5xl text-[14px]">{t("Chào mừng bạn đến với dịch vụ của chúng tôi!")}</span>
         </div>
     );
 }

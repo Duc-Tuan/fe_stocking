@@ -26,6 +26,18 @@ const settingChildren = [
   element: <SettingTransaction />,
 }));
 
+const bootChildren = [
+  PathName.MONITOR_ACC_BOOT,
+  PathName.TRANSACTION_BOOT,
+  PathName.MONITOR_BOOT,
+  PathName.TRANSACTION_ACC_MONITOR_BOOT,
+  PathName.BOOT_ORDER_DETAIL(),
+  PathName.BOOT_ACC_ORDER_DETAIL(),
+].map((path) => ({
+  path,
+  element: <SymmetricalOrder />,
+}));
+
 const router = createBrowserRouter([
   {
     path: PathName.LOGIN,
@@ -63,6 +75,7 @@ const router = createBrowserRouter([
       {
         path: PathName.SYMMETRICAL_ORDER,
         element: <SymmetricalOrder />,
+        children: bootChildren,
       },
     ],
   },

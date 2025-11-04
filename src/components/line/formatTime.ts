@@ -31,6 +31,6 @@ export interface IDataLine {
 export const covertDataLine = (data: any[]): IDataLine[] => {
     return data.map(item => ({
         time: item.time,
-        value: item.high
+        value: item.close
     }));
 }

@@ -1,27 +1,28 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
 import { Outlet, useNavigate } from 'react-router-dom';
+import { Bounce, ToastContainer, toast as toastNotifi } from 'react-toastify';
 import Icon from '../assets/icon';
 import { logout } from '../auth/authSlice';
-import TooltipCustom from '../components/tooltip';
-import type { AppDispatch } from '../store';
-import FilterServer from './FilterServer';
-import TooltipNavigate from './TooltipNavigate';
-import { dataHeader, dataNotification, dataTabsNotification, timeAgo, type INotifi, type INotification } from './type';
-import { useSocket } from '../hooks/useWebSocket';
-import { useAppInfo } from '../hooks/useAppInfo';
-import { Bounce, ToastContainer, toast as toastNotifi } from 'react-toastify';
-import { useTranslation } from 'react-i18next';
-import { titleSatusLot } from '../pages/Transaction/type';
 import { Button } from '../components/button';
-import { PathName } from '../routes/path';
-import { useClickOutside } from '../hooks/useClickOutside';
+import ComponentEdit from '../components/edit';
 import ScreenOrderSend from '../components/sendOrder';
+import TooltipCustom from '../components/tooltip';
+import { useAppInfo } from '../hooks/useAppInfo';
+import { useClickOutside } from '../hooks/useClickOutside';
+import { useSocket } from '../hooks/useWebSocket';
 import type { Option } from '../pages/History/type';
-import ViewNotification from './screenNotifioction/View';
-import { getNotification, getReadNotifcation, setNotificationView } from '../store/notification/notification';
 import { adjustToUTCPlus7 } from '../pages/Home/options';
 import { pathSetting } from '../pages/Settings/type';
+import { titleSatusLot } from '../pages/Transaction/type';
+import { PathName } from '../routes/path';
+import type { AppDispatch } from '../store';
+import { getNotification, getReadNotifcation, setNotificationView } from '../store/notification/notification';
+import FilterServer from './FilterServer';
+import ViewNotification from './screenNotifioction/View';
+import TooltipNavigate from './TooltipNavigate';
+import { dataHeader, dataTabsNotification, timeAgo, type INotifi } from './type';
 
 export default function DashboardLayout() {
   const { serverMonitorActive } = useAppInfo();
@@ -103,6 +104,7 @@ export default function DashboardLayout() {
             <TooltipNavigate iconName={a.nameIcon} path={a.path} title={a.title} key={a.nameIcon} />
           ))}
           <FilterServer />
+          <ComponentEdit />
         </div>
         <div className="flex flex-wrap gap-2">
           {/* <TooltipCustom classNameButton='shadow-md shadow-gray-500' w="w-[40px]" h='h-[40px]' handleClick={handleClickDownload} loading={loadingDownload} titleTooltip={"Xuất file"}><Icon name="icon-export" className="text-white" width={22} height={22} /></TooltipCustom> */}
@@ -113,7 +115,7 @@ export default function DashboardLayout() {
         </div>
       </header>
       {/* Main Content */}
-      <main className="flex-1 p-4 py-2 md:mt-14 mt-10">
+      <main className="flex-1 p-4 py-2 absolute left-0 right-0 top-[45px] md:top-[56px]">
         <Outlet />
       </main>
 
@@ -358,7 +360,7 @@ const Notification = () => {
 
       {visible && (
         <div
-          className={`overflow-y-scroll my-scroll max-h-[80vh] transition-all duration-200 absolute top-full -right-11 min-w-[420px] mt-2 bg-white shadow-md shadow-gray-500 rounded-lg border border-gray-300 ${
+          className={`overflow-y-scroll my-scroll max-h-[80vh] transition-all duration-200 absolute top-full -right-11 min-w-[380px] md:min-w-[450px] mt-2 bg-white shadow-md shadow-gray-500 rounded-lg border border-gray-300 ${
             open ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
           }`}
         >

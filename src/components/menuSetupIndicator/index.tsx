@@ -11,9 +11,20 @@ type ContextMenuProps = {
   dataMenu: IMenuSub[];
   activate: boolean;
   activateSub?: boolean;
+  showmacdLineMACD?: boolean;
+  showsignalLineMACD?: boolean;
 };
 
-export default function MenuSetupIndicator({ x, y, onClose, dataMenu, activate, activateSub }: ContextMenuProps) {
+export default function MenuSetupIndicator({
+  x,
+  y,
+  onClose,
+  dataMenu,
+  activate,
+  activateSub,
+  showmacdLineMACD,
+  showsignalLineMACD,
+}: ContextMenuProps) {
   const { t } = useTranslation();
   const menuRef = useRef<HTMLDivElement>(null);
   const [coords, setCoords] = useState({ left: x, top: y });
@@ -56,13 +67,21 @@ export default function MenuSetupIndicator({ x, y, onClose, dataMenu, activate, 
             i.onClick();
           }}
           className={`cursor-pointer hover:bg-[var(--color-background-opacity-5)] shadow-none text-black hover:text-white text-left p-1 pl-2 transition-all font-medium rounded-sm ${
-            (i.value === 'activate' && activate) || (activateSub && i.value === 'ADX actiave')
+            (i.value === 'activate' && activate) ||
+            (activateSub && i.value === 'ADX actiave') ||
+            (i.value === 'activate macdLine' && showmacdLineMACD) ||
+            (i.value === 'activate signalLine' && showsignalLineMACD)
               ? 'bg-[var(--color-background)] text-white hover:bg-[var(--color-background)]'
               : ''
           }`}
         >
           {t(i.label)}{' '}
-          {i.value === 'activate' || i.value === 'indication' || i.value === 'ADX actiave' || i.value === 'ADX setting'
+          {i.value === 'activate' ||
+          i.value === 'indication' ||
+          i.value === 'ADX actiave' ||
+          i.value === 'ADX setting' ||
+          i.value === 'activate macdLine' ||
+          i.value === 'activate signalLine'
             ? ''
             : i.value}
         </Button>

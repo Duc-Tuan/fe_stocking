@@ -16,7 +16,8 @@ export const calculateROC = (data: any[], period: number = 14) => {
 
         const value = (!past || !isFinite(past))
             ? 0
-            : ((current - past) / Math.abs(past)) * 100;
+            : ((current - past) / Math.abs(past));
+            //  * 100
         roc.push({ time: data[i].time, value });
     }
 

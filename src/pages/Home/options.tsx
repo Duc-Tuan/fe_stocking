@@ -1,4 +1,4 @@
-import type { ISeriesApi, Time, UTCTimestamp } from 'lightweight-charts';
+import type { Time } from 'lightweight-charts';
 import Icon from '../../assets/icon';
 import type { IOptionsTabsCharts } from '../../types/global';
 
@@ -14,6 +14,11 @@ export interface IinitialDataCand {
   low: number;
   close: number;
   P: number;
+}
+
+export interface IDataCandCompare {
+  sever: number,
+  data: IinitialDataCand[]
 }
 
 export const optionsTabsCharts: IOptionsTabsCharts[] = [
@@ -55,11 +60,14 @@ export const timeOptions = [
   { label: 'M10', seconds: 10 * 60 },
   { label: 'M15', seconds: 15 * 60 },
   { label: 'M30', seconds: 30 * 60 },
-  { label: '1H', seconds: 60 * 60 },
-  { label: '2H', seconds: 2 * 60 * 60 },
-  { label: '4H', seconds: 4 * 60 * 60 },
-  { label: '1D', seconds: 24 * 60 * 60 },
-  { label: '1W', seconds: 7 * 24 * 60 * 60 },
+  { label: 'H1', seconds: 60 * 60 },
+  { label: 'H2', seconds: 2 * 60 * 60 },
+  { label: 'H4', seconds: 4 * 60 * 60 },
+  { label: 'H6', seconds: 6 * 60 * 60 },
+  { label: 'H8', seconds: 8 * 60 * 60 },
+  { label: 'H12', seconds: 12 * 60 * 60 },
+  { label: 'D', seconds: 24 * 60 * 60 },
+  { label: 'W', seconds: 7 * 24 * 60 * 60 },
   { label: 'MN', seconds: 30 * 24 * 60 * 60 },
 ];
 

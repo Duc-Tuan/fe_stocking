@@ -3,8 +3,7 @@ export interface IPagination {
     limit: number;
     totalPage?: number;
     total?: number;
-    last_time?: string;
-    has_more?: boolean;
+    is_last_page?: boolean;
     timeframe?: string | "M1" | "M5" | "M10" | "M15" | "M30" | "1H" | "2H" | "4H" | "1D" | "1W" | "MN";
 }
 
@@ -22,6 +21,7 @@ export interface IOptionsTabsCharts {
 export interface IOptions<T = string> {
     value: string,
     label: T,
+    active?: boolean,
     data?: any
 }
 
@@ -34,6 +34,31 @@ export interface ICurrentPnl {
     time: string,
     total_pnl: number
     id_symbol: string
+    statistical: IStatistical[]
+}
+
+export interface IStatistical {
+    best_day: string
+    best_day_change: number
+    best_month: string
+    best_month_change: number
+    best_week: string
+    best_week_change: number
+    day_max: number
+    day_min: number
+    id: number
+    login: number
+    month_max: number
+    month_min: number
+    time: string
+    week_max: number
+    week_min: number
+    worst_day: string
+    worst_day_change: number
+    worst_month: string
+    worst_month_change: number
+    worst_week: string
+    worst_week_change: number
 }
 
 export interface IServerTransaction {
@@ -48,7 +73,7 @@ export interface IServerTransaction {
     server: string,
     loginId: number,
     risk: number | null,
-    type_acc: "QUY" | "USD" | "COPY" | "DEPOSIT" | "RECIPROCAL" | "COM" | "VAY" | "SWWING",
+    type_acc: "QUY" | "USD" | "COPY" | "DEPOSIT" | "RECIPROCAL" | "RECIPROCAL_ACC" | "COM" | "VAY" | "SWWING" | "DEMO",
     monney_acc: number,
     daily_risk: number
 }
@@ -84,6 +109,7 @@ export interface ISetupIndicator {
     isOpen: boolean,
     period: number | undefined,
     periodADX?: number | undefined,
+    periodEMA?: number | undefined,
 }
 
 export const initSetupIndicator: ISetupIndicator = {
@@ -93,6 +119,7 @@ export const initSetupIndicator: ISetupIndicator = {
     period: undefined,
     outerLines: undefined,
     periodADX: undefined,
+    periodEMA: undefined,
 }
 
 export const initSetupIndicatorRSI: ISetupIndicator = {
@@ -107,6 +134,14 @@ export const initSetupIndicatorRSI: ISetupIndicator = {
 export const initSetupIndicatorADR: ISetupIndicator = {
     isOpen: false,
     period: 14,
+    innerLines: [0.3, 0],
+    midline: 0.22,
+    outerLines: [0.2, 0.2]
+}
+export const initSetupIndicatorMACD: ISetupIndicator = {
+    isOpen: false,
+    period: 26,
+    periodEMA: 12,
     innerLines: [0.3, 0],
     midline: 0.22,
     outerLines: [0.2, 0.2]

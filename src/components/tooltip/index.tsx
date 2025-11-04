@@ -21,7 +21,7 @@ export default function TooltipCustom({ placement = "bottom", children, titleToo
         <Tooltip
             className="z-50 bg-transparent"
             content={
-                <div className="text-[var(--color-text)] bg-[var(--color-background)] rounded-lg py-1 px-2">
+                <div className="text-[var(--color-text)] bg-[var(--color-background)] rounded-sm py-1 px-2">
                     {(typeof titleTooltip === 'string') ? t(titleTooltip.toString()) : titleTooltip}
                 </div>
             }
@@ -31,7 +31,7 @@ export default function TooltipCustom({ placement = "bottom", children, titleToo
                 disabled={loading}
                 onClick={handleClick}
                 isLoading={loading}
-                className={`flex justify-center items-center rounded-lg text-[var(--color-text)] bg-[var(--color-background)] active cursor-pointer p-0 md:h-[36px] md:w-[36px] w-[28px] h-[28px] ${classNameButton}`}
+                className={`flex justify-center items-center rounded-lg text-[var(--color-text)] bg-[var(--color-background)] active cursor-pointer p-0 md:h-[36px] md:w-[36px] w-[32px] h-[32px] ${classNameButton}`}
                 aria-current="page"
             >
                 {loading ? <LoadingOnly /> : children}

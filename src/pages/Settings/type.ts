@@ -157,8 +157,13 @@ export const dataTypeAccTransaction: (name: string) => IChangColor[] = (name: st
         },
         {
             active: false,
-            label: "Đối ứng",
+            label: "Đối ứng lệnh",
             value: "RECIPROCAL"
+        },
+        {
+            active: false,
+            label: "Đối ứng thước",
+            value: "RECIPROCAL_ACC"
         },
         {
             active: false,
@@ -169,6 +174,11 @@ export const dataTypeAccTransaction: (name: string) => IChangColor[] = (name: st
             active: false,
             label: "Swwing",
             value: "SWWING"
+        },
+        {
+            active: false,
+            label: "Demo",
+            value: "DEMO"
         },
     ]
 
@@ -206,8 +216,13 @@ export const dataTabsAccTransaction: IChangColor[] = [
     },
     {
         active: false,
-        label: "Đối ứng",
+        label: "Đối ứng lệnh",
         value: "RECIPROCAL"
+    },
+    {
+        active: false,
+        label: "Đối ứng thước",
+        value: "RECIPROCAL_ACC"
     },
     {
         active: false,
@@ -223,6 +238,11 @@ export const dataTabsAccTransaction: IChangColor[] = [
         active: false,
         label: "Swwing",
         value: "SWWING"
+    },
+    {
+        active: false,
+        label: "Demo",
+        value: "DEMO"
     },
 ]
 

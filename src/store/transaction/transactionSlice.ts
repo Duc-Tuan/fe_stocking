@@ -22,7 +22,7 @@ const initialState: AuthState = {
 
 export const getServer = createAsyncThunk('server/getServer', async () => {
     const res = await serverSymbolApi();
-    const dataNew = res.map((a: any, i: number) => ({
+    const dataNew = res.map((a: any, _i: number) => ({
         value: a.username,
         label: a.server,
         data: JSON.parse(a.by_symbol)
@@ -40,6 +40,7 @@ const transactionSlice = createSlice({
     reducers: {
         setServerMonitor(state, action) {
             state.serverMonitorActive = action.payload
+            state.currentPnl = null
         },
         setCurrentPnl(state, action) {
             state.currentPnl = action.payload
