@@ -97,14 +97,17 @@ export default function TransactionPage() {
   }, [serverMonitorActive, pnl, stopLoss, takeProfit]);
 
   const handleSendOrder = (type?: IStatus_sl_tp) => {
-    let by_symbols: any = currentPnl?.by_symbol?.map((a) => ({ ...a, type: a.type.toUpperCase() }));
-    if (
-      type === 'Nguoc_Limit' ||
-      type === 'Nguoc_Stop' ||
-      data?.status_sl_tp === 'Nguoc_Limit' ||
-      data?.status_sl_tp === 'Nguoc_Stop'
-    ) {
-      by_symbols = currentPnl?.by_symbol?.map((a) => ({ ...a, type: a.type.toUpperCase() === 'BUY' ? 'SELL' : 'BUY' }));
+    const dataSymbol = currentPnl?.by_symbol;
+    let by_symbols: any = dataSymbol?.map((a) => ({ ...a, type: a.type.toUpperCase() }));
+
+    const isCheck = type
+      ? type === 'Nguoc_Limit' || type === 'Nguoc_Stop'
+      : data?.status_sl_tp === 'Nguoc_Limit' || data?.status_sl_tp === 'Nguoc_Stop';
+
+    if (isCheck) {
+      by_symbols = by_symbols?.map((a: any) => ({ ...a, type: a.type.toUpperCase() === 'BUY' ? 'SELL' : 'BUY' }));
+    } else {
+      by_symbols = dataSymbol;
     }
 
     setData((prev) => ({ ...prev, status_sl_tp: type ? type : data?.status_sl_tp, by_symbol: by_symbols }));
