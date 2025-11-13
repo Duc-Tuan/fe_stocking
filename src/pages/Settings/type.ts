@@ -3,7 +3,7 @@ import type { Option } from "../History/type";
 
 export interface IDatafunction {
     title: string;
-    type: "Info" | "Acc_tracking" | "Acc_transaction" | "Language" | "Email" | "Notifition"
+    type: "Info" | "Acc_tracking" | "Acc_transaction" | "Language" | "Email" | "Notifition" | "Decentralization"
 }
 
 export interface IOptionDatafunctionSetting extends IDatafunction {
@@ -53,6 +53,12 @@ export const datafunctionSetting: IOptionDatafunctionSetting[] = [
         title: "Thông báo",
         type: "Notifition",
         path: PathName.NOTIFICATION
+    },
+    {
+        active: false,
+        title: "Phân quyền",
+        type: "Decentralization",
+        path: PathName.DECENTRAIZATION
     },
 ]
 
@@ -206,6 +212,11 @@ export const dataTabsAccTransaction: IChangColor[] = [
     },
     {
         active: false,
+        label: "Demo",
+        value: "DEMO"
+    },
+    {
+        active: false,
         label: "CopyTrade",
         value: "COPY"
     },
@@ -238,12 +249,25 @@ export const dataTabsAccTransaction: IChangColor[] = [
         active: false,
         label: "Swwing",
         value: "SWWING"
-    },
-    {
-        active: false,
-        label: "Demo",
-        value: "DEMO"
-    },
+    }
 ]
 
-// swing - vây
+export interface IDataUser {
+    id: number
+    isMonitor: number
+    isTransaction: number
+    role: string
+    username: string
+}
+
+export interface IDetailUser {
+    id: number
+    role: string
+    username: string
+    viewAccMonitor: {
+        id: number, account_mt5_id: number
+    }[]
+    viewAccTransaction: {
+        id: number, acc_transaction_id: number
+    }[]
+}

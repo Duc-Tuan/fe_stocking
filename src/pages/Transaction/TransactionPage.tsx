@@ -1,5 +1,5 @@
 import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react';
-import React, { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
+import React, { use, useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { postSendOrder } from '../../api/historys';
@@ -37,7 +37,7 @@ const init: IOrderTransaction = {
 };
 
 export default function TransactionPage() {
-  const { serverMonitorActive, dataServerTransaction } = useAppInfo();
+  const { serverMonitorActive, dataServerTransaction, user } = useAppInfo();
   const { t } = useTranslation();
   const { currentPnl } = useCurrentPnl();
   const [open, setOpen] = useState(false);
@@ -48,6 +48,15 @@ export default function TransactionPage() {
   const [mess, setMess] = useState<string>('');
   const [dataAccTransaction, setDatAccTransaction] = useState<IServerTransaction[]>([]);
   const [selectTypeAcc, setSelecTypeAcc] = useState<IOptionTypeAcc[]>(dataSelectTypeAcc);
+
+  useEffect(() => {
+    const filteredTabs =
+      user?.role === 200
+        ? dataSelectTypeAcc // admin thấy tất cả
+        : dataSelectTypeAcc.slice(1, 2).map((i) => ({ ...i, actiavte: true })); // user bình thường chỉ thấy 3 tab đầu
+
+    setSelecTypeAcc(filteredTabs);
+  }, [user]);
 
   useEffect(() => {
     const dataNew = dataServerTransaction.filter((i) => i.type_acc === selectTypeAcc.find((a) => a.actiavte)?.value);
@@ -151,26 +160,28 @@ export default function TransactionPage() {
 
   return (
     <div className="flex justify-center items-center mt-0 md:mt-20 ">
-      <div className="absolute top-2 left-4 md:left-8 xl:left-4 grid grid-cols-5 gap-2">
-        {selectTypeAcc.map((i) => (
-          <TooltipCustom
-            key={i.value}
-            placement="top"
-            titleTooltip={i.title}
-            handleClick={() => {
-              setData((prev) => ({ ...prev, account_transaction_id: undefined, IsUSD: false }));
-              setSelecTypeAcc((prev) => prev.map((a) => ({ ...a, actiavte: a.value === i.value })));
-            }}
-            classNameButton={`md:w-auto w-auto px-1.5 py-0 shadow-md shadow-gray-500 text-sm ${
-              i.actiavte
-                ? 'bg-[var(--color-background)]'
-                : 'bg-white text-black hover:bg-[var(--color-background-opacity-2)] hover:text-[var(--color-background)]'
-            }`}
-          >
-            <div className="">{t(i.label).toLocaleUpperCase()}</div>
-          </TooltipCustom>
-        ))}
-      </div>
+      {user?.role === 200 && (
+        <div className="absolute top-2 left-4 md:left-8 xl:left-4 grid grid-cols-5 gap-2">
+          {selectTypeAcc.map((i) => (
+            <TooltipCustom
+              key={i.value}
+              placement="top"
+              titleTooltip={i.title}
+              handleClick={() => {
+                setData((prev) => ({ ...prev, account_transaction_id: undefined, IsUSD: false }));
+                setSelecTypeAcc((prev) => prev.map((a) => ({ ...a, actiavte: a.value === i.value })));
+              }}
+              classNameButton={`md:w-auto w-auto px-1.5 py-0 shadow-md shadow-gray-500 text-sm ${
+                i.actiavte
+                  ? 'bg-[var(--color-background)]'
+                  : 'bg-white text-black hover:bg-[var(--color-background-opacity-2)] hover:text-[var(--color-background)]'
+              }`}
+            >
+              <div className="">{t(i.label).toLocaleUpperCase()}</div>
+            </TooltipCustom>
+          ))}
+        </div>
+      )}
 
       <div className="w-full max-w-4xl p-0 md:p-4 space-y-4 mt-10 md:mt-0">
         {/* Header */}

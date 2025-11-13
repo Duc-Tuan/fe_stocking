@@ -10,14 +10,17 @@ import Notifition from './Screens/Notifition';
 import { datafunctionSetting, pathSetting, type IOptionDatafunctionSetting } from './type';
 import { PathName } from '../../routes/path';
 import { useNavigate } from 'react-router-dom';
+import Decentralization from './Screens/Decentralization';
+import { useAppInfo } from '../../hooks/useAppInfo';
 
 export default function SettingTransaction() {
   const { t } = useTranslation();
-  const [data, setData] = useState<IOptionDatafunctionSetting[]>(datafunctionSetting);
+  const { user } = useAppInfo();
   const [highlightStyle, setHighlightStyle] = useState({ top: 0, height: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const href = window.location.pathname;
+  const [data, setData] = useState<IOptionDatafunctionSetting[]>(datafunctionSetting);
 
   const moveHighlight = (index: number) => {
     if (!containerRef.current) return;
@@ -64,11 +67,14 @@ export default function SettingTransaction() {
       case 'Notifition':
         content = <Notifition />;
         break;
+      case 'Decentralization':
+        content = <Decentralization />;
+        break;
       default:
         null;
     }
     return (
-      <div key={activeType?.type} className="animate-fade-in">
+      <div key={activeType?.type} className="animate-fade-in h-full">
         {content}
       </div>
     );
@@ -76,6 +82,7 @@ export default function SettingTransaction() {
 
   useEffect(() => {
     const notificationBase = PathName.NOTIFICATION_DETAIL().replace('/:id', '');
+    const DecentralizationBase = PathName.DECENTRAIZATION_DETAIL().replace('/:id', '');
 
     switch (true) {
       case href.startsWith(notificationBase):
@@ -97,6 +104,10 @@ export default function SettingTransaction() {
         break;
       case href === pathSetting(PathName.EMAIL):
         handlelick(data[4], 4, false);
+        break;
+      case href.startsWith(DecentralizationBase):
+      case href === pathSetting(PathName.DECENTRAIZATION):
+        handlelick(data[6], 6, false);
         break;
       default:
         break;

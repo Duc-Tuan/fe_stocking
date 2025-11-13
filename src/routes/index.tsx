@@ -20,7 +20,9 @@ const settingChildren = [
   PathName.ACCTRANSACTION,
   PathName.LANGUAGE,
   PathName.INFOACC,
+  PathName.DECENTRAIZATION,
   PathName.NOTIFICATION_DETAIL(),
+  PathName.DECENTRAIZATION_DETAIL(),
 ].map((path) => ({
   path,
   element: <SettingTransaction />,

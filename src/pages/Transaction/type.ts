@@ -145,6 +145,12 @@ export const dataSelectTypeAcc: IOptionTypeAcc[] = [
     },
     {
         actiavte: false,
+        label: "DEMO",
+        value: "DEMO",
+        title: "Tài khoản giao dịch demo"
+    },
+    {
+        actiavte: false,
         label: "COPY",
         value: "COPY",
         title: "Tài khoản giao dịch copy"
@@ -155,10 +161,10 @@ export const dataSelectTypeAcc: IOptionTypeAcc[] = [
         value: "DEPOSIT",
         title: "Tài khoản giao dịch ký gửi"
     },
-    {
-        actiavte: false,
-        label: "COM",
-        value: "COM",
-        title: "Tài khoản giao dịch com"
-    },
+    // {
+    //     actiavte: false,
+    //     label: "COM",
+    //     value: "COM",
+    //     title: "Tài khoản giao dịch com"
+    // },
 ]

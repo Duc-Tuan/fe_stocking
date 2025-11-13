@@ -1,6 +1,7 @@
 export interface IPagination {
     page?: number;
     limit: number;
+    search?: string;
     totalPage?: number;
     total?: number;
     is_last_page?: boolean;
@@ -23,6 +24,7 @@ export interface IOptions<T = string> {
     label: T,
     active?: boolean,
     data?: any
+    id?: number
 }
 
 export interface ICurrentPnl {

@@ -9,7 +9,7 @@ import ViewAccTransaction from './ViewAccTransaction';
 
 export default function AccTransaction() {
   const { t } = useTranslation();
-  const { dataServerTransaction, loadingserverTransaction } = useAppInfo();
+  const { dataServerTransaction, loadingserverTransaction, user } = useAppInfo();
   const [dataRisk, setDataRisk] = useState<IOptionAccTransaction[]>([]);
   const [dataDailtRisk, setDataDailyRisk] = useState<IOptionAccTransaction[]>([]);
 
@@ -27,11 +27,12 @@ export default function AccTransaction() {
   };
 
   const fetchDailyRisk = async () => {
-    const req = await getSettingDailyNotificationApi({ page: 1, limit: 20 });
-    const data = req.data.map((i: any) => {
+    const req: any = await getSettingDailyNotificationApi({ page: 1, limit: 20 });
+
+    const dataConvert = req.data.map((i: any) => {
       return { active: false, label: String(i.risk), value: i?.id };
     });
-    setDataDailyRisk(data);
+    setDataDailyRisk(dataConvert);
   };
 
   useEffect(() => {
@@ -62,6 +63,15 @@ export default function AccTransaction() {
   }, [activeIdx, tabs]);
 
   const activeType = tabs.find((d) => d.active);
+
+  useEffect(() => {
+    const filteredTabs =
+      user?.role === 200
+        ? dataTabsAccTransaction // admin thấy tất cả
+        : dataTabsAccTransaction.filter(i => i.value === 'USD').map(i => ({...i, active: true})); // user bình thường chỉ thấy 3 tab đầu
+
+    setTabs(filteredTabs);
+  }, [user]);
 
   const screen = useMemo(() => {
     let content: React.ReactNode;
@@ -166,7 +176,7 @@ export default function AccTransaction() {
         );
         break;
     }
-    
+
     return (
       <div key={activeType?.value} className="animate-fade-in w-full grid grid-cols-2 gap-2">
         {content}
@@ -203,40 +213,45 @@ export default function AccTransaction() {
 
   return (
     <div className="">
-      <div className="flex justify-start items-center p-2 pb-0 sticky top-0 bg-white z-20 shadow overflow-x-auto" ref={containerRef}>
-        {tabs.map((d, idx) => {
-          return (
-            <Button
-              id="button-history"
-              onClick={() => handlelick(d, idx, d.active)}
-              key={d.value}
-              className={`${idx !== tabs.length && idx !== 0 ? 'right-line' : ''} ${
-                d.active ? 'text-[var(--color-background)]' : 'text-black hover:text-[var(--color-background)]'
-              } hover:bg-[var(--color-background-opacity-2)] cursor-pointer shadow-none px-3 py-1 md:px-4 md:py-3 text-[10px] md:text-[14px] text-center rounded-none flex justify-center items-center gap-1 min-w-[140px] md:min-w-auto min-h-[40px] md:min-h-auto`}
-            >
-              {t(d.label)}
-              <span
-                className={`h-4 ${
-                  readAccTransaction(d.value) > 100 ? 'w-6' : 'w-4'
-                }  bg-[var(--color-background)] text-white rounded-xl flex justify-center items-center text-[10px]`}
-              >
-                {readAccTransaction(d.value) > 100 ? '+99' : readAccTransaction(d.value)}
-              </span>
-            </Button>
-          );
-        })}
-
-        {/* underline indicator */}
+      {user?.role === 200 && (
         <div
-          className="absolute bottom-0 h-[calc(100%-8px)] bg-[var(--color-background-opacity-1)] transition-all duration-300"
-          style={{
-            left: indicatorStyle.left,
-            width: indicatorStyle.width,
-          }}
+          className="flex justify-start items-center p-2 pb-0 sticky top-0 bg-white z-20 shadow overflow-x-auto"
+          ref={containerRef}
         >
-          <div className="w-full h-[3px] bg-[var(--color-background)] absolute bottom-0" />
+          {tabs.map((d, idx) => {
+            return (
+              <Button
+                id="button-history"
+                onClick={() => handlelick(d, idx, d.active)}
+                key={d.value}
+                className={`${idx !== tabs.length && idx !== 0 ? 'right-line' : ''} ${
+                  d.active ? 'text-[var(--color-background)]' : 'text-black hover:text-[var(--color-background)]'
+                } hover:bg-[var(--color-background-opacity-2)] cursor-pointer shadow-none px-3 py-1 md:px-4 md:py-3 text-[10px] md:text-[14px] text-center rounded-none flex justify-center items-center gap-1 min-w-[140px] md:min-w-auto min-h-[40px] md:min-h-auto`}
+              >
+                {t(d.label)}
+                <span
+                  className={`h-4 ${
+                    readAccTransaction(d.value) > 100 ? 'w-6' : 'w-4'
+                  }  bg-[var(--color-background)] text-white rounded-xl flex justify-center items-center text-[10px]`}
+                >
+                  {readAccTransaction(d.value) > 100 ? '+99' : readAccTransaction(d.value)}
+                </span>
+              </Button>
+            );
+          })}
+
+          {/* underline indicator */}
+          <div
+            className="absolute bottom-0 h-[calc(100%-8px)] bg-[var(--color-background-opacity-1)] transition-all duration-300"
+            style={{
+              left: indicatorStyle.left,
+              width: indicatorStyle.width,
+            }}
+          >
+            <div className="w-full h-[3px] bg-[var(--color-background)] absolute bottom-0" />
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="p-2 mt-2">{loadingserverTransaction ? <Loading /> : screen}</div>
     </div>

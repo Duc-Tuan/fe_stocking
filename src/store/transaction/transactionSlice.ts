@@ -23,6 +23,7 @@ const initialState: AuthState = {
 export const getServer = createAsyncThunk('server/getServer', async () => {
     const res = await serverSymbolApi();
     const dataNew = res.map((a: any, _i: number) => ({
+        id: a.id,
         value: a.username,
         label: a.server,
         data: JSON.parse(a.by_symbol)

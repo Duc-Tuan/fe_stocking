@@ -282,7 +282,7 @@ export default function HomePage() {
 
   useEffect(() => {
     let ignore = false;
-    if (serverMonitorActive?.value && !pagination.is_last_page && !isFetchingRef.current) {
+    if (serverMonitorActive?.value && !pagination.is_last_page && !isFetchingRef.current && pageChart !== pagePrev.current) {
       (async () => {
         isFetchingRef.current = true;
         try {
