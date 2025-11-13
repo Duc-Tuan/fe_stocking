@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import Icon from '../../../assets/icon';
 import { Button } from '../../../components/button';
-import type { IServerTransaction } from '../../../types/global';
-import type { IOrderSend, IOrderSendAcc } from '../type';
 import { useClickOutside } from '../../../hooks/useClickOutside';
+import type { IServerTransaction } from '../../../types/global';
+import type { IOrderSendAcc } from '../type';
 
 interface IData extends IServerTransaction {
   active: boolean;

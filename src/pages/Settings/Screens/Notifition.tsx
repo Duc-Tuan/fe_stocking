@@ -17,6 +17,7 @@ import type { QueryLots } from '../../../types/global';
 import type { Option } from '../../History/type';
 import { getNotificationId, pathSetting } from '../type';
 import DetailNotification from './DetailNotification';
+import NotDecent from '../../../components/notDecent';
 
 const initPara: QueryLots = {
   page: 1,
@@ -29,7 +30,7 @@ const initPara: QueryLots = {
 
 export default function Notifition() {
   const { t } = useTranslation();
-  const { notificationReducer, totalNotifcation, pagani, loadingNotification } = useAppInfo();
+  const { notificationReducer, totalNotifcation, pagani, loadingNotification, user } = useAppInfo();
   const [dataCurrent, setDataCurrent] = useState<INotifi>();
   const [openModal, setOpenModal] = useState(false);
   const dispatch = useDispatch<AppDispatch>();
@@ -149,7 +150,7 @@ export default function Notifition() {
     }));
   }, [pagani]);
 
-  return (
+  return user?.role === 200 ? (
     <>
       {isDetail ? (
         <DetailNotification handlelick={hendleView} />
@@ -260,5 +261,7 @@ export default function Notifition() {
 
       <ScreenOrderSend open={openModal} setOpen={setOpenModal} data={dataCurrent} setDataCurrent={setDataCurrent} />
     </>
+  ) : (
+    <NotDecent />
   );
 }

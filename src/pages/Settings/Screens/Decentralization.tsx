@@ -45,19 +45,21 @@ function Decentralization() {
   const [open, setOpen] = useState<boolean>(false);
   const href = window.location.pathname;
 
+  const fetch = async () => {
+    if (user?.role === 200) {
+      setLoading(true);
+      await getUserApi({ limit: query.limit, page: query.page, search: query.search })
+        .then((i) => {
+          setQuery((prev) => ({ ...prev, is_last_page: i.is_last_page, total: i.total }));
+          setData(i.data);
+        })
+        .finally(() => setLoading(false));
+    }
+  };
+
   useEffect(() => {
-    (async () => {
-      if (user?.role === 200) {
-        setLoading(true);
-        await getUserApi({ limit: query.limit, page: query.page, search: query.search })
-          .then((i) => {
-            setQuery((prev) => ({ ...prev, is_last_page: i.is_last_page, total: i.total }));
-            setData(i.data);
-          })
-          .finally(() => setLoading(false));
-      }
-    })();
-  }, [query.page, query.search, user]);
+    fetch();
+  }, [query.page, query.search]);
 
   useEffect(() => {
     const id = getNotificationId(href, PathName.DECENTRAIZATION_DETAIL());
@@ -134,7 +136,7 @@ const ViewItem = ({ data, setIsDetail }: { data: IDataUser; setIsDetail: Dispatc
         </div>
         <div className="flex justify-start items-center gap-2">
           <div className="text-[14px] md:text-base">{t('Quyền TKTD')}:</div>
-          <div className="font-semibold">{data.isTransaction}</div>
+          <div className="font-semibold">{data.isMonitor}</div>
         </div>
       </div>
     </div>
@@ -160,6 +162,19 @@ const DetailView = ({
 
   const handleClickAccMonitor = (isCheck: boolean, id_acc_monitor: number) => {
     const idViewAccMonitor = data?.viewAccMonitor.find((i) => i.account_mt5_id === id_acc_monitor)?.id;
+
+    setDataUser((prev) =>
+      prev.map((i) => {
+        if (i.id === Number(id)) {
+          return {
+            ...i,
+            isMonitor: isCheck ? i.isMonitor + 1 : i.isMonitor - 1,
+          };
+        }
+        return i;
+      }),
+    );
+
     if (isCheck) {
       postDecentralozitionAccMonitor({ user_id: Number(id), account_id: id_acc_monitor })
         .then((res) => {
@@ -187,6 +202,19 @@ const DetailView = ({
 
   const handleClickAccTransaction = (isCheck: boolean, id_acc_transaction: number) => {
     const idViewAccMonitor = data?.viewAccTransaction.find((i) => i.acc_transaction_id === id_acc_transaction)?.id;
+
+    setDataUser((prev) =>
+      prev.map((i) => {
+        if (i.id === Number(id)) {
+          return {
+            ...i,
+            isTransaction: isCheck ? i.isTransaction + 1 : i.isTransaction - 1,
+          };
+        }
+        return i;
+      }),
+    );
+
     if (isCheck) {
       postDecentralozitionAccTransaction({ user_id: Number(id), account_id: id_acc_transaction })
         .then((res) => {

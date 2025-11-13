@@ -23,25 +23,12 @@ import FilterServer from './FilterServer';
 import ViewNotification from './screenNotifioction/View';
 import TooltipNavigate from './TooltipNavigate';
 import { dataHeader, dataTabsNotification, timeAgo, type INotifi } from './type';
+import NotDecent from '../components/notDecent';
 
 export default function DashboardLayout() {
-  const { serverMonitorActive } = useAppInfo();
+  const { serverMonitorActive, user } = useAppInfo();
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
-
-  // const handleClickDownload = async () => {
-  //     if (!loadingDownload) {
-  //         try {
-  //             setLoadingDownload(true)
-  //             await downloadFileExApi()
-  //             return toast.success('Tải file xuống thành công!');
-  //         } catch (error) {
-  //             return toast.error('Tải file xuống thất bại!');
-  //         } finally {
-  //             setLoadingDownload(false)
-  //         }
-  //     }
-  // }
 
   const handleLogout = () => {
     dispatch(logout());
@@ -96,11 +83,17 @@ export default function DashboardLayout() {
     dispatch(getNotification({ page: 1, limit: 10 }));
   }, []);
 
+  useEffect(() => {}, [user]);
+
+  const dataHeaderConvert = useMemo(() => {
+    return user?.role === 200 ? dataHeader : dataHeader.slice(0, 4);
+  }, [user]);
+
   return (
     <div>
       <header className="w-full px-4 md:pt-3 py-2 flex justify-between items-center fixed top-0 backdrop-blur-2xl z-50">
         <div className="flex gap-2">
-          {dataHeader.map((a) => (
+          {dataHeaderConvert.map((a) => (
             <TooltipNavigate iconName={a.nameIcon} path={a.path} title={a.title} key={a.nameIcon} />
           ))}
           <FilterServer />
@@ -193,7 +186,7 @@ const Notification = () => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [visible, setVisible] = useState(false); // để delay unmount
-  const { notificationReducer, totalNotifcation } = useAppInfo();
+  const { notificationReducer, totalNotifcation, user } = useAppInfo();
   const [openModal, setOpenModal] = useState(false);
   const [dataCurrent, setDataCurrent] = useState<INotifi>();
   const navigate = useNavigate();
@@ -364,53 +357,63 @@ const Notification = () => {
             open ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
           }`}
         >
-          <div className="flex justify-between items-center gap-1 sticky top-0 right-0 left-0 bg-white z-10 p-2 pb-0">
-            <div className="flex justify-start items-center" ref={containerRef}>
-              {tabs.map((d, idx) => {
-                return (
-                  <Button
-                    id="button-history"
-                    onClick={() => handlelick(d, idx, d.active)}
-                    key={d.value}
-                    className={`${idx !== tabs.length && idx !== 0 ? 'right-line' : ''} ${
-                      d.active ? 'text-[var(--color-background)]' : 'text-black hover:text-[var(--color-background)]'
-                    } hover:bg-[var(--color-background-opacity-2)] cursor-pointer shadow-none p-2 mb-1 text-[10px] md:text-[14px] text-center rounded-none flex justify-center items-center gap-1`}
-                  >
-                    {t(d.label)}{' '}
-                    <span
-                      className={`h-4 ${
-                        readNotification(d.value) > 100 ? 'w-6' : 'w-4'
-                      }  bg-[var(--color-background)] text-white rounded-xl flex justify-center items-center text-[10px]`}
-                    >
-                      {readNotification(d.value) > 100 ? '+99' : readNotification(d.value)}
-                    </span>
-                  </Button>
-                );
-              })}
+          {user?.role === 200 ? (
+            <>
+              <div className="flex justify-between items-center gap-1 sticky top-0 right-0 left-0 bg-white z-10 p-2 pb-0">
+                <div className="flex justify-start items-center" ref={containerRef}>
+                  {tabs.map((d, idx) => {
+                    return (
+                      <Button
+                        id="button-history"
+                        onClick={() => handlelick(d, idx, d.active)}
+                        key={d.value}
+                        className={`${idx !== tabs.length && idx !== 0 ? 'right-line' : ''} ${
+                          d.active
+                            ? 'text-[var(--color-background)]'
+                            : 'text-black hover:text-[var(--color-background)]'
+                        } hover:bg-[var(--color-background-opacity-2)] cursor-pointer shadow-none p-2 mb-1 text-[10px] md:text-[14px] text-center rounded-none flex justify-center items-center gap-1`}
+                      >
+                        {t(d.label)}{' '}
+                        <span
+                          className={`h-4 ${
+                            readNotification(d.value) > 100 ? 'w-6' : 'w-4'
+                          }  bg-[var(--color-background)] text-white rounded-xl flex justify-center items-center text-[10px]`}
+                        >
+                          {readNotification(d.value) > 100 ? '+99' : readNotification(d.value)}
+                        </span>
+                      </Button>
+                    );
+                  })}
 
-              {/* underline indicator */}
-              <div
-                className="absolute bottom-0.5 h-[2px] bg-[var(--color-background)] transition-all duration-300"
-                style={{
-                  left: indicatorStyle.left,
-                  width: indicatorStyle.width,
-                }}
-              />
+                  {/* underline indicator */}
+                  <div
+                    className="absolute bottom-0.5 h-[2px] bg-[var(--color-background)] transition-all duration-300"
+                    style={{
+                      left: indicatorStyle.left,
+                      width: indicatorStyle.width,
+                    }}
+                  />
+                </div>
+
+                <Button
+                  onClick={() => {
+                    totalNotifcation !== 0 && hendleView();
+                  }}
+                  className={`${
+                    totalNotifcation !== 0 ? 'bg-[var(--color-background)]' : 'bg-gray-300'
+                  } p-1 px-2 cursor-pointer rounded-md text-[10px] md:text-[14px] flex justify-center items-center gap-1`}
+                >
+                  {t('Đọc tất cả')} {totalNotifcation} <Icon name="icon-check" className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <div className="relative w-full p-2 pb-0 pr-1">{screen}</div>
+            </>
+          ) : (
+            <div className="h-60">
+              <NotDecent />
             </div>
-
-            <Button
-              onClick={() => {
-                totalNotifcation !== 0 && hendleView();
-              }}
-              className={`${
-                totalNotifcation !== 0 ? 'bg-[var(--color-background)]' : 'bg-gray-300'
-              } p-1 px-2 cursor-pointer rounded-md text-[10px] md:text-[14px] flex justify-center items-center gap-1`}
-            >
-              {t('Đọc tất cả')} {totalNotifcation} <Icon name="icon-check" className="h-4 w-4" />
-            </Button>
-          </div>
-
-          <div className="relative w-full p-2 pb-0 pr-1">{screen}</div>
+          )}
         </div>
       )}
 

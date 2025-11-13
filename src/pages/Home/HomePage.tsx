@@ -185,8 +185,8 @@ export default function HomePage() {
   const [dataReq, setDataReq] = useState<any[]>([]);
   const [dataCompare, setDataCompare] = useState<IOptions<string>[]>([]);
 
-  const [pageChart, setPageChart] = useState<number>(1)
-  const [applyNumberCandle, setApplyNumberCandle] = useState<number>(100)
+  const [pageChart, setPageChart] = useState<number>(1);
+  const [applyNumberCandle, setApplyNumberCandle] = useState<number>(100);
 
   useEffect(() => {
     setIndicator((prev) =>
@@ -260,11 +260,15 @@ export default function HomePage() {
     }
   }, [currentPnl]);
 
-  const { dataCompareSocket } = useSocket(import.meta.env.VITE_URL_API, 'data_compare_socket', symbolsCandCompare[0]?.sever);
+  const { dataCompareSocket } = useSocket(
+    import.meta.env.VITE_URL_API,
+    'data_compare_socket',
+    symbolsCandCompare[0]?.sever,
+  );
 
   useEffect(() => {
     if (dataCompareSocket) {
-      setSymbolsCandCompareSocket(dataCompareSocket)
+      setSymbolsCandCompareSocket(dataCompareSocket);
     }
   }, [dataCompareSocket]);
 
@@ -274,15 +278,20 @@ export default function HomePage() {
     setSymbolsCand(dataNew);
   }, [symbolsCandSocket]);
 
-  const pagePrev = useRef<number>(1)
+  const pagePrev = useRef<number>(1);
 
   const resetPagePrev = () => {
-    pagePrev.current = 1 
-  }
+    pagePrev.current = 1;
+  };
 
   useEffect(() => {
     let ignore = false;
-    if (serverMonitorActive?.value && !pagination.is_last_page && !isFetchingRef.current && pageChart !== pagePrev.current) {
+    if (
+      serverMonitorActive?.value &&
+      !pagination.is_last_page &&
+      !isFetchingRef.current &&
+      pageChart !== pagePrev.current
+    ) {
       (async () => {
         isFetchingRef.current = true;
         try {
@@ -290,16 +299,16 @@ export default function HomePage() {
             if (symbolsCandCompare.length === 0) {
               await getSymbolApi(Number(serverMonitorActive?.value), pagePrev.current);
             } else {
-              const promises1 =  getSymbolApi(Number(serverMonitorActive?.value), pagePrev.current);
+              const promises1 = getSymbolApi(Number(serverMonitorActive?.value), pagePrev.current);
               const promises2 = symbolsCandCompare
-              .filter((i) => i.sever !== Number(serverMonitorActive?.value))
-              .map((i) => getSymbolApi(Number(i.sever), pagePrev.current));
+                .filter((i) => i.sever !== Number(serverMonitorActive?.value))
+                .map((i) => getSymbolApi(Number(i.sever), pagePrev.current));
               // ✅ Đợi tất cả Promise trong cùng một mảng
               await Promise.all([promises1, ...promises2]);
             }
           }
         } finally {
-          pagePrev.current +=1 
+          pagePrev.current += 1;
           isFetchingRef.current = false;
         }
       })();
@@ -320,7 +329,7 @@ export default function HomePage() {
     setActiveFibId(null);
     setIsDrawingMode(false);
     setIsCheckFibonacci(false);
-    setSymbolsCandCompareSocket([])
+    setSymbolsCandCompareSocket([]);
     if (canvasRef.current) {
       canvasRef.current.style.pointerEvents = 'none';
     }
@@ -375,10 +384,10 @@ export default function HomePage() {
     if (serverId) {
       fetchStatistical(serverId);
 
-      setDataReq([])
+      setDataReq([]);
       setPagination((prev) => ({ ...prev, is_last_page: false, page: 1 }));
-      resetPagePrev()
-      setPageChart((prev) => prev+1)
+      resetPagePrev();
+      setPageChart((prev) => prev + 1);
 
       setSymbolsCand([]);
       setSymbolsCandSocket([]);
@@ -406,12 +415,12 @@ export default function HomePage() {
   const handleRangeChange = (label: TF) => {
     setCandleIndicator([]);
     setSymbolsCand([]);
-    setIndicator((prev) => prev.map(i => ({...i, active: false})))
+    setIndicator((prev) => prev.map((i) => ({ ...i, active: false })));
 
-    setDataReq([])
-    setSymbolsCandCompare((prev) => prev.map((i) => ({...i, data: []})))
-    resetPagePrev()
-    setPageChart((prev) => prev+1)
+    setDataReq([]);
+    setSymbolsCandCompare((prev) => prev.map((i) => ({ ...i, data: [] })));
+    resetPagePrev();
+    setPageChart((prev) => prev + 1);
 
     setPagination((prev) => ({
       ...prev,
@@ -967,7 +976,7 @@ export default function HomePage() {
       container.style.cursor = cursor;
     };
 
-    if (!isCheckFibonacci){
+    if (!isCheckFibonacci) {
       setCursor('crosshair');
     }
 
@@ -2011,513 +2020,520 @@ export default function HomePage() {
   const handleGetCompare = (data: IOptions<string>[], applyCandle: number) => {
     setApplyNumberCandle(applyCandle);
     setSymbolsCandCompare([]);
-    setIndicator(prev => prev.map(i => ({...i, active: false})))
+    setIndicator((prev) => prev.map((i) => ({ ...i, active: false })));
     if (data.length !== 0) {
       reset();
-      setDataReq([])
-      resetPagePrev()
-      setPageChart((prev) => prev+1)
+      setDataReq([]);
+      resetPagePrev();
+      setPageChart((prev) => prev + 1);
       setPagination((prev) => ({ ...prev, is_last_page: false, page: 1 }));
-      const dataNew = data.map(i => ({ sever: Number(i.value), data: []}))
-      setSymbolsCandCompare(dataNew)
+      const dataNew = data.map((i) => ({ sever: Number(i.value), data: [] }));
+      setSymbolsCandCompare(dataNew);
     }
   };
 
   return (
     <div className="text-center">
-      <div className="flex flex-wrap justify-between">
-        <div className="flex flex-wrap gap-2">
-          <div className="flex flex-wrap text-sm font-medium text-center text-gray-500 dark:text-gray-400 gap-2">
-            <CompareCurrencyPair
-              serverIdCurrent={serverId}
-              handleGetCompare={handleGetCompare}
-              setDataCompare={setDataCompare}
-              dataCompare={dataCompare}
-            />
-
-            {activeTab.map((item) => (
-              <React.Fragment key={item.tabsName}>
-                <TooltipCustom isButton titleTooltip={item.tabsName}>
-                  <Button
-                    // disabled={loading}
-                    onClick={() => handleClick(item)}
-                    // isLoading={loading}
-                    className={`flex justify-center items-center md:w-[40px] md:h-[40px] w-[32px] h-[32px] rounded-lg p-0 ${
-                      item.active
-                        ? 'text-[var(--color-text)] bg-[var(--color-background)] active'
-                        : 'bg-gray-200 text-black hover:text-[var(--color-text)] hover:bg-[var(--color-background-opacity-5)] border border-rose-100 dark:hover:border-rose-200'
-                    } cursor-pointer`}
-                    aria-current="page"
-                  >
-                    {item.icon}
-                  </Button>
-                </TooltipCustom>
-              </React.Fragment>
-            ))}
-
-            <Filter handleClick={handleRangeChange} currentRange={currentRange} />
-
-            <TooltipCustom
-              handleClick={() => {
-                setUtilities((prev) => !prev);
-              }}
-              titleTooltip={`${!utilities ? t('Mở') : t('Đóng')} ${t('tiện ích')}`}
-              classNameButton={`${
-                utilities ? 'bg-[var(--color-background)] text-white' : 'text-black bg-gray-200'
-              }  md:w-[40px] md:h-[40px] w-[32px] h-[32px]`}
-            >
-              <Icon name="icon-sidebar-right" width={20} height={20} />
-            </TooltipCustom>
-
-            <CompIndicatorChart
-              dataView={indicatorChart}
-              iconName="icon-indication-chart"
-              nameTitle="Chỉ báo biểu đồ"
-              indicator={indicatorChart}
-              setIndicator={setIndicatorChart}
-            />
-
-            <CompIndicator
-              indicator={indicator}
-              dataView={indicator.filter((_, i) => i < 5)}
-              setIndicator={setIndicator}
-              iconName="icon-rsi"
-              nameTitle="Các chỉ báo"
-            />
-
-            <CompIndicator
-              indicator={indicator}
-              dataView={indicator.filter((_, i) => i > 4)}
-              setIndicator={setIndicator}
-              className="z-30"
-              iconName="icon-quantitative"
-              nameTitle="Các chỉ báo định lượng"
-              classNameIcon="w-[30px] h-[30px]"
-            />
-          </div>
-
-          {activeTab.filter((item: IOptionsTabsCharts) => item?.active)[0]?.tabsName === 'Biểu đồ nến' && (
-            <>
-              <TooltipCustom
-                handleClick={() => {
-                  setIsCheckFibonacci((prev) => !prev);
-                  setFibMode(true);
-                  setIsDrawingMode(false);
-                  setDrawing(false);
-                  setIsDrawingBrush(false);
-                }}
-                titleTooltip={'fibonacci thoái lui'}
-                classNameButton={`${
-                  isCheckFibonacci ? 'bg-[var(--color-background)] text-white' : 'text-black bg-gray-200'
-                }  md:w-[40px] md:h-[40px] w-[32px] h-[32px]`}
-              >
-                <Icon name="icon-fibonacci" width={18} height={18} />
-              </TooltipCustom>
-
-              <TooltipCustom
-                handleClick={() => {
-                  setIsDrawingMode(!isDrawingMode);
-                  setIsCheckFibonacci(false);
-                  setDrawing(false);
-                  setIsDrawingBrush(false);
-                }}
-                titleTooltip={'Đường nằm ngang'}
-                classNameButton={`${
-                  isDrawingMode ? 'bg-[var(--color-background)] text-white' : 'text-black bg-gray-200'
-                }  md:w-[40px] md:h-[40px] w-[32px] h-[32px]`}
-              >
-                <Icon name="icon-line-v2" width={24} height={24} />
-              </TooltipCustom>
-
-              <TooltipCustom
-                handleClick={() => {
-                  setDrawing(!drawing);
-                  setIsCheckFibonacci(false);
-                  setIsDrawingMode(false);
-                  setIsDrawingBrush(false);
-                }}
-                titleTooltip={'Đường xu hướng'}
-                classNameButton={`${
-                  drawing ? 'bg-[var(--color-background)] text-white' : 'text-black bg-gray-200'
-                }  md:w-[40px] md:h-[40px] w-[32px] h-[32px]`}
-              >
-                <Icon name="icon-trend-line" width={20} height={20} />
-              </TooltipCustom>
-
-              <TooltipCustom
-                handleClick={() => {
-                  setIsDrawingBrush(!isDrawingBrush);
-                  setIsCheckFibonacci(false);
-                  setDrawing(false);
-                  setIsDrawingMode(false);
-                }}
-                titleTooltip={'Cọ vẽ'}
-                classNameButton={`${
-                  isDrawingBrush ? 'bg-[var(--color-background)] text-white' : 'text-black bg-gray-200'
-                }  md:w-[40px] md:h-[40px] w-[32px] h-[32px]`}
-              >
-                <Icon name="icon-paint-brush" width={20} height={20} />
-              </TooltipCustom>
-
-              <TooltipCustom
-                handleClick={handleShowIndicator}
-                titleTooltip={showIndicator ? 'Ẩn bản vẽ & chỉ báo' : 'Hiện bản vẽ & chỉ báo'}
-                classNameButton={`${
-                  showIndicator ? 'bg-[var(--color-background)] text-white' : 'text-black bg-gray-200'
-                }  md:w-[40px] md:h-[40px] w-[32px] h-[32px]`}
-              >
-                <Icon name={`${showIndicator ? 'icon-eye' : 'icon-no-eye'}`} width={20} height={20} />
-              </TooltipCustom>
-
-              <DeleteFibonacci
-                strokes={strokes}
-                trendlinesRef={trendlines}
-                linesRef={linesRef}
-                data={fibBlocks}
-                onClick={handleDelete}
-              />
-
-              <button className="flex items-center ml-4 cursor-pointer" onClick={toggleOpen}>
-                <input
-                  checked={isOpen}
-                  readOnly
-                  type="checkbox"
-                  value=""
-                  className="custom-checkbox cursor-pointer appearance-none bg-gray-100 checked:bg-[var(--color-background)] w-4 h-4 rounded-sm dark:bg-white border border-[var(--color-background)] ring-offset-[var(--color-background)]"
+      {serverMonitorActive ? (
+        <>
+          <div className="flex flex-wrap justify-between">
+            <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap text-sm font-medium text-center text-gray-500 dark:text-gray-400 gap-2">
+                <CompareCurrencyPair
+                  serverIdCurrent={serverId}
+                  handleGetCompare={handleGetCompare}
+                  setDataCompare={setDataCompare}
+                  dataCompare={dataCompare}
                 />
-                <label
-                  htmlFor="green-checkbox"
-                  className="cursor-pointer ms-2 text-sm font-medium text-gray-900 dark:text-gray-900"
+
+                {activeTab.map((item) => (
+                  <React.Fragment key={item.tabsName}>
+                    <TooltipCustom isButton titleTooltip={item.tabsName}>
+                      <Button
+                        // disabled={loading}
+                        onClick={() => handleClick(item)}
+                        // isLoading={loading}
+                        className={`flex justify-center items-center md:w-[40px] md:h-[40px] w-[32px] h-[32px] rounded-lg p-0 ${
+                          item.active
+                            ? 'text-[var(--color-text)] bg-[var(--color-background)] active'
+                            : 'bg-gray-200 text-black hover:text-[var(--color-text)] hover:bg-[var(--color-background-opacity-5)] border border-rose-100 dark:hover:border-rose-200'
+                        } cursor-pointer`}
+                        aria-current="page"
+                      >
+                        {item.icon}
+                      </Button>
+                    </TooltipCustom>
+                  </React.Fragment>
+                ))}
+
+                <Filter handleClick={handleRangeChange} currentRange={currentRange} />
+
+                <TooltipCustom
+                  handleClick={() => {
+                    setUtilities((prev) => !prev);
+                  }}
+                  titleTooltip={`${!utilities ? t('Mở') : t('Đóng')} ${t('tiện ích')}`}
+                  classNameButton={`${
+                    utilities ? 'bg-[var(--color-background)] text-white' : 'text-black bg-gray-200'
+                  }  md:w-[40px] md:h-[40px] w-[32px] h-[32px]`}
                 >
-                  {t('Đường trung bình')}
-                </label>
-              </button>
-            </>
-          )}
-        </div>
-      </div>
+                  <Icon name="icon-sidebar-right" width={20} height={20} />
+                </TooltipCustom>
 
-      <div className="grid grid-cols-4 mt-3 gap-1">
-        <div
-          className={`${
-            utilities ? 'md:col-span-3 col-span-4' : 'col-span-4'
-          } p-2 border border-gray-200  overflow-hidden rounded-lg shadow-xl relative`}
-        >
-          <div ref={chartContainerRef} className="crosshair" id="chart">
-            {indicatorChart.find((i) => i.value === 'volume')?.active && (
-              <VolumeProfileOverlay
-                chartRef={chartRef}
-                seriesRefs={[seriesRef, candleSeriesRef]}
-                candleIndicator={candleIndicator}
-                activeIndex={activeTab.find((i) => i.active)?.tabsName === 'Biểu đồ đường' ? 0 : 1}
-                chartContainerRef={chartContainerRef}
-              />
-            )}
-            {indicatorChart.filter((i) => i.active).length !== 0 && (
-              <div className="absolute top-1 left-2 z-10 text-gray-500 text-sm md:max-w-auto max-w-[300px] text-left">
-                {t('Hiển thị')}: {indicatorChart.filter((i) => i.active).map((i) => i.titleSub + ' ' + i.period + '; ')}
-              </div>
-            )}
-            {activeTab.map((item) => (
-              <React.Fragment key={item.tabsName}>
-                {item.active &&
-                  (loading ? (
-                    <Loading className="h-[620px]" />
-                  ) : item.tabsName === 'Biểu đồ đường' ? (
-                    <ChartComponent
-                      chartContainerRef={chartContainerRef}
-                      chartRef={chartRef}
-                      chartRefCurent={chartRefCurent}
-                      seriesRef={seriesRef}
-                      dataOld={symbolsCand}
-                      setPagination={setPageChart}
-                      latestData={symbolsCandSocket}
-                      currentRange={currentRange}
-                      indicatorChart={indicatorChart}
-                      setMenu={setMenu}
-                      symbolsCandCompare={symbolsCandCompare}
-                      serverId={serverId}
-                      symbolsCandCompareSocket={symbolsCandCompareSocket}
-                      applyNumberCandle={applyNumberCandle}
-                    />
-                  ) : (
-                    <CandlestickSeriesComponent
-                      chartContainerRef={chartContainerRef}
-                      chartRef={chartRef}
-                      chartRefCurent={chartRefCurent}
-                      candleSeriesRef={candleSeriesRef}
-                      dataOld={symbolsCand}
-                      setPagination={setPageChart}
-                      isOpen={isOpen}
-                      latestData={symbolsCandSocket}
-                      currentRange={currentRange}
-                      indicatorChart={indicatorChart}
-                      setMenu={setMenu}
-                      symbolsCandCompare={symbolsCandCompare}
-                      serverId={serverId}
-                      symbolsCandCompareSocket={symbolsCandCompareSocket}
-                      applyNumberCandle={applyNumberCandle}
-                    />
-                  ))}
-              </React.Fragment>
-            ))}
-          </div>
-          {indicator
-            .filter((item) => item.active)
-            .map((item, idx) => (
-              <React.Fragment key={idx}>
-                {indicatorComponents[item.value]?.({
-                  candleIndicator: candleIndicator,
-                  chartRef,
-                  chartRefCurentADR,
-                  chartRefCurentRSI,
-                  chartRefCurentATR,
-                  chartRefCurentROC,
-                  chartRefCurentSLOPE,
-                  chartRefCurentROLLING,
-                  chartRefCurentZSCORE,
-                  chartRefCurentADX,
-                  chartRefCurentMACD,
-                  activeTab,
-                  setDataPeriod,
-                  setIndicator,
-                })}
-              </React.Fragment>
-            ))}
-        </div>
+                <CompIndicatorChart
+                  dataView={indicatorChart}
+                  iconName="icon-indication-chart"
+                  nameTitle="Chỉ báo biểu đồ"
+                  indicator={indicatorChart}
+                  setIndicator={setIndicatorChart}
+                />
 
-        {utilities && (
-          <div
-            className="col-span-4 md:col-span-1 border my-scroll max-h-[647.6px] border-gray-200 rounded-lg shadow-xl relative"
-            ref={refUtilities}
-          >
-            <div className="grid grid-cols-2 xl:grid-cols-2 sm:grid-cols-3 gap-2 p-2 pb-0">
-              <div className="p-2 rounded-sm shadow-sm shadow-gray-500 bg-[var(--color-background-roc)] text-white font-semibold">
-                <div className="text-left">{t('Tốc độ thay đổi')}</div>
-                <div className="flex justify-start items-center gap-1">
-                  <div className="text-left">
-                    roc<sub>t</sub>
-                    <sup>({dataPeriod.periodROC})</sup>:
-                  </div>
-                  <div className="">{roc.dataRoc ?? '...'}%</div>
-                </div>
-              </div>
-              <div className="p-2 rounded-sm shadow-sm shadow-gray-500 bg-[var(--color-background-slope)] text-white font-semibold">
-                <div className="text-left">{t('Hồi quy tuyến tính')}</div>
-                <div className="flex justify-start items-center gap-1">
-                  <div className="text-left">
-                    slope<sub>t</sub>
-                    <sup>({dataPeriod.periodSLOPE})</sup>:
-                  </div>
-                  <div className="">{roc.dataSlope !== 'NaN' ? roc.dataSlope : '...'}</div>
-                </div>
-              </div>
-              <div className="p-2 rounded-sm shadow-sm shadow-gray-500 bg-[var(--color-background-rolling)] text-white font-semibold">
-                <div className="text-left">{t('Độ lệnh chuẩn cuộn')}</div>
-                <div className="flex justify-start items-center gap-1">
-                  <div className="text-left">
-                    σ<sub>t</sub>
-                    <sup>({dataPeriod.periodROLLING})</sup>:
-                  </div>
-                  <div className="">{roc.rolling !== 'NaN' ? roc.rolling : '...'}</div>
-                </div>
-              </div>
-              <div className="p-2 rounded-sm shadow-sm shadow-gray-500 bg-[var(--color-background-zScore)] text-white font-semibold">
-                <div className="text-left">{t('Z-score')}</div>
-                <div className="flex justify-start items-center gap-1">
-                  <div className="text-left">
-                    Z<sub>t</sub>
-                    <sup>({dataPeriod.periodZSCORE})</sup>:
-                  </div>
-                  <div className="">{roc.zScore !== 'NaN' ? roc.zScore : '...'}</div>
-                </div>
-              </div>
-              <div className="p-2 rounded-sm shadow-sm shadow-gray-500 bg-[var(--color-background-zScore)] text-white font-semibold">
-                <div className="text-left">{t('Trung bình SMA')}</div>
-                <div className="flex justify-start items-center gap-1">
-                  <div className="text-left">
-                    sma<sup>({indicatorChart.find((i) => i.value === 'sma')?.period})</sup>:
-                  </div>
-                  <div className="">{roc.sma ?? '...'}</div>
-                </div>
-              </div>
-              <div className="p-2 rounded-sm shadow-sm shadow-gray-500 bg-[var(--color-background-ema)] text-white font-semibold">
-                <div className="text-left">{t('Trung bình EMA')}</div>
-                <div className="flex justify-start items-center gap-1">
-                  <div className="text-left">
-                    ema<sup>({indicatorChart.find((i) => i.value === 'ema')?.period})</sup>:
-                  </div>
-                  <div className="">{roc.ema ?? '...'}</div>
-                </div>
-              </div>
-              <div className="p-2 rounded-sm shadow-sm shadow-gray-500 bg-[var(--color-background-wma)] text-white font-semibold">
-                <div className="text-left">{t('Trung bình WMA')}</div>
-                <div className="flex justify-start items-center gap-1">
-                  <div className="text-left">
-                    wma<sup>({indicatorChart.find((i) => i.value === 'wma')?.period})</sup>:
-                  </div>
-                  <div className="">{roc.wma ?? '...'}</div>
-                </div>
-              </div>
-              <div className="p-2 rounded-sm shadow-sm shadow-gray-500 bg-[var(--color-background-rma)] text-white font-semibold">
-                <div className="text-left">{t('Trung bình RMA')}</div>
-                <div className="flex justify-start items-center gap-1">
-                  <div className="text-left">
-                    rma<sup>({indicatorChart.find((i) => i.value === 'rma')?.period})</sup>:
-                  </div>
-                  <div className="">{roc.rma ?? '...'}</div>
-                </div>
-              </div>
-            </div>
+                <CompIndicator
+                  indicator={indicator}
+                  dataView={indicator.filter((_, i) => i < 5)}
+                  setIndicator={setIndicator}
+                  iconName="icon-rsi"
+                  nameTitle="Các chỉ báo"
+                />
 
-            <div className="grid grid-cols-2 xl:grid-cols-2 sm:grid-cols-3 gap-1 mt-2 text-sm p-2 pt-0 font-semibold">
-              <div className="p-2 rounded-sm  bg-[var(--color-background)] text-white shadow-sm shadow-gray-400">
-                <div className="text-left text-[14px] md:text-[16px]">
-                  {t('Ngày')} {t('tăng nhiều')}:
-                </div>
-                <div className="flex justify-between items-center gap-1">
-                  <div className="">{t('Thời gian')}:</div>
-                  <div className="font-bold">{statistical?.best_day ?? '...'}</div>
-                </div>
-                <div className="flex justify-between items-center gap-1">
-                  <div className="">{t('Số điểm')}:</div>
-                  <div className="font-bold">{statistical?.best_day_change.toFixed(2) ?? '...'}</div>
-                </div>
-                <div className="flex justify-between items-center gap-1">
-                  <div className="">{t('PNL')}:</div>
-                  <div className="font-bold">{statistical?.day_max.toFixed(2) ?? '...'}</div>
-                </div>
+                <CompIndicator
+                  indicator={indicator}
+                  dataView={indicator.filter((_, i) => i > 4)}
+                  setIndicator={setIndicator}
+                  className="z-30"
+                  iconName="icon-quantitative"
+                  nameTitle="Các chỉ báo định lượng"
+                  classNameIcon="w-[30px] h-[30px]"
+                />
               </div>
-              <div className="p-2 rounded-sm  bg-[var(--color-background)] text-white shadow-sm shadow-gray-400">
-                <div className="text-left text-[14px] md:text-[16px]">
-                  {t('Ngày')} {t('giảm nhiều')}:
-                </div>
-                <div className="flex justify-between items-center gap-1">
-                  <div className="">{t('Thời gian')}:</div>
-                  <div className="font-bold">{statistical?.worst_day ?? '...'}</div>
-                </div>
-                <div className="flex justify-between items-center gap-1">
-                  <div className="">{t('Số điểm')}:</div>
-                  <div className="font-bold">{statistical?.worst_day_change.toFixed(2) ?? '...'}</div>
-                </div>
-                <div className="flex justify-between items-center gap-1">
-                  <div className="">{t('PNL')}:</div>
-                  <div className="font-bold">{statistical?.day_min.toFixed(2) ?? '...'}</div>
-                </div>
-              </div>
-              <div className="p-2 rounded-sm  bg-[var(--color-background)] text-white shadow-sm shadow-gray-400">
-                <div className="text-left text-[14px] md:text-[16px]">
-                  {t('Tuần')} {t('tăng nhiều')}:
-                </div>
-                <div className="flex justify-between items-center gap-1">
-                  <div className="">{t('Thời gian')}:</div>
-                  <div className="font-bold">{statistical?.best_week ?? '...'}</div>
-                </div>
-                <div className="flex justify-between items-center gap-1">
-                  <div className="">{t('Số điểm')}:</div>
-                  <div className="font-bold">{statistical?.best_day_change.toFixed(2) ?? '...'}</div>
-                </div>
-                <div className="flex justify-between items-center gap-1">
-                  <div className="">{t('PNL')}:</div>
-                  <div className="font-bold">{statistical?.week_max.toFixed(2) ?? '...'}</div>
-                </div>
-              </div>
-              <div className="p-2 rounded-sm  bg-[var(--color-background)] text-white shadow-sm shadow-gray-400">
-                <div className="text-left text-[14px] md:text-[16px]">
-                  {t('Tuần')} {t('giảm nhiều')}:
-                </div>
-                <div className="flex justify-between items-center gap-1">
-                  <div className="">{t('Thời gian')}:</div>
-                  <div className="font-bold">{statistical?.worst_week ?? '...'}</div>
-                </div>
-                <div className="flex justify-between items-center gap-1">
-                  <div className="">{t('Số điểm')}:</div>
-                  <div className="font-bold">{statistical?.worst_week_change.toFixed(2) ?? '...'}</div>
-                </div>
-                <div className="flex justify-between items-center gap-1">
-                  <div className="">{t('PNL')}:</div>
-                  <div className="font-bold">{statistical?.week_min.toFixed(2) ?? '...'}</div>
-                </div>
-              </div>
-              <div className="p-2 rounded-sm  bg-[var(--color-background)] text-white shadow-sm shadow-gray-400">
-                <div className="text-left text-[14px] md:text-[16px]">
-                  {t('Tháng')} {t('tăng nhiều')}:
-                </div>
-                <div className="flex justify-between items-center gap-1">
-                  <div className="">{t('Thời gian')}:</div>
-                  <div className="font-bold">{statistical?.best_month ?? '...'}</div>
-                </div>
-                <div className="flex justify-between items-center gap-1">
-                  <div className="">{t('Số điểm')}:</div>
-                  <div className="font-bold">{statistical?.best_month_change.toFixed(2) ?? '...'}</div>
-                </div>
-                <div className="flex justify-between items-center gap-1">
-                  <div className="">{t('PNL')}:</div>
-                  <div className="font-bold">{statistical?.month_max.toFixed(2) ?? '...'}</div>
-                </div>
-              </div>
-              <div className="p-2 rounded-sm bg-[var(--color-background)] text-white shadow-sm shadow-gray-400">
-                <div className="text-left text-[14px] md:text-[16px]">
-                  {t('Tháng')} {t('giảm nhiều')}:
-                </div>
-                <div className="flex justify-between items-center gap-1">
-                  <div className="">{t('Thời gian')}:</div>
-                  <div className="font-bold">{statistical?.worst_month ?? '...'}</div>
-                </div>
-                <div className="flex justify-between items-center gap-1">
-                  <div className="">{t('Số điểm')}:</div>
-                  <div className="font-bold">{statistical?.worst_month_change.toFixed(2) ?? '...'}</div>
-                </div>
-                <div className="flex justify-between items-center gap-1">
-                  <div className="">{t('PNL')}:</div>
-                  <div className="font-bold">{statistical?.month_min.toFixed(2) ?? '...'}</div>
-                </div>
-              </div>
-            </div>
 
-            <div className="sticky bottom-0 left-0 right-0 p-2 bg-white">
-              <div className="grid grid-cols-3 font-bold text-[14px]">
-                <span className="border border-gray-200 py-1">{t('Cặp tiền')}</span>
-                <span className="border border-gray-200 py-1">{t('Giá hiện tại')}</span>
-                <span className="border border-gray-200 py-1">{t('Lợi nhuận')}</span>
-              </div>
-              {dataRealTime.map((item, idx) => (
-                <div key={idx} className="grid grid-cols-3 font-semibold text-[14px]">
-                  <span className="border border-gray-200 py-0.5">{item.symbol}</span>
-                  <span className="border border-gray-200 text-[var(--color-background)] py-0.5">
-                    {item.current_price.toFixed(4)}
-                  </span>
-                  <span
-                    className={`${
-                      item.profit > 0 ? 'text-blue-500' : item.profit === 0 ? 'text-gray-500' : 'text-red-500'
-                    } border border-gray-200 py-0.5`}
+              {activeTab.filter((item: IOptionsTabsCharts) => item?.active)[0]?.tabsName === 'Biểu đồ nến' && (
+                <>
+                  <TooltipCustom
+                    handleClick={() => {
+                      setIsCheckFibonacci((prev) => !prev);
+                      setFibMode(true);
+                      setIsDrawingMode(false);
+                      setDrawing(false);
+                      setIsDrawingBrush(false);
+                    }}
+                    titleTooltip={'fibonacci thoái lui'}
+                    classNameButton={`${
+                      isCheckFibonacci ? 'bg-[var(--color-background)] text-white' : 'text-black bg-gray-200'
+                    }  md:w-[40px] md:h-[40px] w-[32px] h-[32px]`}
                   >
-                    {item.profit.toFixed(4)}
-                  </span>
-                </div>
-              ))}
+                    <Icon name="icon-fibonacci" width={18} height={18} />
+                  </TooltipCustom>
+
+                  <TooltipCustom
+                    handleClick={() => {
+                      setIsDrawingMode(!isDrawingMode);
+                      setIsCheckFibonacci(false);
+                      setDrawing(false);
+                      setIsDrawingBrush(false);
+                    }}
+                    titleTooltip={'Đường nằm ngang'}
+                    classNameButton={`${
+                      isDrawingMode ? 'bg-[var(--color-background)] text-white' : 'text-black bg-gray-200'
+                    }  md:w-[40px] md:h-[40px] w-[32px] h-[32px]`}
+                  >
+                    <Icon name="icon-line-v2" width={24} height={24} />
+                  </TooltipCustom>
+
+                  <TooltipCustom
+                    handleClick={() => {
+                      setDrawing(!drawing);
+                      setIsCheckFibonacci(false);
+                      setIsDrawingMode(false);
+                      setIsDrawingBrush(false);
+                    }}
+                    titleTooltip={'Đường xu hướng'}
+                    classNameButton={`${
+                      drawing ? 'bg-[var(--color-background)] text-white' : 'text-black bg-gray-200'
+                    }  md:w-[40px] md:h-[40px] w-[32px] h-[32px]`}
+                  >
+                    <Icon name="icon-trend-line" width={20} height={20} />
+                  </TooltipCustom>
+
+                  <TooltipCustom
+                    handleClick={() => {
+                      setIsDrawingBrush(!isDrawingBrush);
+                      setIsCheckFibonacci(false);
+                      setDrawing(false);
+                      setIsDrawingMode(false);
+                    }}
+                    titleTooltip={'Cọ vẽ'}
+                    classNameButton={`${
+                      isDrawingBrush ? 'bg-[var(--color-background)] text-white' : 'text-black bg-gray-200'
+                    }  md:w-[40px] md:h-[40px] w-[32px] h-[32px]`}
+                  >
+                    <Icon name="icon-paint-brush" width={20} height={20} />
+                  </TooltipCustom>
+
+                  <TooltipCustom
+                    handleClick={handleShowIndicator}
+                    titleTooltip={showIndicator ? 'Ẩn bản vẽ & chỉ báo' : 'Hiện bản vẽ & chỉ báo'}
+                    classNameButton={`${
+                      showIndicator ? 'bg-[var(--color-background)] text-white' : 'text-black bg-gray-200'
+                    }  md:w-[40px] md:h-[40px] w-[32px] h-[32px]`}
+                  >
+                    <Icon name={`${showIndicator ? 'icon-eye' : 'icon-no-eye'}`} width={20} height={20} />
+                  </TooltipCustom>
+
+                  <DeleteFibonacci
+                    strokes={strokes}
+                    trendlinesRef={trendlines}
+                    linesRef={linesRef}
+                    data={fibBlocks}
+                    onClick={handleDelete}
+                  />
+
+                  <button className="flex items-center ml-4 cursor-pointer" onClick={toggleOpen}>
+                    <input
+                      checked={isOpen}
+                      readOnly
+                      type="checkbox"
+                      value=""
+                      className="custom-checkbox cursor-pointer appearance-none bg-gray-100 checked:bg-[var(--color-background)] w-4 h-4 rounded-sm dark:bg-white border border-[var(--color-background)] ring-offset-[var(--color-background)]"
+                    />
+                    <label
+                      htmlFor="green-checkbox"
+                      className="cursor-pointer ms-2 text-sm font-medium text-gray-900 dark:text-gray-900"
+                    >
+                      {t('Đường trung bình')}
+                    </label>
+                  </button>
+                </>
+              )}
             </div>
           </div>
-        )}
-      </div>
 
-      {menu && (
-        <MenuSetupIndicator
-          x={menu.x}
-          y={menu.y}
-          onClose={() => setMenu(null)}
-          dataMenu={menuSetup}
-          activate={showSetting}
-        />
+          <div className="grid grid-cols-4 mt-3 gap-1">
+            <div
+              className={`${
+                utilities ? 'md:col-span-3 col-span-4' : 'col-span-4'
+              } p-2 border border-gray-200  overflow-hidden rounded-lg shadow-xl relative`}
+            >
+              <div ref={chartContainerRef} className="crosshair" id="chart">
+                {indicatorChart.find((i) => i.value === 'volume')?.active && (
+                  <VolumeProfileOverlay
+                    chartRef={chartRef}
+                    seriesRefs={[seriesRef, candleSeriesRef]}
+                    candleIndicator={candleIndicator}
+                    activeIndex={activeTab.find((i) => i.active)?.tabsName === 'Biểu đồ đường' ? 0 : 1}
+                    chartContainerRef={chartContainerRef}
+                  />
+                )}
+                {indicatorChart.filter((i) => i.active).length !== 0 && (
+                  <div className="absolute top-1 left-2 z-10 text-gray-500 text-sm md:max-w-auto max-w-[300px] text-left">
+                    {t('Hiển thị')}:{' '}
+                    {indicatorChart.filter((i) => i.active).map((i) => i.titleSub + ' ' + i.period + '; ')}
+                  </div>
+                )}
+                {activeTab.map((item) => (
+                  <React.Fragment key={item.tabsName}>
+                    {item.active &&
+                      (loading ? (
+                        <Loading className="h-[620px]" />
+                      ) : item.tabsName === 'Biểu đồ đường' ? (
+                        <ChartComponent
+                          chartContainerRef={chartContainerRef}
+                          chartRef={chartRef}
+                          chartRefCurent={chartRefCurent}
+                          seriesRef={seriesRef}
+                          dataOld={symbolsCand}
+                          setPagination={setPageChart}
+                          latestData={symbolsCandSocket}
+                          currentRange={currentRange}
+                          indicatorChart={indicatorChart}
+                          setMenu={setMenu}
+                          symbolsCandCompare={symbolsCandCompare}
+                          serverId={serverId}
+                          symbolsCandCompareSocket={symbolsCandCompareSocket}
+                          applyNumberCandle={applyNumberCandle}
+                        />
+                      ) : (
+                        <CandlestickSeriesComponent
+                          chartContainerRef={chartContainerRef}
+                          chartRef={chartRef}
+                          chartRefCurent={chartRefCurent}
+                          candleSeriesRef={candleSeriesRef}
+                          dataOld={symbolsCand}
+                          setPagination={setPageChart}
+                          isOpen={isOpen}
+                          latestData={symbolsCandSocket}
+                          currentRange={currentRange}
+                          indicatorChart={indicatorChart}
+                          setMenu={setMenu}
+                          symbolsCandCompare={symbolsCandCompare}
+                          serverId={serverId}
+                          symbolsCandCompareSocket={symbolsCandCompareSocket}
+                          applyNumberCandle={applyNumberCandle}
+                        />
+                      ))}
+                  </React.Fragment>
+                ))}
+              </div>
+              {indicator
+                .filter((item) => item.active)
+                .map((item, idx) => (
+                  <React.Fragment key={idx}>
+                    {indicatorComponents[item.value]?.({
+                      candleIndicator: candleIndicator,
+                      chartRef,
+                      chartRefCurentADR,
+                      chartRefCurentRSI,
+                      chartRefCurentATR,
+                      chartRefCurentROC,
+                      chartRefCurentSLOPE,
+                      chartRefCurentROLLING,
+                      chartRefCurentZSCORE,
+                      chartRefCurentADX,
+                      chartRefCurentMACD,
+                      activeTab,
+                      setDataPeriod,
+                      setIndicator,
+                    })}
+                  </React.Fragment>
+                ))}
+            </div>
+
+            {utilities && (
+              <div
+                className="col-span-4 md:col-span-1 border my-scroll max-h-[647.6px] border-gray-200 rounded-lg shadow-xl relative"
+                ref={refUtilities}
+              >
+                <div className="grid grid-cols-2 xl:grid-cols-2 sm:grid-cols-3 gap-2 p-2 pb-0">
+                  <div className="p-2 rounded-sm shadow-sm shadow-gray-500 bg-[var(--color-background-roc)] text-white font-semibold">
+                    <div className="text-left">{t('Tốc độ thay đổi')}</div>
+                    <div className="flex justify-start items-center gap-1">
+                      <div className="text-left">
+                        roc<sub>t</sub>
+                        <sup>({dataPeriod.periodROC})</sup>:
+                      </div>
+                      <div className="">{roc.dataRoc ?? '...'}%</div>
+                    </div>
+                  </div>
+                  <div className="p-2 rounded-sm shadow-sm shadow-gray-500 bg-[var(--color-background-slope)] text-white font-semibold">
+                    <div className="text-left">{t('Hồi quy tuyến tính')}</div>
+                    <div className="flex justify-start items-center gap-1">
+                      <div className="text-left">
+                        slope<sub>t</sub>
+                        <sup>({dataPeriod.periodSLOPE})</sup>:
+                      </div>
+                      <div className="">{roc.dataSlope !== 'NaN' ? roc.dataSlope : '...'}</div>
+                    </div>
+                  </div>
+                  <div className="p-2 rounded-sm shadow-sm shadow-gray-500 bg-[var(--color-background-rolling)] text-white font-semibold">
+                    <div className="text-left">{t('Độ lệnh chuẩn cuộn')}</div>
+                    <div className="flex justify-start items-center gap-1">
+                      <div className="text-left">
+                        σ<sub>t</sub>
+                        <sup>({dataPeriod.periodROLLING})</sup>:
+                      </div>
+                      <div className="">{roc.rolling !== 'NaN' ? roc.rolling : '...'}</div>
+                    </div>
+                  </div>
+                  <div className="p-2 rounded-sm shadow-sm shadow-gray-500 bg-[var(--color-background-zScore)] text-white font-semibold">
+                    <div className="text-left">{t('Z-score')}</div>
+                    <div className="flex justify-start items-center gap-1">
+                      <div className="text-left">
+                        Z<sub>t</sub>
+                        <sup>({dataPeriod.periodZSCORE})</sup>:
+                      </div>
+                      <div className="">{roc.zScore !== 'NaN' ? roc.zScore : '...'}</div>
+                    </div>
+                  </div>
+                  <div className="p-2 rounded-sm shadow-sm shadow-gray-500 bg-[var(--color-background-zScore)] text-white font-semibold">
+                    <div className="text-left">{t('Trung bình SMA')}</div>
+                    <div className="flex justify-start items-center gap-1">
+                      <div className="text-left">
+                        sma<sup>({indicatorChart.find((i) => i.value === 'sma')?.period})</sup>:
+                      </div>
+                      <div className="">{roc.sma ?? '...'}</div>
+                    </div>
+                  </div>
+                  <div className="p-2 rounded-sm shadow-sm shadow-gray-500 bg-[var(--color-background-ema)] text-white font-semibold">
+                    <div className="text-left">{t('Trung bình EMA')}</div>
+                    <div className="flex justify-start items-center gap-1">
+                      <div className="text-left">
+                        ema<sup>({indicatorChart.find((i) => i.value === 'ema')?.period})</sup>:
+                      </div>
+                      <div className="">{roc.ema ?? '...'}</div>
+                    </div>
+                  </div>
+                  <div className="p-2 rounded-sm shadow-sm shadow-gray-500 bg-[var(--color-background-wma)] text-white font-semibold">
+                    <div className="text-left">{t('Trung bình WMA')}</div>
+                    <div className="flex justify-start items-center gap-1">
+                      <div className="text-left">
+                        wma<sup>({indicatorChart.find((i) => i.value === 'wma')?.period})</sup>:
+                      </div>
+                      <div className="">{roc.wma ?? '...'}</div>
+                    </div>
+                  </div>
+                  <div className="p-2 rounded-sm shadow-sm shadow-gray-500 bg-[var(--color-background-rma)] text-white font-semibold">
+                    <div className="text-left">{t('Trung bình RMA')}</div>
+                    <div className="flex justify-start items-center gap-1">
+                      <div className="text-left">
+                        rma<sup>({indicatorChart.find((i) => i.value === 'rma')?.period})</sup>:
+                      </div>
+                      <div className="">{roc.rma ?? '...'}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 xl:grid-cols-2 sm:grid-cols-3 gap-1 mt-2 text-sm p-2 pt-0 font-semibold">
+                  <div className="p-2 rounded-sm  bg-[var(--color-background)] text-white shadow-sm shadow-gray-400">
+                    <div className="text-left text-[14px] md:text-[16px]">
+                      {t('Ngày')} {t('tăng nhiều')}:
+                    </div>
+                    <div className="flex justify-between items-center gap-1">
+                      <div className="">{t('Thời gian')}:</div>
+                      <div className="font-bold">{statistical?.best_day ?? '...'}</div>
+                    </div>
+                    <div className="flex justify-between items-center gap-1">
+                      <div className="">{t('Số điểm')}:</div>
+                      <div className="font-bold">{statistical?.best_day_change.toFixed(2) ?? '...'}</div>
+                    </div>
+                    <div className="flex justify-between items-center gap-1">
+                      <div className="">{t('PNL')}:</div>
+                      <div className="font-bold">{statistical?.day_max.toFixed(2) ?? '...'}</div>
+                    </div>
+                  </div>
+                  <div className="p-2 rounded-sm  bg-[var(--color-background)] text-white shadow-sm shadow-gray-400">
+                    <div className="text-left text-[14px] md:text-[16px]">
+                      {t('Ngày')} {t('giảm nhiều')}:
+                    </div>
+                    <div className="flex justify-between items-center gap-1">
+                      <div className="">{t('Thời gian')}:</div>
+                      <div className="font-bold">{statistical?.worst_day ?? '...'}</div>
+                    </div>
+                    <div className="flex justify-between items-center gap-1">
+                      <div className="">{t('Số điểm')}:</div>
+                      <div className="font-bold">{statistical?.worst_day_change.toFixed(2) ?? '...'}</div>
+                    </div>
+                    <div className="flex justify-between items-center gap-1">
+                      <div className="">{t('PNL')}:</div>
+                      <div className="font-bold">{statistical?.day_min.toFixed(2) ?? '...'}</div>
+                    </div>
+                  </div>
+                  <div className="p-2 rounded-sm  bg-[var(--color-background)] text-white shadow-sm shadow-gray-400">
+                    <div className="text-left text-[14px] md:text-[16px]">
+                      {t('Tuần')} {t('tăng nhiều')}:
+                    </div>
+                    <div className="flex justify-between items-center gap-1">
+                      <div className="">{t('Thời gian')}:</div>
+                      <div className="font-bold">{statistical?.best_week ?? '...'}</div>
+                    </div>
+                    <div className="flex justify-between items-center gap-1">
+                      <div className="">{t('Số điểm')}:</div>
+                      <div className="font-bold">{statistical?.best_day_change.toFixed(2) ?? '...'}</div>
+                    </div>
+                    <div className="flex justify-between items-center gap-1">
+                      <div className="">{t('PNL')}:</div>
+                      <div className="font-bold">{statistical?.week_max.toFixed(2) ?? '...'}</div>
+                    </div>
+                  </div>
+                  <div className="p-2 rounded-sm  bg-[var(--color-background)] text-white shadow-sm shadow-gray-400">
+                    <div className="text-left text-[14px] md:text-[16px]">
+                      {t('Tuần')} {t('giảm nhiều')}:
+                    </div>
+                    <div className="flex justify-between items-center gap-1">
+                      <div className="">{t('Thời gian')}:</div>
+                      <div className="font-bold">{statistical?.worst_week ?? '...'}</div>
+                    </div>
+                    <div className="flex justify-between items-center gap-1">
+                      <div className="">{t('Số điểm')}:</div>
+                      <div className="font-bold">{statistical?.worst_week_change.toFixed(2) ?? '...'}</div>
+                    </div>
+                    <div className="flex justify-between items-center gap-1">
+                      <div className="">{t('PNL')}:</div>
+                      <div className="font-bold">{statistical?.week_min.toFixed(2) ?? '...'}</div>
+                    </div>
+                  </div>
+                  <div className="p-2 rounded-sm  bg-[var(--color-background)] text-white shadow-sm shadow-gray-400">
+                    <div className="text-left text-[14px] md:text-[16px]">
+                      {t('Tháng')} {t('tăng nhiều')}:
+                    </div>
+                    <div className="flex justify-between items-center gap-1">
+                      <div className="">{t('Thời gian')}:</div>
+                      <div className="font-bold">{statistical?.best_month ?? '...'}</div>
+                    </div>
+                    <div className="flex justify-between items-center gap-1">
+                      <div className="">{t('Số điểm')}:</div>
+                      <div className="font-bold">{statistical?.best_month_change.toFixed(2) ?? '...'}</div>
+                    </div>
+                    <div className="flex justify-between items-center gap-1">
+                      <div className="">{t('PNL')}:</div>
+                      <div className="font-bold">{statistical?.month_max.toFixed(2) ?? '...'}</div>
+                    </div>
+                  </div>
+                  <div className="p-2 rounded-sm bg-[var(--color-background)] text-white shadow-sm shadow-gray-400">
+                    <div className="text-left text-[14px] md:text-[16px]">
+                      {t('Tháng')} {t('giảm nhiều')}:
+                    </div>
+                    <div className="flex justify-between items-center gap-1">
+                      <div className="">{t('Thời gian')}:</div>
+                      <div className="font-bold">{statistical?.worst_month ?? '...'}</div>
+                    </div>
+                    <div className="flex justify-between items-center gap-1">
+                      <div className="">{t('Số điểm')}:</div>
+                      <div className="font-bold">{statistical?.worst_month_change.toFixed(2) ?? '...'}</div>
+                    </div>
+                    <div className="flex justify-between items-center gap-1">
+                      <div className="">{t('PNL')}:</div>
+                      <div className="font-bold">{statistical?.month_min.toFixed(2) ?? '...'}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="sticky bottom-0 left-0 right-0 p-2 bg-white">
+                  <div className="grid grid-cols-3 font-bold text-[14px]">
+                    <span className="border border-gray-200 py-1">{t('Cặp tiền')}</span>
+                    <span className="border border-gray-200 py-1">{t('Giá hiện tại')}</span>
+                    <span className="border border-gray-200 py-1">{t('Lợi nhuận')}</span>
+                  </div>
+                  {dataRealTime.map((item, idx) => (
+                    <div key={idx} className="grid grid-cols-3 font-semibold text-[14px]">
+                      <span className="border border-gray-200 py-0.5">{item.symbol}</span>
+                      <span className="border border-gray-200 text-[var(--color-background)] py-0.5">
+                        {item.current_price.toFixed(4)}
+                      </span>
+                      <span
+                        className={`${
+                          item.profit > 0 ? 'text-blue-500' : item.profit === 0 ? 'text-gray-500' : 'text-red-500'
+                        } border border-gray-200 py-0.5`}
+                      >
+                        {item.profit.toFixed(4)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {menu && (
+            <MenuSetupIndicator
+              x={menu.x}
+              y={menu.y}
+              onClose={() => setMenu(null)}
+              dataMenu={menuSetup}
+              activate={showSetting}
+            />
+          )}
+
+          <SetupIndicatorAll
+            close={() => setShowSetting(false)}
+            open={showSetting}
+            data={indicatorChart}
+            setDataCurrent={setIndicatorChart}
+            // setDataPeriod={setDataPeriod}
+          />
+        </>
+      ) : (
+        <div className="h-[90vh] flex justify-center items-center text-gray-400">{t('Hiện đang không có TKTD nào')}</div>
       )}
-
-      <SetupIndicatorAll
-        close={() => setShowSetting(false)}
-        open={showSetting}
-        data={indicatorChart}
-        setDataCurrent={setIndicatorChart}
-        // setDataPeriod={setDataPeriod}
-      />
     </div>
   );
 }

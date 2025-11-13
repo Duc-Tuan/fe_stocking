@@ -1,6 +1,6 @@
-import type { IOrderSendAcc, OrderType } from "../pages/BootSymmetricalOrder/type";
-import axiosClient from "../services/axiosClient"
-import type { QueryLots } from "../types/global"
+import type { OrderType } from "../pages/BootSymmetricalOrder/type";
+import axiosClient from "../services/axiosClient";
+import type { QueryLots } from "../types/global";
 
 interface OpenOrderBootRequest {
     type: "EXNESS" | "FUND";

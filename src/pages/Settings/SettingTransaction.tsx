@@ -1,21 +1,19 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/button';
+import { PathName } from '../../routes/path';
 import Acc from './Screens/Acc';
 import AccTracking from './Screens/AccTracking';
 import AccTransaction from './Screens/AccTransaction';
+import Decentralization from './Screens/Decentralization';
 import Email from './Screens/Email';
 import Language from './Screens/Language';
 import Notifition from './Screens/Notifition';
 import { datafunctionSetting, pathSetting, type IOptionDatafunctionSetting } from './type';
-import { PathName } from '../../routes/path';
-import { useNavigate } from 'react-router-dom';
-import Decentralization from './Screens/Decentralization';
-import { useAppInfo } from '../../hooks/useAppInfo';
 
 export default function SettingTransaction() {
   const { t } = useTranslation();
-  const { user } = useAppInfo();
   const [highlightStyle, setHighlightStyle] = useState({ top: 0, height: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();

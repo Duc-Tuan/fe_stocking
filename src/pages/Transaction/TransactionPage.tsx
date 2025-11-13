@@ -1,5 +1,5 @@
 import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react';
-import React, { use, useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
+import React, { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { postSendOrder } from '../../api/historys';
@@ -189,32 +189,42 @@ export default function TransactionPage() {
           <div className="font-bold">
             {t('Cặp tiền của tài khoản theo dõi')} {serverMonitorActive?.value}
           </div>
-          <div className="text-gray-500">{serverMonitorActive?.label}</div>
-          <div className="text-[var(--color-background)] mt-1 font-bold">
-            {serverMonitorActive?.data?.map((a: string, i: number) => {
-              return a + (i !== serverMonitorActive?.data.length - 1 ? ' - ' : '');
-            })}
-          </div>
+          {serverMonitorActive ? (
+            <>
+              <div className="text-gray-500">{serverMonitorActive?.label}</div>
+              <div className="text-[var(--color-background)] mt-1 font-bold">
+                {serverMonitorActive?.data?.map((a: string, i: number) => {
+                  return a + (i !== serverMonitorActive?.data.length - 1 ? ' - ' : '');
+                })}
+              </div>
+            </>
+          ) : (
+            <div className="text-gray-400">{t('Hiện đang không có tài khoản theo dõi nào')}</div>
+          )}
         </div>
 
         {/* Giá và Lệnh */}
         <div className="grid grid-cols-4 gap-1">
           <div className="row-start-1 md:row-start-1 col-span-2 md:col-span-1 shadow-xs shadow-gray-500 rounded-lg p-3 h-full">
             <div className="flex flex-col justify-between h-full">
-              {currentPnl?.by_symbol.map((item, index) => (
-                <div
-                  key={index}
-                  className={`text-[12px] md:text-sm flex justify-between items-center text-gray-700 py-1 border-b border-b-gray-300 border-solid}`}
-                >
-                  <span className="font-bold">
-                    {item.symbol}
-                    <span className={`text-[10px] pl-1 ${item.type === 'SELL' ? 'text-rose-600' : 'text-blue-600'}`}>
-                      {item.type}
+              {currentPnl?.by_symbol ? (
+                currentPnl?.by_symbol.map((item, index) => (
+                  <div
+                    key={index}
+                    className={`text-[12px] md:text-sm flex justify-between items-center text-gray-700 py-1 border-b border-b-gray-300 border-solid}`}
+                  >
+                    <span className="font-bold">
+                      {item.symbol}
+                      <span className={`text-[10px] pl-1 ${item.type === 'SELL' ? 'text-rose-600' : 'text-blue-600'}`}>
+                        {item.type}
+                      </span>
                     </span>
-                  </span>
-                  <span>{item.current_price?.toFixed(6)}</span>
-                </div>
-              ))}
+                    <span>{item.current_price?.toFixed(6)}</span>
+                  </div>
+                ))
+              ) : (
+                <div className="flex justify-center items-center text-gray-400 h-full">{t('Hiện đang trống')}</div>
+              )}
             </div>
           </div>
 
@@ -343,7 +353,13 @@ export default function TransactionPage() {
           <div className="col-span-1 h-9 md:h-11 flex items-center rounded-md p-2 text-[12px] md:text-sm shadow-xs shadow-gray-500">
             <div className="flex justify-between items-center w-full font-bold">
               <span>PNL:</span>
-              <span className="text-[14px] md:text-lg">{currentPnl?.total_pnl.toFixed(3)}</span>
+              <span className="text-[14px] md:text-lg">
+                {currentPnl?.total_pnl ? (
+                  currentPnl?.total_pnl.toFixed(3)
+                ) : (
+                  <span className="text-base text-gray-400">{t('Trống')}</span>
+                )}
+              </span>
             </div>
           </div>
           <div className={`${isCheckOrther ? 'md:col-span-1 col-span-2' : 'col-span-2'}`}>

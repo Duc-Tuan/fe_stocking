@@ -360,7 +360,8 @@ export const ChartComponent = (props: any) => {
       seriesRef.current.setData(originalData.map((i: any) => {
         const close = ((i.close - baseEur) / baseEur) * 100;
         return {time: i.time,
-              value: close === -0 ? 0 : close, // % thay đổi
+              value: Object.is(close, -0) ? 0 : close,
+              // close === -0 ? 0 : close, // % thay đổi
             }
       }));
 
@@ -379,7 +380,7 @@ export const ChartComponent = (props: any) => {
             const value = ((c.close - baseB) / baseB) * 100; // % thay đổi
             return {
               time: c.time,
-              value: value === -0 ? 0 : value, // % thay đổi
+              value: Object.is(value, -0) ? 0 : value, // % thay đổi
             };
           });
 

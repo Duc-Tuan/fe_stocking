@@ -414,7 +414,7 @@ export const CandlestickSeriesComponent = (props: any) => {
             const value = ((c.close - baseB) / baseB) * 100; // % thay đổi
             return {
               time: c.time,
-              value: value === -0 ? 0 : value, // % thay đổi
+              value: Object.is(value, -0) ? 0 : value, // % thay đổi
             };
           });
 
