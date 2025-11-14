@@ -156,7 +156,7 @@ export default function Positions() {
   }, [dataCurrentPosition]);
 
   return (
-    <div className="relative">
+    <div className="relative h-full">
       <Filter
         setFilter={setFilter}
         filter={filter}
@@ -214,7 +214,7 @@ export default function Positions() {
         )}
       </div>
 
-      <div className="sticky bottom-0 bg-white p-2 grid grid-cols-2 md:grid-cols-5">
+      <div className="absolute bottom-0 left-0 right-0 bg-white p-2 grid grid-cols-2 md:grid-cols-5">
         {[
           ...dataAccTransaction,
           // nếu ít hơn 5 thì thêm phần tử ảo cho đủ
@@ -267,7 +267,7 @@ export default function Positions() {
               </div>
               <div className="text-[10px] md:text-sm">
                 <span className="font-bold mr-2">{t('Phí qua đêm')}: </span>
-                {d.swap}
+                {d.swap ?? 0}
               </div>
               <div className="text-[10px] md:text-sm">
                 <span className="font-bold mr-2">{t('Số lệnh đang mở')}: </span>

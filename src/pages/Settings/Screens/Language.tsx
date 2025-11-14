@@ -94,7 +94,7 @@ const ChangColor = ({ t }: any) => {
           <Button
             key={a.value}
             onClick={() => handleLanguage(a.value)}
-            className={`${a.label} flex justify-center items-center md:w-[36px] md:h-[36px] h-[30px] w-[30px] cursor-pointer shadow-md shadow-gray-300 p-0`}
+            className={`${a.label} flex justify-center items-center md:w-[36px] md:h-[36px] h-[30px] w-[30px] cursor-pointer shadow-md shadow-gray-300 p-0 border border-white`}
           >
             {a.active ? <Icon name="icon-check" width={18} height={18} className="text-white" /> : ''}
           </Button>

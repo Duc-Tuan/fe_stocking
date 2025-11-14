@@ -2225,9 +2225,9 @@ export default function HomePage() {
                   />
                 )}
                 {indicatorChart.filter((i) => i.active).length !== 0 && (
-                  <div className="absolute top-1 left-2 z-10 text-gray-500 text-sm md:max-w-auto max-w-[300px] text-left">
+                  <div className="absolute top-1 left-2 z-10 text-gray-500 text-sm md:max-w-auto max-w-[340px] text-left">
                     {t('Hiển thị')}:{' '}
-                    {indicatorChart.filter((i) => i.active).map((i) => i.titleSub + ' ' + i.period + '; ')}
+                    {indicatorChart.filter((i) => i.active).map((i) => i.titleSub + ' ' + i.period + ' ' + i.k + '; ')}
                   </div>
                 )}
                 {activeTab.map((item) => (

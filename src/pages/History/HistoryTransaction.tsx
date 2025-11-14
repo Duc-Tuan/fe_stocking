@@ -82,7 +82,7 @@ export default function HistoryTransaction() {
                 })}
             </div>
 
-            <div className="col-span-5 lg:col-span-4 shadow-md shadow-gray-500 rounded-lg overflow-y-scroll my-scroll relative pb-0">
+            <div className="col-span-5 lg:col-span-4 shadow-md shadow-gray-500 rounded-lg overflow-y-scroll my-scroll relative pb-0 h-[calc(100vh-240px)] md:h-[calc(100vh-80px)]">
                 {screen}
             </div>
         </div>

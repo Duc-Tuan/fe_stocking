@@ -26,13 +26,13 @@ export const datafunctionBoot: IOptionDatafunctionBoot[] = [
     },
     {
         active: false,
-        title: "Lịch sử giao dịch",
+        title: "Theo dõi TKGD theo thước",
         type: "monitor_acc_boot",
         path: PathName.MONITOR_ACC_BOOT
     },
     {
         active: false,
-        title: "Theo dõi tài khoản",
+        title: "Theo dõi TKGD lệnh lẻ",
         type: "monitor",
         path: PathName.MONITOR_BOOT
     },

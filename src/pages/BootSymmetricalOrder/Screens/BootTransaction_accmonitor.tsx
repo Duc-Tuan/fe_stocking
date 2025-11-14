@@ -19,7 +19,7 @@ import {
   dataTypeAcc,
   OrderType,
   type IOrderSendAcc,
-  type IOrderSendAccResponse
+  type IOrderSendAccResponse,
 } from '../type';
 import SelectAccExness from './SelectAccExness';
 import { postOpenOrderMonitorBoot } from '../../../api/boot';
@@ -104,244 +104,246 @@ export default function BootTransaction_AccMonitor() {
   const classInputBorder =
     'text-[12px] md:text-sm border border-gray-300 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none p-1 rounded w-full h-10 pl-2 shadow-sm shadow-gray-200 focus:outline-none focus:border-[var(--color-background)]';
   return (
-    <div className="relative pb-2">
-      <h1 className="text-center font-bold  text-[14px] md:text-lg text-shadow-sm mt-3">
-        <span className="border-b border-b-gray-500">{t('Boot vào lệnh đối ứng theo thước')}</span>
-      </h1>
+    <div className="relative py-2 h-full flex flex-col justify-between items-center gap-1">
+      <div className="w-full">
+        <h1 className="text-center font-bold  text-[14px] md:text-lg text-shadow-sm">
+          <span className="border-b border-b-gray-500">{t('Boot vào lệnh đối ứng theo thước')}</span>
+        </h1>
 
-      <div className="grid grid-cols-2 md:grid-cols-2 gap-4 w-full px-10 md:px-0 md:w-lg mx-auto mt-2">
-        <div className="col-span-2 md:col-span-1 flex justify-center items-center">
-          <h2 className="">
-            {t('PNL của thước')}: {currentPnl?.total_pnl ?? t('loading...')}
-          </h2>
-        </div>
-
-        <div className="col-span-2 md:col-span-1 flex justify-center items-center gap-1">
-          <h2 className="text-[14px] md:text-sm w-full">{t('TP chênh lệch')}:</h2>
-          <InputNumber
-            type="number"
-            placeholder={t('Nhập số chênh lệnh...')}
-            value={String(pip)}
-            onChange={(e) => {
-              const dataNumber = Number(e.target.value);
-              setPip(dataNumber);
-              setData((prev) => [
-                { ...prev[0], tp: convertTp(prev[0].type_acc, currentPnl?.total_pnl, dataNumber) },
-                { ...prev[1], tp: convertTp(prev[1].type_acc, currentPnl?.total_pnl, dataNumber) },
-              ]);
-            }}
-            className={classInputHeder}
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 mt-4 gap-2 px-0 md:px-2">
-        <div className="col-span-2 md:col-span-1 shadow shadow-gray-300 p-2 px-1 rounded">
-          <div className="flex justify-center items-center flex-col gap-2">
-            <h1 className="text-center text-[12px] md:text-[16px]">
-              <span className="border-b border-b-gray-500">{t('Vào lệnh cho tài khoản tham chiếu')}</span>
-            </h1>
-            <div className="flex justify-start items-center gap-2 text-[12px] md:text-[16px]">
-              {t('Exness')}:
-              <SelectAccExness
-                dataAccTransaction={dataServerTransaction.filter(
-                  (i) => i.type_acc === 'RECIPROCAL_ACC' && i.username !== data[1].username,
-                )}
-                setDataSubmit={setData}
-                dataSelect={data.find((i) => i.type === 'EXNESS')}
-                title="EXNESS"
-              />
-            </div>
+        <div className="grid grid-cols-2 md:grid-cols-2 gap-4 w-full px-10 md:px-0 md:w-lg mx-auto mt-2">
+          <div className="col-span-2 md:col-span-1 flex justify-center items-center">
+            <h2 className="">
+              {t('PNL của thước')}: {currentPnl?.total_pnl ?? t('loading...')}
+            </h2>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 my-2 px-2 md:px-1">
-            <div className="flex flex-col justify-center items-start gap-1 col-span-1">
-              <label htmlFor="exness-symbol" className="text-[12px] md:text-[16px]">
-                {t('Thước')}:
-              </label>
-              <SelectSymbol
-                setData={setData}
-                serverMonitor={serverMonitor}
-                loadingServerMonitor={loadingServerMonitor}
-                serverMonitorActive={serverMonitorActive}
-              />
-            </div>
-            <div className="flex flex-col justify-center items-start gap-1 col-span-1">
-              <label htmlFor="exness-symbol" className="text-[12px] md:text-[16px]">
-                {t('Kiểu lệnh')}:
-              </label>
-              <SeletType setValue={setData} />
-            </div>
-          </div>
-          <div className="flex flex-col justify-center items-start gap-1 mb-2 px-2 md:px-1">
-            <label htmlFor="exness-volume" className="text-[12px] md:text-[16px]">
-              {t('Volume')}
-            </label>
+          <div className="col-span-2 md:col-span-1 flex justify-center items-center gap-1">
+            <h2 className="text-[14px] md:text-sm w-full">{t('TP chênh lệch')}:</h2>
             <InputNumber
-              id="exness-volume"
               type="number"
-              placeholder={t('Volume')}
-              value={data[0].volume ?? ''}
-              onChange={(e) => setData((prev) => prev.map((i) => ({ ...i, volume: Number(e.target.value) })))}
-              min={0}
-              max={1}
-              step={0.01}
-              // className="border border-gray-300 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none p-1 rounded w-full h-10 pl-2 shadow-sm shadow-gray-200 focus:outline-none focus:border-[var(--color-background)]"
-              className={`${classInputBorder}`}
-            />
-          </div>
-
-          <div className="px-1 mb-2">
-            <div className="mb-1">{t('Thông tin chi tiết từng cặp')}:</div>
-            <div className="grid grid-cols-4 font-bold text-[14px]">
-              <span className="border border-gray-200 py-1 text-center">{t('Cặp tiền')}</span>
-              <span className="border border-gray-200 py-1 text-center">{t('Kiểu lệnh')}</span>
-              <span className="border border-gray-200 py-1 text-center">{t('Giá hiện tại')}</span>
-              <span className="border border-gray-200 py-1 text-center">{t('Lợi nhuận')}</span>
-            </div>
-            {data[0].data?.map((item: any, idx) => (
-              <div key={idx} className="grid grid-cols-4 font-semibold text-[14px]">
-                <span className="border border-gray-200 py-0.5 text-center">{item.symbol}</span>
-                <span
-                  className={`border border-gray-200 py-0.5 text-center ${
-                    item.type === 'BUY' ? 'text-blue-500' : 'text-red-500'
-                  }`}
-                >
-                  {item.type}
-                </span>
-                <span className="border border-gray-200 text-[var(--color-background)] py-0.5 text-center">
-                  {item.current_price.toFixed(4)}
-                </span>
-                <span
-                  className={`${
-                    item.profit > 0 ? 'text-blue-500' : item.profit === 0 ? 'text-gray-500' : 'text-red-500'
-                  } border border-gray-200 py-0.5 text-center`}
-                >
-                  {item.profit.toFixed(4)}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          <div className="flex flex-col justify-center items-start gap-1 mb-2 px-2 md:px-1">
-            <div className="flex justify-start items-center gap-1">
-              <label htmlFor="exness-tp" className="text-[12px] md:text-[16px]">
-                {t('Chốt lời (TP)')}:
-              </label>
-            </div>
-            <InputNumber
-              id="exness-tp"
-              type="number"
-              placeholder={t('TP')}
-              disabled
-              value={data[0].tp?.toFixed(2)}
-              className={classInputBorder}
+              placeholder={t('Nhập số chênh lệnh...')}
+              value={String(pip)}
+              onChange={(e) => {
+                const dataNumber = Number(e.target.value);
+                setPip(dataNumber);
+                setData((prev) => [
+                  { ...prev[0], tp: convertTp(prev[0].type_acc, currentPnl?.total_pnl, dataNumber) },
+                  { ...prev[1], tp: convertTp(prev[1].type_acc, currentPnl?.total_pnl, dataNumber) },
+                ]);
+              }}
+              className={classInputHeder}
             />
           </div>
         </div>
 
-        <div className="col-span-2 md:col-span-1 shadow shadow-gray-300 p-2 px-1 rounded">
-          <div className="flex justify-center items-center flex-col gap-2">
-            <h1 className="text-center text-[12px] md:text-[16px]">
-              <span className="border-b border-b-gray-500">{t('Vào lệnh cho tài khoản đối ứng của')}</span>
-            </h1>
-            <div className="flex justify-start items-center gap-2 text-[12px] md:text-[16px]">
-              {t('Exness')}:
-              <SelectAccExness
-                dataAccTransaction={dataServerTransaction.filter(
-                  (i) => i.type_acc === 'RECIPROCAL_ACC' && i.username !== data[0].username,
-                )}
-                setDataSubmit={setData}
-                dataSelect={data.find((i) => i.type === 'FUND')}
-                title="FUND"
-              />
+        <div className="grid grid-cols-2 mt-4 gap-2 px-0 md:px-2">
+          <div className="col-span-2 md:col-span-1 shadow shadow-gray-300 p-2 px-1 rounded">
+            <div className="flex justify-center items-center flex-col gap-2">
+              <h1 className="text-center text-[12px] md:text-[16px]">
+                <span className="border-b border-b-gray-500">{t('Vào lệnh cho tài khoản tham chiếu')}</span>
+              </h1>
+              <div className="flex justify-start items-center gap-2 text-[12px] md:text-[16px]">
+                {t('Exness')}:
+                <SelectAccExness
+                  dataAccTransaction={dataServerTransaction.filter(
+                    (i) => i.type_acc === 'RECIPROCAL_ACC' && i.username !== data[1].username,
+                  )}
+                  setDataSubmit={setData}
+                  dataSelect={data.find((i) => i.type === 'EXNESS')}
+                  title="EXNESS"
+                />
+              </div>
             </div>
-          </div>
 
-          <div className="grid grid-cols-2 gap-2 my-2 px-2 md:px-1">
-            <div className="flex flex-col justify-center items-start gap-1 col-span-1">
-              <label htmlFor="exness-symbol" className="text-[12px] md:text-[16px]">
-                {t('Thước')}:
-              </label>
-              <div className="border border-gray-300 p-1 rounded w-full h-10 pl-2 shadow-sm shadow-gray-200 flex justify-start items-center font-semibold text-[12px] md:text-sm">
-                {serverMonitorActive?.value ?? t('Chọn')}
+            <div className="grid grid-cols-2 gap-2 my-2 px-2 md:px-1">
+              <div className="flex flex-col justify-center items-start gap-1 col-span-1">
+                <label htmlFor="exness-symbol" className="text-[12px] md:text-[16px]">
+                  {t('Thước')}:
+                </label>
+                <SelectSymbol
+                  setData={setData}
+                  serverMonitor={serverMonitor}
+                  loadingServerMonitor={loadingServerMonitor}
+                  serverMonitorActive={serverMonitorActive}
+                />
+              </div>
+              <div className="flex flex-col justify-center items-start gap-1 col-span-1">
+                <label htmlFor="exness-symbol" className="text-[12px] md:text-[16px]">
+                  {t('Kiểu lệnh')}:
+                </label>
+                <SeletType setValue={setData} />
               </div>
             </div>
-            <div className="flex flex-col justify-center items-start gap-1 col-span-1">
-              <label htmlFor="exness-symbol" className="text-[12px] md:text-[16px]">
-                {t('Kiểu lệnh')}:
-              </label>
-              <div className="border border-gray-300 p-1 rounded w-full h-10 pl-2 shadow-sm shadow-gray-200 flex justify-start items-center font-semibold text-[12px] md:text-sm">
-                {paretypeOrder(data[1].type_acc) ?? t('Chọn')}
-              </div>
-            </div>
-          </div>
-          <div className="flex flex-col justify-center items-start gap-1 mb-2 px-2 md:px-1">
-            <div className="flex justify-start items-center gap-1">
+            <div className="flex flex-col justify-center items-start gap-1 mb-2 px-2 md:px-1">
               <label htmlFor="exness-volume" className="text-[12px] md:text-[16px]">
-                {t('Volume')}:
+                {t('Volume')}
               </label>
+              <InputNumber
+                id="exness-volume"
+                type="number"
+                placeholder={t('Volume')}
+                value={data[0].volume ?? ''}
+                onChange={(e) => setData((prev) => prev.map((i) => ({ ...i, volume: Number(e.target.value) })))}
+                min={0}
+                max={1}
+                step={0.01}
+                // className="border border-gray-300 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none p-1 rounded w-full h-10 pl-2 shadow-sm shadow-gray-200 focus:outline-none focus:border-[var(--color-background)]"
+                className={`${classInputBorder}`}
+              />
             </div>
-            <InputNumber
-              id="exness-volume"
-              type="number"
-              disabled
-              placeholder={t('Volume')}
-              value={String(data[1].volume ?? '')}
-              className={`${classInputBorder}`}
-            />
+
+            <div className="px-1 mb-2">
+              <div className="mb-1">{t('Thông tin chi tiết từng cặp')}:</div>
+              <div className="grid grid-cols-4 font-bold text-[14px]">
+                <span className="border border-gray-200 py-1 text-center">{t('Cặp tiền')}</span>
+                <span className="border border-gray-200 py-1 text-center">{t('Kiểu lệnh')}</span>
+                <span className="border border-gray-200 py-1 text-center">{t('Giá hiện tại')}</span>
+                <span className="border border-gray-200 py-1 text-center">{t('Lợi nhuận')}</span>
+              </div>
+              {data[0].data?.map((item: any, idx) => (
+                <div key={idx} className="grid grid-cols-4 font-semibold text-[14px]">
+                  <span className="border border-gray-200 py-0.5 text-center">{item.symbol}</span>
+                  <span
+                    className={`border border-gray-200 py-0.5 text-center ${
+                      item.type === 'BUY' ? 'text-blue-500' : 'text-red-500'
+                    }`}
+                  >
+                    {item.type}
+                  </span>
+                  <span className="border border-gray-200 text-[var(--color-background)] py-0.5 text-center">
+                    {item.current_price.toFixed(4)}
+                  </span>
+                  <span
+                    className={`${
+                      item.profit > 0 ? 'text-blue-500' : item.profit === 0 ? 'text-gray-500' : 'text-red-500'
+                    } border border-gray-200 py-0.5 text-center`}
+                  >
+                    {item.profit.toFixed(4)}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex flex-col justify-center items-start gap-1 mb-2 px-2 md:px-1">
+              <div className="flex justify-start items-center gap-1">
+                <label htmlFor="exness-tp" className="text-[12px] md:text-[16px]">
+                  {t('Chốt lời (TP)')}:
+                </label>
+              </div>
+              <InputNumber
+                id="exness-tp"
+                type="number"
+                placeholder={t('TP')}
+                disabled
+                value={data[0].tp?.toFixed(2)}
+                className={classInputBorder}
+              />
+            </div>
           </div>
 
-          <div className="px-1 mb-2">
-            <div className="mb-1">{t('Thông tin chi tiết từng cặp')}:</div>
-            <div className="grid grid-cols-4 font-bold text-[14px]">
-              <span className="border border-gray-200 py-1 text-center">{t('Cặp tiền')}</span>
-              <span className="border border-gray-200 py-1 text-center">{t('Kiểu lệnh')}</span>
-              <span className="border border-gray-200 py-1 text-center">{t('Giá hiện tại')}</span>
-              <span className="border border-gray-200 py-1 text-center">{t('Lợi nhuận')}</span>
-            </div>
-            {data[1].data?.map((item: any, idx) => (
-              <div key={idx} className="grid grid-cols-4 font-semibold text-[14px]">
-                <span className="border border-gray-200 py-0.5 text-center">{item.symbol}</span>
-                <span
-                  className={`border border-gray-200 py-0.5 text-center ${
-                    item.type === 'BUY' ? 'text-blue-500' : 'text-red-500'
-                  }`}
-                >
-                  {item.type}
-                </span>
-                <span className="border border-gray-200 text-[var(--color-background)] py-0.5 text-center">
-                  {item.current_price.toFixed(4)}
-                </span>
-                <span
-                  className={`${
-                    item.profit > 0 ? 'text-blue-500' : item.profit === 0 ? 'text-gray-500' : 'text-red-500'
-                  } border border-gray-200 py-0.5 text-center`}
-                >
-                  {item.profit.toFixed(4)}
-                </span>
+          <div className="col-span-2 md:col-span-1 shadow shadow-gray-300 p-2 px-1 rounded">
+            <div className="flex justify-center items-center flex-col gap-2">
+              <h1 className="text-center text-[12px] md:text-[16px]">
+                <span className="border-b border-b-gray-500">{t('Vào lệnh cho tài khoản đối ứng của')}</span>
+              </h1>
+              <div className="flex justify-start items-center gap-2 text-[12px] md:text-[16px]">
+                {t('Exness')}:
+                <SelectAccExness
+                  dataAccTransaction={dataServerTransaction.filter(
+                    (i) => i.type_acc === 'RECIPROCAL_ACC' && i.username !== data[0].username,
+                  )}
+                  setDataSubmit={setData}
+                  dataSelect={data.find((i) => i.type === 'FUND')}
+                  title="FUND"
+                />
               </div>
-            ))}
-          </div>
-          <div className="flex flex-col justify-center items-start gap-1 mb-2 px-2 md:px-1">
-            <div className="flex justify-start items-center gap-1">
-              <label htmlFor="exness-tp" className="text-[12px] md:text-[16px]">
-                {t('Chốt lời (TP)')}:
-              </label>
             </div>
-            <InputNumber
-              id="exness-tp"
-              type="number"
-              disabled
-              placeholder={t('TP')}
-              defaultValue={String(data[1].tp?.toFixed(2) ?? '')}
-              className={`${classInputBorder}`}
-            />
+
+            <div className="grid grid-cols-2 gap-2 my-2 px-2 md:px-1">
+              <div className="flex flex-col justify-center items-start gap-1 col-span-1">
+                <label htmlFor="exness-symbol" className="text-[12px] md:text-[16px]">
+                  {t('Thước')}:
+                </label>
+                <div className="border border-gray-300 p-1 rounded w-full h-10 pl-2 shadow-sm shadow-gray-200 flex justify-start items-center font-semibold text-[12px] md:text-sm">
+                  {serverMonitorActive?.value ?? t('Chọn')}
+                </div>
+              </div>
+              <div className="flex flex-col justify-center items-start gap-1 col-span-1">
+                <label htmlFor="exness-symbol" className="text-[12px] md:text-[16px]">
+                  {t('Kiểu lệnh')}:
+                </label>
+                <div className="border border-gray-300 p-1 rounded w-full h-10 pl-2 shadow-sm shadow-gray-200 flex justify-start items-center font-semibold text-[12px] md:text-sm">
+                  {paretypeOrder(data[1].type_acc) ?? t('Chọn')}
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col justify-center items-start gap-1 mb-2 px-2 md:px-1">
+              <div className="flex justify-start items-center gap-1">
+                <label htmlFor="exness-volume" className="text-[12px] md:text-[16px]">
+                  {t('Volume')}:
+                </label>
+              </div>
+              <InputNumber
+                id="exness-volume"
+                type="number"
+                disabled
+                placeholder={t('Volume')}
+                value={String(data[1].volume ?? '')}
+                className={`${classInputBorder}`}
+              />
+            </div>
+
+            <div className="px-1 mb-2">
+              <div className="mb-1">{t('Thông tin chi tiết từng cặp')}:</div>
+              <div className="grid grid-cols-4 font-bold text-[14px]">
+                <span className="border border-gray-200 py-1 text-center">{t('Cặp tiền')}</span>
+                <span className="border border-gray-200 py-1 text-center">{t('Kiểu lệnh')}</span>
+                <span className="border border-gray-200 py-1 text-center">{t('Giá hiện tại')}</span>
+                <span className="border border-gray-200 py-1 text-center">{t('Lợi nhuận')}</span>
+              </div>
+              {data[1].data?.map((item: any, idx) => (
+                <div key={idx} className="grid grid-cols-4 font-semibold text-[14px]">
+                  <span className="border border-gray-200 py-0.5 text-center">{item.symbol}</span>
+                  <span
+                    className={`border border-gray-200 py-0.5 text-center ${
+                      item.type === 'BUY' ? 'text-blue-500' : 'text-red-500'
+                    }`}
+                  >
+                    {item.type}
+                  </span>
+                  <span className="border border-gray-200 text-[var(--color-background)] py-0.5 text-center">
+                    {item.current_price.toFixed(4)}
+                  </span>
+                  <span
+                    className={`${
+                      item.profit > 0 ? 'text-blue-500' : item.profit === 0 ? 'text-gray-500' : 'text-red-500'
+                    } border border-gray-200 py-0.5 text-center`}
+                  >
+                    {item.profit.toFixed(4)}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <div className="flex flex-col justify-center items-start gap-1 mb-2 px-2 md:px-1">
+              <div className="flex justify-start items-center gap-1">
+                <label htmlFor="exness-tp" className="text-[12px] md:text-[16px]">
+                  {t('Chốt lời (TP)')}:
+                </label>
+              </div>
+              <InputNumber
+                id="exness-tp"
+                type="number"
+                disabled
+                placeholder={t('TP')}
+                defaultValue={String(data[1].tp?.toFixed(2) ?? '')}
+                className={`${classInputBorder}`}
+              />
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="flex justify-end items-center">
+      <div className="flex justify-end items-center w-full">
         <Button
           className={`${
             isSubmit ? 'bg-[var(--color-background)]' : 'bg-gray-300'
@@ -583,7 +585,7 @@ const Modal = ({
   const [loading, setLoading] = useState<boolean>(false);
 
   const handleClick = async () => {
-    const dataNew = dataCurrent.map((i) => ({...i, type_acc: i.type_acc === 0 ? "XUOI" : "NGUOC"}));
+    const dataNew = dataCurrent.map((i) => ({ ...i, type_acc: i.type_acc === 0 ? 'XUOI' : 'NGUOC' }));
     setLoading(true);
     await postOpenOrderMonitorBoot(dataNew)
       .then((data) => {
@@ -593,10 +595,11 @@ const Modal = ({
         } else {
           toast.error(`Gửi lệnh thất bại`);
         }
-      }).finally(() => setLoading(false));
+      })
+      .finally(() => setLoading(false));
   };
 
-    const isTextColor = (data?: number) => {
+  const isTextColor = (data?: number) => {
     let color = '';
     switch (data) {
       case 0:
@@ -646,7 +649,9 @@ const Modal = ({
                         </div>
                         <div className="flex justify-start items-center gap-2">
                           <label htmlFor="exness-tp">{t('Kiểu lệnh')}:</label>
-                          <div className={`font-semibold ${isTextColor(item.type_acc)}`}>{item.type_acc === 0 ? 'Xuôi' : 'Ngược'}</div>
+                          <div className={`font-semibold ${isTextColor(item.type_acc)}`}>
+                            {item.type_acc === 0 ? 'Xuôi' : 'Ngược'}
+                          </div>
                         </div>
                         <div className="flex justify-start items-center gap-2">
                           <label htmlFor="exness-tp">{t('Volume')}:</label>
@@ -661,7 +666,9 @@ const Modal = ({
                           <div className="grid grid-cols-2 md:grid-cols-3 font-bold text-[14px]">
                             <span className="border border-gray-200 py-1 text-center">{t('Cặp tiền')}</span>
                             <span className="border border-gray-200 py-1 text-center">{t('Kiểu lệnh')}</span>
-                            <span className="border border-gray-200 py-1 text-center hidden md:block">{t('Giá hiện tại')}</span>
+                            <span className="border border-gray-200 py-1 text-center hidden md:block">
+                              {t('Giá hiện tại')}
+                            </span>
                           </div>
                           {item.data?.map((item: any, idx) => (
                             <div key={idx} className="grid grid-cols-2 md:grid-cols-3 font-semibold text-[14px]">

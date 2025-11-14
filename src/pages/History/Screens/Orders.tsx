@@ -65,10 +65,13 @@ export default function Orders() {
         setQuery={setQuery}
         handleFilter={handleFilter}
       />
-      <div className="">
-        <div className="p-2 flex flex-col justify-center items-start gap-2">
-          {!loading ? (
-            data.length === 0? <div className="text-gray-300 flex justify-center items-center min-h-[50vh] w-full">{t("Hiện chưa có lệnh")}</div> :
+      <div className="p-2 flex flex-col justify-center items-start gap-2">
+        {!loading ? (
+          data.length === 0 ? (
+            <div className="text-gray-300 flex justify-center items-center min-h-[70vh] w-full">
+              {t('Hiện chưa có lệnh')}
+            </div>
+          ) : (
             data.map((a, idx) => (
               <div
                 key={idx}
@@ -100,13 +103,13 @@ export default function Orders() {
                 </div>
               </div>
             ))
-          ) : (
-            <Loading />
-          )}
-        </div>
+          )
+        ) : (
+          <Loading />
+        )}
       </div>
 
-      <div className="absolute bottom-0 left-0 right-0 bg-white p-2">
+      <div className="sticky bottom-0 left-0 right-0 bg-white p-2">
         <div className="flex justify-between items-center my-1 px-2">
           <div className="font-semibold text-[12px] md:text-sm">{t('Tổng lệnh')}</div>
           <span className="font-bold text-[12px] md:text-sm">{total.totalOrder}</span>
@@ -115,7 +118,7 @@ export default function Orders() {
         <div className="">
           <Button
             onClick={() => setShowInfo(!showInfo)}
-            className="shadow-none mb-1 flex h-9 md:h-11 justify-between items-center w-full font-bold cursor-pointer text-black px-2 hover:bg-[var(--color-background-opacity-2)] transition text-[12px] md:text-sm"
+            className="rounded-none shadow-none flex h-9 md:h-11 justify-between items-center w-full font-bold cursor-pointer text-black px-2 hover:bg-[var(--color-background-opacity-2)] transition text-[12px] md:text-sm"
           >
             <span>{t('Xem thông tin tài khoản')}</span>
             <Icon

@@ -239,8 +239,8 @@ export default function BootTransaction() {
   const classInputBorder =
     'text-[12px] md:text-sm border border-gray-300 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none p-1 rounded w-full h-10 pl-2 shadow-sm shadow-gray-200 focus:outline-none focus:border-[var(--color-background)]';
   return (
-    <div className="relative pb-2">
-      <h1 className="text-center font-bold  text-[14px] md:text-lg text-shadow-sm mt-3">
+    <div className="relative py-2">
+      <h1 className="text-center font-bold  text-[14px] md:text-lg text-shadow-sm">
         <span className="border-b border-b-gray-500">{t('Boot vào lệnh đối ứng')}</span>
       </h1>
 
@@ -361,7 +361,7 @@ export default function BootTransaction() {
       </div>
 
       <div className="grid grid-cols-2 mt-4 gap-2 px-0 md:px-2">
-        <div className="col-span-2 md:col-span-1 shadow shadow-gray-300 mx-2 p-2 rounded">
+        <div className="col-span-2 md:col-span-1 shadow shadow-gray-300 p-2 rounded">
           <div className="flex justify-center items-center flex-col gap-2">
             <h1 className="text-center text-[12px] md:text-[16px]">
               <span className="border-b border-b-gray-500">{t('Vào lệnh cho tài khoản tham chiếu')}</span>
@@ -523,7 +523,7 @@ export default function BootTransaction() {
           </div>
         </div>
 
-        <div className="col-span-2 md:col-span-1 shadow shadow-gray-300 mx-2 p-2 rounded">
+        <div className="col-span-2 md:col-span-1 shadow shadow-gray-300 p-2 rounded">
           <div className="flex justify-center items-center flex-col gap-2">
             <h1 className="text-center text-[12px] md:text-[16px]">
               <span className="border-b border-b-gray-500">{t('Vào lệnh cho tài khoản đối ứng của')}</span>

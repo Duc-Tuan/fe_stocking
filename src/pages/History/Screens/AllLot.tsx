@@ -119,7 +119,9 @@ export default function AllLot() {
       <div className="mt-1 p-2">
         {!loading ? (
           data.length === 0 ? (
-            <div className="flex justify-center items-center min-h-[70vh] text-gray-300">{t('Hiện đang không có dữ liệu')}</div>
+            <div className="flex justify-center items-center min-h-[70vh] text-gray-300">
+              {t('Hiện đang không có dữ liệu')}
+            </div>
           ) : (
             data.map((a, idx) => (
               <div
@@ -131,18 +133,20 @@ export default function AllLot() {
                     <span className="font-bold mr-2">
                       {t('Lô')} {idx + 1}
                     </span>
-                    <span
-                      className={`${
-                        colorbg(a.status).classC
-                      } rounded-md text-white px-2 py-1 text-[12px] md:text-sm font-bold`}
-                    >
-                      {t(colorbg(a.status).label)}
-                    </span>
-                    {a.type === 'CLOSE' && (
-                      <span className="font-semibold text-[12px] md:text-sm bg-red-600 py-1 px-2 rounded-md text-white">
-                        {t('Lô đã đóng lệnh')}
+                    <div className="md:flex gap-2">
+                      <span
+                        className={`${
+                          colorbg(a.status).classC
+                        } rounded-sm text-white px-2 py-1 text-[12px] md:text-sm font-bold block md:mb-0 mb-1`}
+                      >
+                        {t(colorbg(a.status).label)}
                       </span>
-                    )}
+                      {a.type === 'CLOSE' && (
+                        <span className="font-semibold text-[12px] md:text-sm bg-red-600 py-1 px-2 rounded-sm text-white block">
+                          {t('Lô đã đóng lệnh')}
+                        </span>
+                      )}
+                    </div>
                     {a.type === 'RUNNING' && a.status !== 'Lenh_thi_truong' && (
                       <TooltipNavigate
                         handle={() => {
@@ -270,7 +274,7 @@ export default function AllLot() {
                           </div>
                           {a.bySymbol.map((d, idx) => (
                             <div key={idx} className="text-[12px] md:text-sm text-center h-6">
-                              {d.price_transaction}
+                              {d.price_transaction?.toFixed(5)}
                             </div>
                           ))}
                         </div>
