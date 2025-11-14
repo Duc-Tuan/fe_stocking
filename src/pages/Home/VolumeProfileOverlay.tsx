@@ -165,7 +165,7 @@ export const VolumeProfileOverlay: React.FC<Props> = ({
   return (
     <canvas
       ref={overlayRef}
-      className="absolute top-2 right-16 bottom-0 h-[calc(100%-44px)] w-[94%] pointer-events-none"
+      className="absolute top-2 right-20 bottom-0 h-[calc(100%-44px)] w-[94%] pointer-events-none"
     />
   );
 };

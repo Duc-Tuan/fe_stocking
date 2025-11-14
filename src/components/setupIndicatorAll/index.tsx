@@ -52,7 +52,7 @@ export default function SetupIndicatorAll({
 
                 <div className="mt-4">
                   <div className="">
-                    <div className="text-left font-bold">{t('Cài đặt cho bollinger band')}</div>
+                    <div className="text-left font-bold">{t('Cài đặt cho bollinger band 1')}</div>
                     <div className="grid grid-cols-2 gap-2">
                       <div className="">
                         <div className="text-[12px] md:text-[16px] text-left mb-1">
@@ -88,6 +88,57 @@ export default function SetupIndicatorAll({
                             setValue((prev) =>
                               prev.map((i) => {
                                 if (i.value === 'bb') {
+                                  return {
+                                    ...i,
+                                    k: Number(e.target.value),
+                                  };
+                                }
+                                return i;
+                              }),
+                            );
+                          }}
+                          className={classInputBorder}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="">
+                    <div className="text-left font-bold">{t('Cài đặt cho bollinger band 2')}</div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="">
+                        <div className="text-[12px] md:text-[16px] text-left mb-1">
+                          {t('Số kỳ tính trung bình (SMA)')}:
+                        </div>
+                        <InputNumber
+                          type="number"
+                          placeholder={t('Nhập vào...')}
+                          value={String(value.find((i) => i.value === 'bb1')?.period ?? '')}
+                          onChange={(e) => {
+                            setValue((prev) =>
+                              prev.map((i) => {
+                                if (i.value === 'bb1') {
+                                  return {
+                                    ...i,
+                                    period: Number(e.target.value),
+                                  };
+                                }
+                                return i;
+                              }),
+                            );
+                          }}
+                          className={classInputBorder}
+                        />
+                      </div>
+                      <div className="">
+                        <div className="text-[12px] md:text-[16px] text-left mb-1">{t('Độ trễ')}:</div>
+                        <InputNumber
+                          type="number"
+                          placeholder={t('Nhập vào...')}
+                          value={String(value.find((i) => i.value === 'bb1')?.k ?? '')}
+                          onChange={(e) => {
+                            setValue((prev) =>
+                              prev.map((i) => {
+                                if (i.value === 'bb1') {
                                   return {
                                     ...i,
                                     k: Number(e.target.value),

@@ -38,6 +38,10 @@ export const ChartComponent = (props: any) => {
   const upperLine = useRef<ISeriesApi<'Line'> | null>(null);
   const lowerLine = useRef<ISeriesApi<'Line'> | null>(null);
 
+  const maLine1 = useRef<ISeriesApi<'Line'> | null>(null);
+  const upperLine1 = useRef<ISeriesApi<'Line'> | null>(null);
+  const lowerLine1 = useRef<ISeriesApi<'Line'> | null>(null);
+
   const lineSMA = useRef<ISeriesApi<'Line'> | null>(null);
   const lineEMA = useRef<ISeriesApi<'Line'> | null>(null);
   const lineWMA = useRef<ISeriesApi<'Line'> | null>(null);
@@ -96,7 +100,7 @@ export const ChartComponent = (props: any) => {
                     top: 10px;
                     left: ${x + 8}px;
                     width: 0;
-                    height: ${widthScreen < 500 ? (360-28)+"px" : "93%"};
+                    height: ${widthScreen < 500 ? 360 - 28 + 'px' : '93%'};
                     border-left: 1px dashed rgba(0, 0, 0, 0.2);
                     pointer-events: none;
                     z-index: 2;
@@ -191,7 +195,9 @@ export const ChartComponent = (props: any) => {
 
     seriesRef.current = newSeries;
 
-    indicationBB(chart, maLine, upperLine, lowerLine);
+    indicationBB(chart, maLine, upperLine, lowerLine, 'green');
+    indicationBB(chart, maLine1, upperLine1, lowerLine1, '#ff9000');
+
     const handleRightClick = (e: MouseEvent) => {
       e.preventDefault();
       setMenu({ x: e.clientX, y: e.clientY });
@@ -315,6 +321,12 @@ export const ChartComponent = (props: any) => {
       lineEMA.current = null;
       lineWMA.current = null;
       lineRMA.current = null;
+      maLine.current = null;
+      upperLine.current = null;
+      lowerLine.current = null;
+      maLine1.current = null;
+      upperLine1.current = null;
+      lowerLine1.current = null;
       lineCompare1.current = null;
       lineCompare2.current = null;
       lineCompare3.current = null;
@@ -357,13 +369,16 @@ export const ChartComponent = (props: any) => {
       const baseEur = originalData[0]?.close;
       const priceFormatter = (price: number) => `${price.toFixed(2)}%`; // vì giờ đã là % rồi
 
-      seriesRef.current.setData(originalData.map((i: any) => {
-        const close = ((i.close - baseEur) / baseEur) * 100;
-        return {time: i.time,
-              value: Object.is(close, -0) ? 0 : close,
-              // close === -0 ? 0 : close, // % thay đổi
-            }
-      }));
+      seriesRef.current.setData(
+        originalData.map((i: any) => {
+          const close = ((i.close - baseEur) / baseEur) * 100;
+          return {
+            time: i.time,
+            value: Object.is(close, -0) ? 0 : close,
+            // close === -0 ? 0 : close, // % thay đổi
+          };
+        }),
+      );
 
       seriesRef.current.applyOptions({
         title: serverId,
@@ -374,7 +389,7 @@ export const ChartComponent = (props: any) => {
       allDataCompare.current
         .filter((i: any) => Number(i.sever) !== Number(serverId))
         .map((i: IDataCandCompare, idx: number) => {
-          const dataNew = i.data.slice(-applyNumberCandle)
+          const dataNew = i.data.slice(-applyNumberCandle);
           const baseB = dataNew[0]?.close; // t0 của B
           const lineData = dataNew.map((c: any) => {
             const value = ((c.close - baseB) / baseB) * 100; // % thay đổi
@@ -442,6 +457,15 @@ export const ChartComponent = (props: any) => {
     upperLine,
     lowerLine,
     isVisible: indicatorChart.find((i: any) => i.value === 'bb').active,
+  });
+
+  useBollingerBands({
+    dataOld: allData.current.length === 0 ? dataOld : allData.current,
+    dataCurrent: indicatorChart.find((i: any) => i.value === 'bb1'),
+    maLine: maLine1,
+    upperLine: upperLine1,
+    lowerLine: lowerLine1,
+    isVisible: indicatorChart.find((i: any) => i.value === 'bb1').active,
   });
 
   useEffect(() => {

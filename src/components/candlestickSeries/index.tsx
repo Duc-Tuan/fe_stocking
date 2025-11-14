@@ -50,6 +50,10 @@ export const CandlestickSeriesComponent = (props: any) => {
   const upperLine = useRef<ISeriesApi<'Line'> | null>(null);
   const lowerLine = useRef<ISeriesApi<'Line'> | null>(null);
 
+  const maLine1 = useRef<ISeriesApi<'Line'> | null>(null);
+  const upperLine1 = useRef<ISeriesApi<'Line'> | null>(null);
+  const lowerLine1 = useRef<ISeriesApi<'Line'> | null>(null);
+
   const lineSMA = useRef<ISeriesApi<'Line'> | null>(null);
   const lineEMA = useRef<ISeriesApi<'Line'> | null>(null);
   const lineWMA = useRef<ISeriesApi<'Line'> | null>(null);
@@ -211,7 +215,8 @@ export const CandlestickSeriesComponent = (props: any) => {
     addChartLine(lineCompare3, chart, '--color-background-lineCompare3', true);
     addChartLine(lineCompare4, chart, '--color-background-lineCompare4', true);
 
-    indicationBB(chart, maLine, upperLine, lowerLine);
+    indicationBB(chart, maLine, upperLine, lowerLine, 'green');
+    indicationBB(chart, maLine1, upperLine1, lowerLine1, '#ff9000');
     const handleRightClick = (e: MouseEvent) => {
       e.preventDefault();
       setMenu({ x: e.clientX, y: e.clientY });
@@ -333,6 +338,9 @@ export const CandlestickSeriesComponent = (props: any) => {
       maLine.current = null;
       upperLine.current = null;
       lowerLine.current = null;
+      maLine1.current = null;
+      upperLine1.current = null;
+      lowerLine1.current = null;
       lineEMA.current = null;
       lineSMA.current = null;
       lineWMA.current = null;
@@ -496,6 +504,15 @@ export const CandlestickSeriesComponent = (props: any) => {
     upperLine,
     lowerLine,
     isVisible: indicatorChart.find((i: any) => i.value === 'bb').active,
+  });
+  
+  useBollingerBands({
+    dataOld: allData.current.length === 0 ? dataOld : allData.current,
+    dataCurrent: indicatorChart.find((i: any) => i.value === 'bb1'),
+    maLine: maLine1,
+    upperLine: upperLine1,
+    lowerLine: lowerLine1,
+    isVisible: indicatorChart.find((i: any) => i.value === 'bb1').active,
   });
 
   useEffect(() => {
