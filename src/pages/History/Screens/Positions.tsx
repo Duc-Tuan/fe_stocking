@@ -191,7 +191,7 @@ export default function Positions() {
                     {a.is_odd && <CloseOrderOdd data={a} setData={setData} />}
                   </div>
                   <div className="text-sm flex justify-start items-center gap-1">
-                    {a.open_price} <Icon name="icon-right-v2" width={14} height={14} /> {a.current_price}
+                    {a.open_price?.toFixed(4)} <Icon name="icon-right-v2" width={14} height={14} /> {a.current_price?.toFixed(4)}
                   </div>
                 </div>
                 <div className="">
@@ -200,7 +200,7 @@ export default function Positions() {
                       a.profit > 0 ? 'text-blue-700' : a.profit === 0 ? 'text-gray-400' : 'text-red-500'
                     } font-semibold`}
                   >
-                    {a.profit}
+                    {a.profit?.toFixed(2)}
                   </div>
                   <div className="text-sm">
                     {a.account_id} | {dayjs.utc(a.time).tz('Asia/Ho_Chi_Minh').format('YYYY-MM-DD HH:mm:ss')}
@@ -348,25 +348,24 @@ const More = ({ data, title, dataRisk }: { data: IBreakEven[]; title: string; da
                         </div>
                         <div className="flex">
                           <div className="">{t('PNL thị trường')}: </div>
-                          <div className="font-semibold pl-2 text-[var(--color-background)]">{d.pnl.toFixed(5)}</div>
+                          <div className="font-semibold pl-2 text-[var(--color-background)]">{d.pnl?.toFixed(5)}</div>
                         </div>
                         <div className="flex">
                           <div className="">{t('Tổng lợi nhuận / Volume')}: </div>
-                          <div className="font-semibold pl-2">{d.pnl_break_even.toFixed(5)}</div>
+                          <div className="font-semibold pl-2">{d.pnl_break_even?.toFixed(5)}</div>
                         </div>
                         <div className="flex">
                           <div className="">{t('Tổng lợi nhuận')}: </div>
-                          <div className="font-semibold pl-2">{d.total_profit.toFixed(5)}</div>
+                          <div className="font-semibold pl-2">{d.total_profit?.toFixed(5)}</div>
                         </div>
                         <div className="flex">
                           <div className="">{t('Tổng volume')}: </div>
-                          <div className="font-semibold pl-2">{d.total_volume}</div>
+                          <div className="font-semibold pl-2">{d.total_volume?.toFixed(2)}</div>
                         </div>
                         <div className="flex">
                           <div className="">{t('Điểm PNL hòa vốn')}: </div>
-                          {/* <div className="font-semibold pl-2">{(d.pnl - d.pnl_break_even).toFixed(5)}</div> */}
                           <div className="font-semibold pl-2">
-                            {Pnlbreak_even(d.pnl, d.pnl_break_even, d.type).toFixed(5)}
+                            {Pnlbreak_even(d.pnl, d.pnl_break_even, d.type)?.toFixed(5)}
                           </div>
                         </div>
                       </div>
@@ -438,11 +437,11 @@ const More = ({ data, title, dataRisk }: { data: IBreakEven[]; title: string; da
                         </div>
                         <div className="flex justify-start items-center gap-2">
                           <div className="">{t('Tổng volume')}:</div>
-                          <div className="font-semibold">{i.total_volume.toFixed(3)}</div>
+                          <div className="font-semibold">{i.total_volume?.toFixed(3)}</div>
                         </div>
                         <div className="flex justify-start items-center gap-2">
                           <div className="">{t('Tổng LN')}:</div>
-                          <div className="font-semibold">{i.total_profit.toFixed(3)}</div>
+                          <div className="font-semibold">{i.total_profit?.toFixed(3)}</div>
                         </div>
                         <div className="flex justify-start items-center gap-2">
                           <div className="">{t('Tổng lệnh')}:</div>

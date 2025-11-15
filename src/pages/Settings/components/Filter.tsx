@@ -82,7 +82,7 @@ export default function Filter({ query, setQuery, setOpen }: IProps) {
           title="Trang sau"
           className="w-[30px] md:w-[36px] h-[30px] md:h-[36px] p-0 flex justify-center items-center"
         />
-        <div className="h-[36px] px-2 ml-2 shadow-md shadow-gray-500 flex justify-center items-center rounded-lg font-semibold">
+        <div className="h-[36px] px-2 ml-2 shadow-md shadow-gray-500 flex justify-center items-center rounded-md font-semibold">
           {t('Tổng số bản')}: {query?.total ?? 0}
         </div>
       </div>
